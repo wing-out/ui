@@ -111,7 +111,7 @@ Item {
         CheckBox {
             id: ttsTellUsernames
             enabled: ttsEnabled.checked
-            text: "TTS:usernames"
+            text: "TTS:name"
         }
     }
 

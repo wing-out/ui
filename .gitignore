@@ -82,4 +82,6 @@ CMakeLists.txt.user*
 .rcc/
 .uic/
 /build*/
+/android/.gradle
+/.cache
 

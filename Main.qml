@@ -12,7 +12,7 @@ ApplicationWindow {
     visible: true
     Material.theme: Material.Dark
     Material.accent: Material.Purple
-    title: qsTr("Backstage: dashboard")
+    title: qsTr("Wing Out: Dashboard")
 
     property var latestChatMessageTimestampUNIXNano: null
     property var latestTimestampChatMessageIDs: []
@@ -28,7 +28,6 @@ ApplicationWindow {
         timers.pingTicker.start();
         timers.streamStatusTicker.callback = updateStreamStatus;
         timers.streamStatusTicker.start();
-        handleDXProducerClientStatus(QtGrpc.StatusCode.Ok);
     }
 
     function ping() {
@@ -59,13 +58,11 @@ ApplicationWindow {
         var receivedTimestamp = new Date();
         var sentTimestamp = pingTimestamps[reply.payload];
         var timeDiffMs = receivedTimestamp.getTime() - sentTimestamp.getTime();
-
-        statusBarBottom.text = timeDiffMs + "ms";
-        statusBarBottom.color = "#4CAF50";
+        pingStatus.rttMS = timeDiffMs;
     }
 
     function onPingFail(status): void {
-        handleDXProducerClientStatus(status);
+        pingStatus.rttMS = -1;
     }
 
     function onChatNewMessage(chatMessage): void {
@@ -116,23 +113,6 @@ ApplicationWindow {
     function onScreenshotErrored(status): void {
         console.log("Errored", status);
         timers.retryTimerDXProducerClientSubscribeToScreenshot.start();
-    }
-
-    function handleDXProducerClientStatus(status): void {
-        switch (status.code) {
-        case QtGrpc.StatusCode.Ok:
-            statusBarBottom.text = qsTr("ok");
-            statusBarBottom.color = "#4CAF50";
-            break;
-        case QtGrpc.StatusCode.Unavailable:
-            statusBarBottom.text = qsTr("no connection");
-            statusBarBottom.color = "#F44336";
-            break;
-        default:
-            statusBarBottom.text = qsTr("unknown");
-            statusBarBottom.color = "#F44336";
-            break;
-        }
     }
 
     function updateStreamStatus() {
@@ -200,7 +180,7 @@ ApplicationWindow {
     }
     GrpcHttp2Channel {
         id: dxProducerTarget
-        hostUri: "http://192.168.0.134:3594"
+        hostUri: "http://192.168.0.131:3594"
         options: GrpcChannelOptions {
             deadlineTimeout: 365 * 24 * 3600 * 1000
         }
@@ -229,7 +209,7 @@ ApplicationWindow {
         Text {
             id: youtubeCounter
             x: parent.spacing
-            width: 60;
+            width: 60
             color: isActive ? '#00FF00' : '#808080'
             text: value >= 0 ? "Y" + value : "Y"
             font.pointSize: 20
@@ -239,7 +219,7 @@ ApplicationWindow {
         }
         Text {
             id: twitchCounter
-            width: 60;
+            width: 60
             color: isActive ? '#00FF00' : '#808080'
             text: value >= 0 ? "T" + value : "T"
             font.pointSize: 20
@@ -249,7 +229,7 @@ ApplicationWindow {
         }
         Text {
             id: kickCounter
-            width: 60;
+            width: 60
             color: isActive ? '#00FF00' : '#808080'
             text: value >= 0 ? "K" + value : "K"
             font.pointSize: 20
@@ -261,34 +241,35 @@ ApplicationWindow {
             id: statusStreamTime
             font.pointSize: 20
             font.bold: true
-            width: parent.width - kickCounter.x - kickCounter.width - parent.spacing*2
+            width: parent.width - kickCounter.x - kickCounter.width - parent.spacing * 2
             horizontalAlignment: Text.AlignRight
             color: seconds >= 0 ? '#00FF00' : '#808080'
             property int seconds: -1
-            text: seconds < 0 ? "not started" : (seconds < 60 ? seconds : (seconds < 3600 ? Math.floor(seconds / 60)+":"+(seconds % 60) : Math.floor(seconds / 3600)+":"+Math.floor(seconds % 3600 / 60)+":"+(seconds % 60)))
+            text: seconds < 0 ? "not started" : (seconds < 60 ? seconds : (seconds < 3600 ? Math.floor(seconds / 60) + ":" + (seconds % 60) : Math.floor(seconds / 3600) + ":" + Math.floor(seconds % 3600 / 60) + ":" + (seconds % 60)))
         }
     }
 
-    Text {
-        id: statusBarBottom
-        x: 20
-        y: parent.height - 16
-        width: parent.width - 40
-        height: 16
-        text: qsTr("")
-        font.pixelSize: 12
+    function colorMix(colorA, colorB, ratio) {
+        var cA = Qt.color(colorA);
+        var cB = Qt.color(colorB);
+        var r = cA.r * (1 - ratio) + cB.r * ratio;
+        var g = cA.g * (1 - ratio) + cB.g * ratio;
+        var b = cA.b * (1 - ratio) + cB.b * ratio;
+        var a = cA.a * (1 - ratio) + cB.a * ratio;
+        return Qt.rgba(r, g, b, a);
     }
 
-    ChatView {
-        id: chatView
-        y: imageScreenshot.y + imageScreenshot.height
-        width: parent.width
-        height: parent.height - statusBarBottom.height - imageScreenshot.height
-
-        onAtYEndChanged: function () {
-            console.log("onAtYEndChanged", atYEnd);
-            dxProducerClient.setIgnoreImages(!atYEnd);
+    function pingColorFromMS(rttMS) {
+        if (rttMS < 0) {
+            return '#A0A0A0';
         }
+        if (rttMS < 100) {
+            return colorMix('#00FF00', '#FFFF00', rttMS / 100);
+        }
+        if (rttMS < 1000) {
+            return colorMix('#FFFF00', '#FF0000', (rttMS - 100) / 900);
+        }
+        return '#FF0000'
     }
 
     Image {
@@ -300,5 +281,47 @@ ApplicationWindow {
         retainWhileLoading: true
         asynchronous: true
         smooth: false
+    }
+
+    ChatView {
+        id: chatView
+        y: imageScreenshot.y + imageScreenshot.height
+        width: parent.width
+        height: statusBarBottom.y - y
+
+        onAtYEndChanged: function () {
+            console.log("onAtYEndChanged", atYEnd);
+            dxProducerClient.setIgnoreImages(!atYEnd);
+        }
+        Component.onCompleted: function () {
+            console.log("ChatView: x,y,w,h: ", x, y, width, height);
+        }
+    }
+
+    Row {
+        id: statusBarBottom
+        x: 20
+        y: parent.height - 16
+        width: parent.width - 40
+        height: 16
+        spacing: 10
+
+        Text {
+            id: pingStatus
+            height: parent.height
+            width: 100
+            font.pixelSize: 12
+            property int rttMS: -1
+            text: rttMS < 0 ? "no data" : rttMS + "ms"
+            color: application.pingColorFromMS(rttMS)
+
+            Component.onCompleted: function () {
+                console.log("pingStatus: x,y,w,h: ", x, y, width, height);
+            }
+        }
+
+        Component.onCompleted: function () {
+            console.log("statusBarBottom: x,y,w,h: ", x, y, width, height);
+        }
     }
 }

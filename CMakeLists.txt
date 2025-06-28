@@ -1,41 +1,32 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(backstage VERSION 0.1 LANGUAGES CXX)
+project(wingout VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_COMPILER_LAUNCHER ccache)
 set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick)
-find_package(Qt6 REQUIRED COMPONENTS Protobuf)
-find_package(Qt6 REQUIRED COMPONENTS ProtobufTools)
-find_package(Qt6 REQUIRED COMPONENTS ProtobufQuick)
+find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 find_package(Qt6 REQUIRED COMPONENTS Grpc)
 find_package(Qt6 REQUIRED COMPONENTS GrpcTools)
 find_package(Qt6 REQUIRED COMPONENTS GrpcQuick)
 find_package(Qt6 REQUIRED COMPONENTS Multimedia)
-find_package(Qt6 REQUIRED COMPONENTS Core)
-find_package(Qt6 REQUIRED COMPONENTS Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Protobuf)
+find_package(Qt6 REQUIRED COMPONENTS ProtobufTools)
+find_package(Qt6 REQUIRED COMPONENTS ProtobufQuick)
+find_package(Qt6 REQUIRED COMPONENTS Quick)
 find_package(Qt6 REQUIRED COMPONENTS TextToSpeech)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
-set(SOURCES main.cpp)
-if(ANDROID)
-    list(APPEND SOURCES android.cpp)
-endif()
-
-qt_add_executable(backstage
-    ${SOURCES}
+qt_add_executable(wingout
+    main.cpp
 )
 
-if(ANDROID)
-    target_compile_definitions(backstage PRIVATE Q_OS_ANDROID)
-endif()
-
-qt_add_qml_module(backstage
-    URI Backstage
+qt_add_qml_module(wingout
+    URI WingOut
     VERSION 1.0
     QML_FILES
         Main.qml
@@ -84,8 +75,8 @@ qt_add_grpc(DXProducer CLIENT
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
-set_target_properties(backstage PROPERTIES
-    MACOSX_BUNDLE_GUI_IDENTIFIER center.dx.backstage
+set_target_properties(wingout PROPERTIES
+    MACOSX_BUNDLE_GUI_IDENTIFIER center.dx.wingout
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
@@ -100,7 +91,7 @@ target_link_libraries(DXProducer
     Qt6::Quick
 )
 
-target_link_libraries(backstage
+target_link_libraries(wingout
     PRIVATE
     DXProducer.Player
     DXProducer
@@ -109,10 +100,9 @@ target_link_libraries(backstage
     Qt6::Quick
     Qt6::TextToSpeech
 )
-target_link_libraries(backstage PRIVATE Qt6::Core)
 
 include(GNUInstallDirs)
-install(TARGETS backstage
+install(TARGETS wingout
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
