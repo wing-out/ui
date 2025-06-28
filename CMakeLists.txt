@@ -72,6 +72,15 @@ qt_add_grpc(DXProducer CLIENT
     QML
 )
 
+qt_add_qml_module(Platform
+    URI Platform
+    VERSION 1.0
+    SOURCES
+        platform.h platform.cpp
+    OUTPUT_DIRECTORY
+        ${CMAKE_CURRENT_BINARY_DIR}/Platform/
+)
+
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
@@ -95,6 +104,7 @@ target_link_libraries(wingout
     PRIVATE
     DXProducer.Player
     DXProducer
+    Platform
     Qt6::Core
     Qt6::Concurrent
     Qt6::Quick

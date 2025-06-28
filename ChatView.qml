@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtMultimedia
 import QtTextToSpeech
+import Platform
 
 Item {
     id: chatView
@@ -83,6 +84,10 @@ Item {
     property alias model: chatMessagesModel
     property alias list: messagesList
     property alias atYEnd: messagesList.atYEnd
+
+    Platform {
+        id: platform
+    }
 
     SoundEffect {
         id: soundAddChatMessage
@@ -188,6 +193,7 @@ Item {
                 case "botrixoficial":
                     return;
                 }
+                platform.vibrate(500)
                 var text = msg.message
                 text = text.replace(/https?:\/\/[^\s]+/g, "<HTTP-link>")
                 if (ttsEnabled.checked && tts.state !== TextToSpeech.Error) {
