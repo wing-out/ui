@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "qdatetime": "cpp",
+        "qnetworkdatagram": "cpp"
+    },
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/build/${buildKit}/${buildType}"
+    ],
+    "cmake.options.statusBarVisibility": "visible",
+    "cmake.buildDirectory": "${workspaceFolder}/build/${buildKit}/${buildType}",
+    "cmake.useCMakePresets": "never"
+}

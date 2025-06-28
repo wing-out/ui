@@ -1,0 +1,11 @@
+{
+  "configurations": [
+    {
+      "name": "Linux",
+      "includePath": [
+        "${workspaceFolder}/build/${buildKit}/${buildType}"
+      ]
+    }
+  ],
+  "version": 4
+}
