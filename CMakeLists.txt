@@ -106,6 +106,7 @@ target_link_libraries(wingout
     DXProducer
     Platform
     Qt6::Core
+    Qt6::CorePrivate
     Qt6::Concurrent
     Qt6::Quick
     Qt6::TextToSpeech

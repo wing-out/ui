@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtGrpc
+import Platform
 
 import streamd
 
@@ -161,6 +162,21 @@ ApplicationWindow {
     function onUpdateStreamStatusKickError() {
     }
 
+    Platform {
+        id: platform
+        Component.onCompleted: {
+            platform.setEnableRunningInBackground(true);
+            platform.startMonitoringSignalStrength();
+        }
+    }
+    Connections {
+        target: platform
+        function onSignalStrengthChanged(strength) {
+            console.log("new value of the signal strength: "+strength)
+            signalStatus.signalStrength = strength
+        }
+    }
+
     Timers {
         id: timers
         Component.onCompleted: {
@@ -269,7 +285,7 @@ ApplicationWindow {
         if (rttMS < 1000) {
             return colorMix('#FFFF00', '#FF0000', (rttMS - 100) / 900);
         }
-        return '#FF0000'
+        return '#FF0000';
     }
 
     Image {
@@ -318,6 +334,17 @@ ApplicationWindow {
             Component.onCompleted: function () {
                 console.log("pingStatus: x,y,w,h: ", x, y, width, height);
             }
+        }
+
+        Text {
+            id: signalStatus
+            height: parent.height
+            width: 100
+            font.pixelSize: 12
+            property int signalStrength: -1
+            text: signalStrength < 0 ? "" : signalStrength
+            color: '#FFFFFF'
+
         }
 
         Component.onCompleted: function () {
