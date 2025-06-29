@@ -33,6 +33,10 @@ void Client::ping(const QString &payloadToReturn,
   arg.setPayloadToReturn(payloadToReturn);
   arg.setPayloadToIgnore(payloadToIgnore);
   arg.setRequestExtraPayloadSize(requestExtraPayload);
+  if (this->client() == nullptr) {
+    qWarning() << "this->client() == nullptr";
+    return;
+  }
   this->Ping(arg, finishCallback, errorCallback, options);
 }
 

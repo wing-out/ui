@@ -32,8 +32,34 @@ ApplicationWindow {
     }
 
     function ping() {
+        var now = new Date();
+        var pingIDLastSuccess = pingCurrentID;
+        var sinceLastSuccess = -1;
+        for (var i = pingCurrentID - 1; i != pingCurrentID; i--) {
+            if (i < 0) {
+                i = 65535;
+            }
+            var byte0 = i / 0x100;
+            var byte1 = i % 0x100;
+            var payload = String.fromCharCode(byte0) + String.fromCharCode(byte1);
+            var sentTimestamp = pingTimestamps[payload];
+            if (sentTimestamp === undefined || sentTimestamp === null) {
+                break;
+            }
+            sinceLastSuccess = now.getTime() - sentTimestamp.getTime();
+            if (sinceLastSuccess > 10000) {
+                pingStatus.rttMS = -1;
+                sinceLastSuccess = -1;
+                break;
+            }
+        }
+        if (sinceLastSuccess > pingStatus.rttMS) {
+            console.log("forcing displayed pingStatus.rttMS value to be ", sinceLastSuccess);
+            pingStatus.rttMS = sinceLastSuccess;
+        }
         var byte0 = pingCurrentID / 0x100;
         var byte1 = pingCurrentID % 0x100;
+        pingCurrentID = (pingCurrentID + 1) % 65536;
         var payload = String.fromCharCode(byte0) + String.fromCharCode(byte1);
         pingTimestamps[payload] = new Date();
         dxProducerClient.ping(payload, "", 0, onPingSuccess, onPingFail, grpcCallOptions);
@@ -58,6 +84,11 @@ ApplicationWindow {
     function onPingSuccess(reply): void {
         var receivedTimestamp = new Date();
         var sentTimestamp = pingTimestamps[reply.payload];
+        if (sentTimestamp === undefined || sentTimestamp === null) {
+            console.warn("timestamp found for payload:", reply.payload);
+            return;
+        }
+        delete pingTimestamps[reply.payload];
         var timeDiffMs = receivedTimestamp.getTime() - sentTimestamp.getTime();
         pingStatus.rttMS = timeDiffMs;
     }
@@ -172,8 +203,8 @@ ApplicationWindow {
     Connections {
         target: platform
         function onSignalStrengthChanged(strength) {
-            console.log("new value of the signal strength: "+strength)
-            signalStatus.signalStrength = strength
+            console.log("new value of the signal strength: " + strength);
+            signalStatus.signalStrength = strength;
         }
     }
 
@@ -196,7 +227,7 @@ ApplicationWindow {
     }
     GrpcHttp2Channel {
         id: dxProducerTarget
-        hostUri: "http://192.168.0.131:3594"
+        hostUri: "http://192.168.0.134:3594"
         options: GrpcChannelOptions {
             deadlineTimeout: 365 * 24 * 3600 * 1000
         }
@@ -277,7 +308,7 @@ ApplicationWindow {
 
     function pingColorFromMS(rttMS) {
         if (rttMS < 0) {
-            return '#A0A0A0';
+            return '#FF0000';
         }
         if (rttMS < 100) {
             return colorMix('#00FF00', '#FFFF00', rttMS / 100);
@@ -344,7 +375,6 @@ ApplicationWindow {
             property int signalStrength: -1
             text: signalStrength < 0 ? "" : signalStrength
             color: '#FFFFFF'
-
         }
 
         Component.onCompleted: function () {
