@@ -117,9 +117,9 @@ ApplicationWindow {
     }
 
     function updateStreamStatus() {
-        dxProducerClient.getStreamStatus("youtube", onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, grpcCallOptions);
-        dxProducerClient.getStreamStatus("twitch", onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, grpcCallOptions);
-        dxProducerClient.getStreamStatus("kick", onUpdateStreamStatusKick, onUpdateStreamStatusKickError, grpcCallOptions);
+        dxProducerClient.getStreamStatus("youtube", false, onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, grpcCallOptions);
+        dxProducerClient.getStreamStatus("twitch", false, onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, grpcCallOptions);
+        dxProducerClient.getStreamStatus("kick", false, onUpdateStreamStatusKick, onUpdateStreamStatusKickError, grpcCallOptions);
     }
 
     function onUpdateStreamStatusYouTube(streamStatus) {

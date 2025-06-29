@@ -13,7 +13,7 @@ public class SignalStrengthListener {
         m_activity = activity;
     }
 
-    public static native void signalStrengthChanged(int strength);
+    public static native void onSignalStrengthChanged(int strength);
 
     public static void installSignalStrengthListener() {
         final TelephonyManager telephonyManager = (TelephonyManager) m_activity.getSystemService(Context.TELEPHONY_SERVICE);
@@ -31,7 +31,7 @@ public class SignalStrengthListener {
                             // Legacy method
                             level = signalStrength.getGsmSignalStrength();
                         }
-                        signalStrengthChanged(level);
+                        onSignalStrengthChanged(level);
                     }
                 }, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
             }
