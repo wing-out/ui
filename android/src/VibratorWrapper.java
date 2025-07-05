@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 public class VibratorWrapper {
     private static final Logger logger = Logger.getLogger(VibratorWrapper.class.getName());
-    public static void vibrate(Context context, long duration) {
+    public static void vibrate(Context context, long duration, int effect) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             logger.warning("SDK version is too low");
             return;
@@ -32,7 +32,7 @@ public class VibratorWrapper {
             logger.warning("the device has no vibrator");
             return;
         }
-        vibrator.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE));
+        vibrator.vibrate(VibrationEffect.createOneShot(duration, effect));
         logger.info("vibrate()");
     }
 }

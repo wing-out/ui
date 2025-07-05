@@ -11,7 +11,7 @@ class Platform : public QObject {
       int signalStrength READ getSignalStrength WRITE setSignalStrength NOTIFY onSignalStrengthChanged)
 public:
   explicit Platform(QObject* parent = nullptr) : QObject(parent), signalStrength(-1) {}
-  Q_INVOKABLE void vibrate(uint64_t duration_ms);
+  Q_INVOKABLE void vibrate(uint64_t duration_ms, bool is_notification);
   Q_INVOKABLE void setEnableRunningInBackground(bool value);
   Q_INVOKABLE void startMonitoringSignalStrength();
   int getSignalStrength() {

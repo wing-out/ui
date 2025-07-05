@@ -7,7 +7,7 @@
 #include <QJniObject>
 #include <QtCore/private/qandroidextras_p.h>
 
-void Platform::vibrate(uint64_t duration_ms) {
+void Platform::vibrate(uint64_t duration_ms, bool is_notification) {
   QJniObject activity = QJniObject::callStaticObjectMethod(
       "org/qtproject/qt/android/QtNative", "activity",
       "()Landroid/app/Activity;");
@@ -16,10 +16,15 @@ void Platform::vibrate(uint64_t duration_ms) {
     return;
   }
 
+  uint32_t effect = 0xffffffff; // DEFAULT_AMPLITUDE
+  if (!is_notification) {
+    effect = 0x00000080;
+  }
+
   QJniObject::callStaticMethod<void>("center/dx/wingout/VibratorWrapper",
-                                     "vibrate", "(Landroid/content/Context;J)V",
+                                     "vibrate", "(Landroid/content/Context;JI)V",
                                      activity.object<jobject>(),
-                                     static_cast<jlong>(duration_ms));
+                                     static_cast<jlong>(duration_ms), static_cast<jint>(effect));
 }
 
 void Platform::setEnableRunningInBackground(bool value) {

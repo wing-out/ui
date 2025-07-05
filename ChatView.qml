@@ -104,6 +104,11 @@ Item {
         spacing: 16
 
         CheckBox {
+            id: vibrationEnabled
+            checked: true
+            text: "vibrate"
+        }
+        CheckBox {
             id: ttsEnabled
             enabled: tts.state !== TextToSpeech.Error
             text: "TTS"
@@ -193,7 +198,9 @@ Item {
                 case "botrixoficial":
                     return;
                 }
-                platform.vibrate(500)
+                if (vibrationEnabled.checked) {
+                    platform.vibrate(500, true)
+                }
                 var text = msg.message
                 text = text.replace(/https?:\/\/[^\s]+/g, "<HTTP-link>")
                 if (ttsEnabled.checked && tts.state !== TextToSpeech.Error) {

@@ -31,6 +31,39 @@ ApplicationWindow {
         timers.streamStatusTicker.start();
     }
 
+    onClosing: {
+        close.accepted = false;
+        inputBlocker.visible = true;
+    }
+
+    MouseArea {
+        id: inputBlocker
+        anchors.fill: parent
+        z: 9999
+        visible: false
+        enabled: true // Set to false to unlock
+        opacity: 0.0
+        property real startX: 0
+        property real startY: 0
+        onClicked: {}
+        onPressed: {
+            inputBlocker.startX = mouse.x;
+            inputBlocker.startY = mouse.y;
+        }
+        onReleased: {
+            var deltaY = mouse.y - inputBlocker.startY;
+            var deltaX = mouse.x - inputBlocker.startX;
+            if (deltaY >= -200) {
+                return;
+            }
+            if (deltaX <= 200) {
+                return;
+            }
+            inputBlocker.visible = false;
+            platform.vibrate(50, false);
+        }
+    }
+
     function ping() {
         var now = new Date();
         var pingIDLastSuccess = pingCurrentID;
@@ -98,7 +131,6 @@ ApplicationWindow {
     }
 
     function onChatNewMessage(chatMessage): void {
-        //console.log("onChatNewMessage", chatMessage)
         if (latestChatMessageTimestampUNIXNano != null && latestChatMessageTimestampUNIXNano == chatMessage.createdAtUNIXNano) {
             var alreadyDisplayed = false;
             latestTimestampChatMessageIDs.foreach(function (item) {
@@ -129,6 +161,7 @@ ApplicationWindow {
     }
     function onChatMessagesFinished(status): void {
         console.log("Finished", status);
+        timers.retryTimerDXProducerClientSubscribeToChatMessages.start();
     }
 
     function onChatMessagesErrored(status): void {
@@ -141,6 +174,7 @@ ApplicationWindow {
     }
     function onScreenshotFinished(status): void {
         console.log("Finished", status);
+        timers.retryTimerDXProducerClientSubscribeToScreenshot.start();
     }
     function onScreenshotErrored(status): void {
         console.log("Errored", status);
@@ -156,14 +190,14 @@ ApplicationWindow {
     function onUpdateStreamStatusYouTube(streamStatus) {
         youtubeCounter.isActive = streamStatus.isActive;
         if (streamStatus.hasViewersCount) {
-            youtubeCounter.value = streamStatus.viewerCount;
+            youtubeCounter.value = streamStatus.viewersCount;
         } else {
             youtubeCounter.value = -1;
         }
         if (streamStatus.hasStartedAt) {
             var now = new Date();
             var seconds = now.getTime() - (streamStatus.startedAt / 1000000);
-            statusStreamTime.seconds = seconds;
+            statusStreamTime.seconds = seconds / 1000;
         } else {
             statusStreamTime.seconds = -1;
         }
@@ -174,7 +208,7 @@ ApplicationWindow {
     function onUpdateStreamStatusTwitch(streamStatus) {
         twitchCounter.isActive = streamStatus.isActive;
         if (streamStatus.hasViewersCount) {
-            twitchCounter.value = streamStatus.viewerCount;
+            twitchCounter.value = streamStatus.viewersCount;
         } else {
             twitchCounter.value = -1;
         }
@@ -185,7 +219,7 @@ ApplicationWindow {
     function onUpdateStreamStatusKick(streamStatus) {
         kickCounter.isActive = streamStatus.isActive;
         if (streamStatus.hasViewersCount) {
-            kickCounter.value = streamStatus.viewerCount;
+            kickCounter.value = streamStatus.viewersCount;
         } else {
             kickCounter.value = -1;
         }
@@ -227,7 +261,7 @@ ApplicationWindow {
     }
     GrpcHttp2Channel {
         id: dxProducerTarget
-        hostUri: "http://192.168.0.134:3594"
+        hostUri: "http://192.168.0.131:3594"
         options: GrpcChannelOptions {
             deadlineTimeout: 365 * 24 * 3600 * 1000
         }
@@ -258,7 +292,7 @@ ApplicationWindow {
             x: parent.spacing
             width: 60
             color: isActive ? '#00FF00' : '#808080'
-            text: value >= 0 ? "Y" + value : "Y"
+            text: value >= 0 ? "Y " + value : "Y"
             font.pointSize: 20
             font.bold: true
             property int value: -1
@@ -268,7 +302,7 @@ ApplicationWindow {
             id: twitchCounter
             width: 60
             color: isActive ? '#00FF00' : '#808080'
-            text: value >= 0 ? "T" + value : "T"
+            text: value >= 0 ? "T " + value : "T"
             font.pointSize: 20
             font.bold: true
             property int value: -1
@@ -278,7 +312,7 @@ ApplicationWindow {
             id: kickCounter
             width: 60
             color: isActive ? '#00FF00' : '#808080'
-            text: value >= 0 ? "K" + value : "K"
+            text: value >= 0 ? "K " + value : "K"
             font.pointSize: 20
             font.bold: true
             property int value: -1
@@ -292,7 +326,19 @@ ApplicationWindow {
             horizontalAlignment: Text.AlignRight
             color: seconds >= 0 ? '#00FF00' : '#808080'
             property int seconds: -1
-            text: seconds < 0 ? "not started" : (seconds < 60 ? seconds : (seconds < 3600 ? Math.floor(seconds / 60) + ":" + (seconds % 60) : Math.floor(seconds / 3600) + ":" + Math.floor(seconds % 3600 / 60) + ":" + (seconds % 60)))
+            function pad(num) {
+                return num < 10 ? "0" + num : num;
+            }
+            function formatTime(seconds) {
+                if (seconds < 0)
+                    return "not started";
+                if (seconds < 60)
+                    return pad(seconds);
+                if (seconds < 3600)
+                    return pad(Math.floor(seconds / 60)) + ":" + pad(seconds % 60);
+                return Math.floor(seconds / 3600) + ":" + pad(Math.floor((seconds % 3600) / 60)) + ":" + pad(seconds % 60);
+            }
+            text: formatTime(seconds)
         }
     }
 
