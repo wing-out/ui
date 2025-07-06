@@ -53,6 +53,7 @@ public:
   Q_INVOKABLE void setIgnoreImages(const bool value);
 signals:
 private:
+  void _onChannelChanged();
   bool ignoreImages = false;
 };
 } // namespace DXProducer

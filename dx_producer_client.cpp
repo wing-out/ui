@@ -16,12 +16,19 @@
 
 namespace DXProducer {
 
-Client::Client(QObject *parent) : streamd::StreamD::QmlClient{parent} {}
+Client::Client(QObject *parent) : streamd::StreamD::QmlClient{parent} {
+  QObject::connect(this, &QGrpcClientBase::channelChanged, this,
+                   &Client::_onChannelChanged);
+}
 
 streamd::StreamD::Client *Client::client() {
   QmlClient::Client *client;
   client = this;
   return client;
+}
+
+void Client::_onChannelChanged() {
+  qDebug() << "channel changed: " << this->channel().get();
 }
 
 void Client::ping(const QString &payloadToReturn,

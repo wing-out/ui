@@ -2,10 +2,15 @@ cmake_minimum_required(VERSION 3.16)
 
 project(wingout VERSION 0.1 LANGUAGES CXX)
 
+#set(SANITIZER_FLAGS "-fsanitize=address -fsanitize-recover=address")
+set(DEBUG_FLAGS "-fno-omit-frame-pointer -ggdb3")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_COMPILER_LAUNCHER ccache)
 set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
+set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
 
 find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Concurrent)
@@ -19,7 +24,7 @@ find_package(Qt6 REQUIRED COMPONENTS ProtobufQuick)
 find_package(Qt6 REQUIRED COMPONENTS Quick)
 find_package(Qt6 REQUIRED COMPONENTS TextToSpeech)
 
-qt_standard_project_setup(REQUIRES 6.8)
+qt_standard_project_setup(REQUIRES 6.9)
 
 qt_add_executable(wingout
     main.cpp
@@ -39,14 +44,6 @@ qt_add_qml_module(wingout
 )
 
 qt_add_protobuf(DXProducer.Player
-    PROTO_FILES
-        ./import/streamctl/pkg/streamd/grpc/player/player.proto
-    OUTPUT_DIRECTORY
-        ${CMAKE_CURRENT_BINARY_DIR}/player/
-    QML
-)
-
-qt_add_grpc(DXProducer.Player CLIENT
     PROTO_FILES
         ./import/streamctl/pkg/streamd/grpc/player/player.proto
     OUTPUT_DIRECTORY

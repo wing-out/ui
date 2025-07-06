@@ -8,5 +8,6 @@
     ],
     "cmake.options.statusBarVisibility": "visible",
     "cmake.buildDirectory": "${workspaceFolder}/build/${buildKit}/${buildType}",
-    "cmake.useCMakePresets": "never"
+    "cmake.useCMakePresets": "never",
+    "java.configuration.updateBuildConfiguration": "interactive"
 }
