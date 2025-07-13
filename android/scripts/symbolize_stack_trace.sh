@@ -16,4 +16,15 @@ while IFS= read -r line; do
             echo "WARNING: $LIBFILE_PATH not found"
         fi
     fi
+    if [[ "$line" =~ ([0-9a-f]+)[\ ]+[^\ ]*/lib/arm64/([^\ ]*\.so) ]]; then
+        LIBFILE="${BASH_REMATCH[2]}"
+        OFFSET="${BASH_REMATCH[1]}"
+        LIBFILE_PATH="$SYMBOLS_DIR/$LIBFILE"
+        if [ -f "$LIBFILE_PATH" ]; then
+            echo "----- $LIBFILE (0x$OFFSET) -----"
+            $SYMBOLIZER -f -e "$LIBFILE_PATH" "0x$OFFSET"
+        else
+            echo "WARNING: $LIBFILE_PATH not found"
+        fi
+    fi
 done

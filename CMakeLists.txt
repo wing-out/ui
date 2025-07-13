@@ -34,38 +34,38 @@ qt_add_qml_module(wingout
     URI WingOut
     VERSION 1.0
     QML_FILES
-        Main.qml
-        ChatView.qml
-        Timers.qml
-        VideoPlayerRTMP.qml
+    Main.qml
+    ChatView.qml
+    Timers.qml
+    VideoPlayerRTMP.qml
     RESOURCES
-        audio/chat_message_add.wav
-        android/AndroidManifest.xml android/build.gradle android/res/values/libs.xml android/res/xml/qtprovider_paths.xml
+    audio/chat_message_add.wav
+    android/AndroidManifest.xml android/build.gradle android/res/values/libs.xml android/res/xml/qtprovider_paths.xml
 )
 
 qt_add_protobuf(DXProducer.Player
     PROTO_FILES
-        ./import/streamctl/pkg/streamd/grpc/player/player.proto
+    ./import/streamctl/pkg/streamd/grpc/player/player.proto
     OUTPUT_DIRECTORY
-        ${CMAKE_CURRENT_BINARY_DIR}/player/
+    ${CMAKE_CURRENT_BINARY_DIR}/player/
     QML
 )
 
 qt_add_protobuf(DXProducer
     PROTO_FILES
-        ./import/streamctl/pkg/streamd/grpc/streamd.proto
+    ./import/streamctl/pkg/streamd/grpc/streamd.proto
     QML
 )
 
 target_sources(DXProducer
-  PRIVATE
+    PRIVATE
     dx_producer_client.h dx_producer_client.cpp
     image.h image.cpp
 )
 
 qt_add_grpc(DXProducer CLIENT
     PROTO_FILES
-        ./import/streamctl/pkg/streamd/grpc/streamd.proto
+    ./import/streamctl/pkg/streamd/grpc/streamd.proto
     QML
 )
 
@@ -73,9 +73,9 @@ qt_add_qml_module(Platform
     URI Platform
     VERSION 1.0
     SOURCES
-        platform.h platform.cpp
+    platform.h platform.cpp
     OUTPUT_DIRECTORY
-        ${CMAKE_CURRENT_BINARY_DIR}/Platform/
+    ${CMAKE_CURRENT_BINARY_DIR}/Platform/
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -97,6 +97,17 @@ target_link_libraries(DXProducer
     Qt6::Quick
 )
 
+if (ANDROID)
+    include(FetchContent)
+    FetchContent_Declare(
+        android_openssl
+        URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
+    )
+    FetchContent_MakeAvailable(android_openssl)
+    include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
+    add_android_openssl_libraries(wingout)
+endif()
+
 target_link_libraries(wingout
     PRIVATE
     DXProducer.Player
@@ -107,6 +118,7 @@ target_link_libraries(wingout
     Qt6::Concurrent
     Qt6::Quick
     Qt6::TextToSpeech
+    Qt6::Network
 )
 
 include(GNUInstallDirs)

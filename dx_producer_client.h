@@ -1,12 +1,19 @@
 #ifndef DX_PRODUCER_CLIENT_H
 #define DX_PRODUCER_CLIENT_H
 
+#include <QAbstractGrpcChannel>
 #include <QDateTime>
+#include <QGrpcChannelOptions>
 #include <QJSValue>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QObject>
 #include <QQmlEngine>
+#include <QUrl>
+#include <qvariant.h>
 
 #include "qmlstreamd_client.grpc.qpb.h"
+#include "streamd.qpb.h"
 #include "streamd_client.grpc.qpb.h"
 
 namespace DXProducer {
@@ -51,9 +58,14 @@ public:
       const QJSValue &finishCallback, const QJSValue &errorCallback,
       const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
   Q_INVOKABLE void setIgnoreImages(const bool value);
+  Q_INVOKABLE void processGRPCError(const QVariant &error);
 signals:
 private:
   void _onChannelChanged();
+  void _reconnectIfNeeded();
+  QMutex locker;
+  QUrl serverURI;
+  QGrpcChannelOptions serverChannelOptions;
   bool ignoreImages = false;
 };
 } // namespace DXProducer

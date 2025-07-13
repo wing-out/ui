@@ -28,6 +28,8 @@ void Platform::vibrate(uint64_t duration_ms, bool is_notification) {
 }
 
 void Platform::setEnableRunningInBackground(bool value) {
+  return;
+  /*
   auto activity = QJniObject(QNativeInterface::QAndroidApplication::context());
   if (!activity.isValid()) {
     qWarning() << "unable to find the activity";
@@ -38,7 +40,7 @@ void Platform::setEnableRunningInBackground(bool value) {
   QJniObject result = activity.callObjectMethod(
       "startService",
       "(Landroid/content/Intent;)Landroid/content/ComponentName;",
-      serviceIntent.handle().object());
+      serviceIntent.handle().object());*/
 }
 
 void Platform::startMonitoringSignalStrength() {

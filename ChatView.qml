@@ -81,6 +81,38 @@ Item {
         });
     }
 
+    function formatEventType(eventType) {
+        switch(eventType) {
+        case 0:
+            return "<font color='#ffffff'>undefined</font>"
+        case 1:
+            return ""
+        case 2:
+            return "<font color='#ff00ff'>cheer</font>"
+        case 3:
+            return "<font color='#ffff00'>hold</font>"
+        case 4:
+            return "<font color='#ffff00'>ad_break</font>"
+        case 5:
+            return "<font color='#ffff00'>ban</font>"
+        case 6:
+            return "<font color='#ff00ff'>follow</font>"
+        case 7:
+            return "<font color='#ff00ff'>raid</font>"
+        case 8:
+            return "<font color='#ff00ff'>shoutout</font>"
+        case 9:
+            return "<font color='#ff00ff'>subscribe</font>"
+        case 10:
+            return "<font color='#00ff00'>stream_online</font>"
+        case 11:
+            return "<font color='#ff0000'>stream_offline</font>"
+        case 12:
+            return "<font color='#ffffff'>other</font>"
+        }
+        return "<font color='#ffffff'>unknown_"+eventType+"</font>"
+    }
+
     property alias model: chatMessagesModel
     property alias list: messagesList
     property alias atYEnd: messagesList.atYEnd
@@ -138,12 +170,14 @@ Item {
             ListElement {
                 timestamp: "53"
                 platformName: "twitch"
+                eventType: 1
                 username: "some-twitch-user"
                 message: "message 1"
                 isTest: true
             }
             ListElement {
                 timestamp: "59"
+                eventType: 2
                 platformName: "youtube"
                 username: "some-youtube-user"
                 message: "message 2"
@@ -155,7 +189,7 @@ Item {
             visible: !isTest || chatView.parent == null
             Text {
                 color: "#ffffff"
-                text: "<font color='" + platformNameToColor(platformName) + "'>" + timestamp + "</font> <font color='" + usernameToColor(username) + "'>" + username + "</font> " + message
+                text: "<font color='" + platformNameToColor(platformName) + "'>" + timestamp + "</font> "+formatEventType(eventType)+" <font color='" + usernameToColor(username) + "'>" + username + "</font> " + message
                 wrapMode: Text.WordWrap
                 font.pointSize: 20
                 font.bold: true

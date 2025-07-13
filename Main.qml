@@ -19,6 +19,7 @@ ApplicationWindow {
     property var latestTimestampChatMessageIDs: []
     property var pingCurrentID: 0
     property var pingTimestamps: {}
+    property var pingInProgress: false
 
     Component.onCompleted: {
         subscribeToChatMessages();
@@ -66,7 +67,6 @@ ApplicationWindow {
 
     function ping() {
         var now = new Date();
-        var pingIDLastSuccess = pingCurrentID;
         var sinceLastSuccess = -1;
         for (var i = pingCurrentID - 1; i != pingCurrentID; i--) {
             if (i < 0) {
@@ -90,12 +90,18 @@ ApplicationWindow {
             console.log("forcing displayed pingStatus.rttMS value to be ", sinceLastSuccess);
             pingStatus.rttMS = sinceLastSuccess;
         }
+
+        if (pingInProgress) {
+            return;
+        }
+        pingInProgress = true;
+
         var byte0 = pingCurrentID / 0x100;
         var byte1 = pingCurrentID % 0x100;
         pingCurrentID = (pingCurrentID + 1) % 65536;
         var payload = String.fromCharCode(byte0) + String.fromCharCode(byte1);
         pingTimestamps[payload] = new Date();
-        dxProducerClient.ping(payload, "", 0, onPingSuccess, onPingFail, grpcCallOptions);
+        dxProducerClientPinger.ping(payload, "", 0, onPingSuccess, onPingFail, grpcCallOptions);
     }
 
     function subscribeToChatMessages() {
@@ -103,22 +109,23 @@ ApplicationWindow {
 
         if (latestChatMessageTimestampUNIXNano == null) {
             since = new Date();
-            since.setDate(since.getDate() - 7);
+            since.setDate(since.getDate() - 60);
         } else {
             since = new Date(Math.floor(latestChatMessageTimestampUNIXNano / 1000000));
         }
         console.log("since: ", since);
-        dxProducerClient.subscribeToChatMessages(since, 200, onChatNewMessage, onChatMessagesFinished, onChatMessagesErrored);
+        dxProducerClientChatListener.subscribeToChatMessages(since, 200, onChatNewMessage, onChatMessagesFinished, onChatMessagesErrored);
     }
     function subscribeToScreenshots() {
-        dxProducerClient.subscribeToImage("screenshot", onNewScreenshot, onScreenshotFinished, onScreenshotErrored);
+        dxProducerClientScreenshotListener.subscribeToImage("screenshot", onNewScreenshot, onScreenshotFinished, onScreenshotErrored);
     }
 
     function onPingSuccess(reply): void {
+        pingInProgress = false;
         var receivedTimestamp = new Date();
         var sentTimestamp = pingTimestamps[reply.payload];
         if (sentTimestamp === undefined || sentTimestamp === null) {
-            console.warn("timestamp found for payload:", reply.payload);
+            console.warn("timestamp not found for payload:", reply.payload[0], reply.payload[1]);
             return;
         }
         delete pingTimestamps[reply.payload];
@@ -126,8 +133,11 @@ ApplicationWindow {
         pingStatus.rttMS = timeDiffMs;
     }
 
-    function onPingFail(status): void {
+    function onPingFail(error): void {
+        pingInProgress = false;
         pingStatus.rttMS = -1;
+        console.log("ping failed");
+        processGRPCError(dxProducerClientPinger, error);
     }
 
     function onChatNewMessage(chatMessage): void {
@@ -150,6 +160,7 @@ ApplicationWindow {
         var item = {
             timestamp: String((new Date(Math.floor(chatMessage.createdAtUNIXNano / 1000000))).getMinutes()).padStart(2, "0"),
             isLive: chatMessage.isLive,
+            eventType: chatMessage.eventType,
             platformName: chatMessage.platID,
             username: chatMessage.username,
             message: chatMessage.message
@@ -164,8 +175,9 @@ ApplicationWindow {
         timers.retryTimerDXProducerClientSubscribeToChatMessages.start();
     }
 
-    function onChatMessagesErrored(status): void {
-        console.log("Errored", status);
+    function onChatMessagesErrored(error): void {
+        console.log("Errored", error);
+        processGRPCError(dxProducerClientChatListener, error);
         timers.retryTimerDXProducerClientSubscribeToChatMessages.start();
     }
 
@@ -176,18 +188,37 @@ ApplicationWindow {
         console.log("Finished", status);
         timers.retryTimerDXProducerClientSubscribeToScreenshot.start();
     }
-    function onScreenshotErrored(status): void {
-        console.log("Errored", status);
+    function onScreenshotErrored(error): void {
+        console.log("Errored", error);
+        processGRPCError(dxProducerClientScreenshotListener, error);
         timers.retryTimerDXProducerClientSubscribeToScreenshot.start();
     }
 
+    function processGRPCError(dxProducer, error): void {
+        dxProducer.processGRPCError(error);
+    }
+
+    property var updateStreamStatusYouTubeInProgress: false
+    property var updateStreamStatusTwitchInProgress: false
+    property var updateStreamStatusKickInProgress: false
+
     function updateStreamStatus() {
-        dxProducerClient.getStreamStatus("youtube", false, onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, grpcCallOptions);
-        dxProducerClient.getStreamStatus("twitch", false, onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, grpcCallOptions);
-        dxProducerClient.getStreamStatus("kick", false, onUpdateStreamStatusKick, onUpdateStreamStatusKickError, grpcCallOptions);
+        if (!updateStreamStatusYouTubeInProgress) {
+            updateStreamStatusYouTubeInProgress = true
+            dxProducerClientStreamStatusYouTube.getStreamStatus("youtube", false, onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, grpcCallOptions);
+        }
+        if (!updateStreamStatusTwitchInProgress) {
+            updateStreamStatusTwitchInProgress = true
+            dxProducerClientStreamStatusTwitch.getStreamStatus("twitch", false, onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, grpcCallOptions);
+        }
+        if (!updateStreamStatusKickInProgress) {
+            updateStreamStatusKickInProgress = true
+            dxProducerClientStreamStatusKick.getStreamStatus("kick", false, onUpdateStreamStatusKick, onUpdateStreamStatusKickError, grpcCallOptions);
+        }
     }
 
     function onUpdateStreamStatusYouTube(streamStatus) {
+        updateStreamStatusYouTubeInProgress = false;
         youtubeCounter.isActive = streamStatus.isActive;
         if (streamStatus.hasViewersCount) {
             youtubeCounter.value = streamStatus.viewersCount;
@@ -202,10 +233,13 @@ ApplicationWindow {
             statusStreamTime.seconds = -1;
         }
     }
-    function onUpdateStreamStatusYouTubeError() {
+    function onUpdateStreamStatusYouTubeError(error) {
+        updateStreamStatusYouTubeInProgress = false;
+        processGRPCError(dxProducerClientStreamStatusYouTube, error);
     }
 
     function onUpdateStreamStatusTwitch(streamStatus) {
+        updateStreamStatusTwitchInProgress = false;
         twitchCounter.isActive = streamStatus.isActive;
         if (streamStatus.hasViewersCount) {
             twitchCounter.value = streamStatus.viewersCount;
@@ -213,10 +247,13 @@ ApplicationWindow {
             twitchCounter.value = -1;
         }
     }
-    function onUpdateStreamStatusTwitchError() {
+    function onUpdateStreamStatusTwitchError(error) {
+        updateStreamStatusTwitchInProgress = false;
+        processGRPCError(dxProducerClientStreamStatusTwitch, error);
     }
 
     function onUpdateStreamStatusKick(streamStatus) {
+        updateStreamStatusKickInProgress = false;
         kickCounter.isActive = streamStatus.isActive;
         if (streamStatus.hasViewersCount) {
             kickCounter.value = streamStatus.viewersCount;
@@ -224,7 +261,9 @@ ApplicationWindow {
             kickCounter.value = -1;
         }
     }
-    function onUpdateStreamStatusKickError() {
+    function onUpdateStreamStatusKickError(error) {
+        updateStreamStatusKickInProgress = false;
+        processGRPCError(dxProducerClientStreamStatusTwitch, error);
     }
 
     Platform {
@@ -257,17 +296,37 @@ ApplicationWindow {
     }
     GrpcCallOptions {
         id: grpcCallOptions
-        deadlineTimeout: 1000
+        deadlineTimeout: 10000
     }
     GrpcHttp2Channel {
         id: dxProducerTarget
-        hostUri: "http://192.168.0.131:3594"
+        hostUri: "https://192.168.0.131:3594"
         options: GrpcChannelOptions {
             deadlineTimeout: 365 * 24 * 3600 * 1000
         }
     }
     Client {
-        id: dxProducerClient
+        id: dxProducerClientPinger
+        channel: dxProducerTarget.channel
+    }
+    Client {
+        id: dxProducerClientChatListener
+        channel: dxProducerTarget.channel
+    }
+    Client {
+        id: dxProducerClientScreenshotListener
+        channel: dxProducerTarget.channel
+    }
+    Client {
+        id: dxProducerClientStreamStatusYouTube
+        channel: dxProducerTarget.channel
+    }
+    Client {
+        id: dxProducerClientStreamStatusTwitch
+        channel: dxProducerTarget.channel
+    }
+    Client {
+        id: dxProducerClientStreamStatusKick
         channel: dxProducerTarget.channel
     }
 
@@ -384,7 +443,7 @@ ApplicationWindow {
 
         onAtYEndChanged: function () {
             console.log("onAtYEndChanged", atYEnd);
-            dxProducerClient.setIgnoreImages(!atYEnd);
+            dxProducerClientScreenshotListener.setIgnoreImages(!atYEnd);
         }
         Component.onCompleted: function () {
             console.log("ChatView: x,y,w,h: ", x, y, width, height);
