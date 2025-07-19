@@ -12,8 +12,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
 set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
 
+find_package(Qt6 REQUIRED COMPONENTS Bluetooth)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Connectivity)
 find_package(Qt6 REQUIRED COMPONENTS Grpc)
 find_package(Qt6 REQUIRED COMPONENTS GrpcTools)
 find_package(Qt6 REQUIRED COMPONENTS GrpcQuick)
@@ -34,8 +36,11 @@ qt_add_qml_module(wingout
     URI WingOut
     VERSION 1.0
     QML_FILES
+    Cameras.qml
+    Dashboard.qml
     Main.qml
     ChatView.qml
+    Settings.qml
     Timers.qml
     VideoPlayerRTMP.qml
     RESOURCES
@@ -78,6 +83,16 @@ qt_add_qml_module(Platform
     ${CMAKE_CURRENT_BINARY_DIR}/Platform/
 )
 
+qt_add_qml_module(RemoteCameraController
+    URI RemoteCameraController
+    VERSION 1.0
+    SOURCES
+    ble_characteristic.h ble_remote_device.h ble_remote_device.cpp ble_service.h
+    remote_camera_controller.h remote_camera_controller.cpp
+    OUTPUT_DIRECTORY
+    ${CMAKE_CURRENT_BINARY_DIR}/RemoteCameraController/
+)
+
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
@@ -90,6 +105,12 @@ set_target_properties(wingout PROPERTIES
     QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android
 )
 
+target_link_libraries(RemoteCameraController
+    PRIVATE
+    Qt6::Bluetooth
+    Qt6::Connectivity
+)
+
 target_link_libraries(DXProducer
     PRIVATE
     DXProducer.Player
@@ -97,7 +118,7 @@ target_link_libraries(DXProducer
     Qt6::Quick
 )
 
-if (ANDROID)
+if(ANDROID)
     include(FetchContent)
     FetchContent_Declare(
         android_openssl
@@ -113,6 +134,7 @@ target_link_libraries(wingout
     DXProducer.Player
     DXProducer
     Platform
+    RemoteCameraController
     Qt6::Core
     Qt6::CorePrivate
     Qt6::Concurrent
