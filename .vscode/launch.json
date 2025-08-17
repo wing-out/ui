@@ -19,7 +19,7 @@
             "program": "${command:cmake.launchTargetPath}",
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "visualizerFile": "${command:qt-cpp.natvis}",
+            "visualizerFile": "/home/streaming/.config/Code/User/workspaceStorage/57b19ebacc6d54c2ef3c181f27afa0ec/tonka3000.qtvsctools/qt.natvis.xml",
             "showDisplayString": true,
             "args": [
                 "-qmljsdebugger=host:127.0.0.1,port:20815,block,services:DebugMessages,QmlDebugger,V8Debugger"
@@ -48,7 +48,7 @@
                 ],
                 "MIMode": "gdb",
                 "miDebuggerPath": "${command:qt-cpp.minGWgdb}"
-            },
-        },
+            }
+        }
     ]
 }

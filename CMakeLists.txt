@@ -28,9 +28,28 @@ find_package(Qt6 REQUIRED COMPONENTS TextToSpeech)
 
 qt_standard_project_setup(REQUIRES 6.9)
 
+find_program(FONTFORGE_EXECUTABLE fontforge)
+if(NOT FONTFORGE_EXECUTABLE)
+    message(FATAL_ERROR "'fontforge' executable not found")
+endif()
+
+set(FONT FreeSans.ttf)
+set(FONT_PATH ${CMAKE_CURRENT_BINARY_DIR}/FreeSans.ttf)
+
+add_custom_command(
+    OUTPUT ${FONT_PATH}
+    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/import/gnu-freefont/sfd ${FONT} && mv ${CMAKE_CURRENT_SOURCE_DIR}/import/gnu-freefont/sfd/${FONT} ${FONT_PATH}
+    COMMENT "Generating FreeSans font"
+)
+
+add_custom_target(fonts ALL DEPENDS ${FONT_PATH})
+
+set_source_files_properties(${FONT_PATH} PROPERTIES QT_RESOURCE_ALIAS fonts/FreeSans.ttf)
+
 qt_add_executable(wingout
     main.cpp
 )
+add_dependencies(wingout fonts)
 
 qt_add_qml_module(wingout
     URI WingOut
@@ -44,6 +63,7 @@ qt_add_qml_module(wingout
     Timers.qml
     VideoPlayerRTMP.qml
     RESOURCES
+    ${FONT_PATH}
     audio/chat_message_add.wav
     android/AndroidManifest.xml android/build.gradle android/res/values/libs.xml android/res/xml/qtprovider_paths.xml
 )

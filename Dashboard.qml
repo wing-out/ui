@@ -127,7 +127,8 @@ Page {
             eventType: chatMessage.eventType,
             platformName: chatMessage.platID,
             username: chatMessage.username,
-            message: chatMessage.message
+            message: chatMessage.message,
+            messageFormatType: chatMessage.messageFormatType,
         };
         if (chatView.model.count > 200) {
             chatView.model.remove(0);

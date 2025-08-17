@@ -112,6 +112,26 @@ Item {
         }
         return "<font color='#ffffff'>unknown_"+eventType+"</font>"
     }
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function formatMessage(message, messageFormatType) {
+        switch (messageFormatType) {
+        case "plain":
+            return escapeHtml(message);
+        case "html":
+            return message;
+        default:
+            console.warn("Unknown messageFormatType: " + messageFormatType);
+            return escapeHtml(message);
+        }
+    }
 
     property alias model: chatMessagesModel
     property alias list: messagesList
@@ -128,6 +148,11 @@ Item {
 
     TextToSpeech {
         id: tts
+    }
+
+    FontLoader {
+        id: fontFreeSans
+        source: "qrc:/qt/qml/WingOut/fonts/FreeSans.ttf"
     }
 
     Row {
@@ -189,10 +214,13 @@ Item {
             visible: !isTest || chatView.parent == null
             Text {
                 color: "#ffffff"
-                text: "<font color='" + platformNameToColor(platformName) + "'>" + timestamp + "</font> "+formatEventType(eventType)+" <font color='" + usernameToColor(username) + "'>" + username + "</font> " + message
+                text: "<font color='" + platformNameToColor(platformName) + "'>" + timestamp + "</font> "+formatEventType(eventType)+" <font color='" + usernameToColor(username) + "'>" + username + "</font> " + formatMessage(message, typeof messageFormatType !== "undefined" ? messageFormatType : "undefined")
                 wrapMode: Text.WordWrap
+                font.family: fontFreeSans.name
+                font.letterSpacing: 1
                 font.pointSize: 20
                 font.bold: true
+                lineHeight: 1.2
                 width: messagesList.width
             }
         }
@@ -236,10 +264,12 @@ Item {
                     platform.vibrate(500, true)
                 }
                 var text = msg.message
+                text = text.replace(/<[^>]*>/g, "")
                 text = text.replace(/https?:\/\/[^\s]+/g, "<HTTP-link>")
                 if (ttsEnabled.checked && tts.state !== TextToSpeech.Error) {
                     if (ttsTellUsernames.checked) {
-                        text = "from "+msg.username+": "+text
+                        var username = msg.usernameReadable ? msg.usernameReadable : msg.username;
+                        text = "from "+username+": "+text
                     }
                     tts.enqueue(text);
                 } else {

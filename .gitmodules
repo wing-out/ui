@@ -1,0 +1,3 @@
+[submodule "import/gnu-freefont"]
+	path = import/gnu-freefont
+	url = https://github.com/zrajm/gnu-freefont
