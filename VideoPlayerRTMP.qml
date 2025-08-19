@@ -11,13 +11,13 @@ Rectangle {
         videoOutput: videoOutput
         audioOutput: AudioOutput {} // <-- Add this line
         onErrorOccurred: function (error, errorString) {
-            console.log(error, " ", errorString);
+            console.log("onErrorOccurred:", error, " ", errorString);
         }
         onPlaybackStateChanged: function() {
-            console.log(mediaPlayer.errorString)
+            console.log("onPlaybackStateChanged: ", mediaPlayer.errorString)
         }
         onPlayingChanged: function() {
-            console.log(mediaPlayer.errorString)
+            console.log("onPlayingChanged: ", mediaPlayer.errorString)
         }
     }
     VideoOutput {
@@ -28,8 +28,7 @@ Rectangle {
         anchors.fill: parent
         onPressed: {
             mediaPlayer.play();
-            console.log("clicked");
-            console.log(mediaPlayer.errorString)
+            console.log("clicked", mediaPlayer.errorString)
         }
     }
     Text {
