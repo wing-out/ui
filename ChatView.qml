@@ -74,8 +74,15 @@ Item {
                 messagesList.positionViewAtEnd();
                 Qt.callLater(function () {
                     messagesList.positionViewAtEnd();
+                    scrollToBottomTimer.start();
                 });
             });
+        }
+
+        Timer {
+            id: scrollToBottomTimer
+            interval: 100; running: true; repeat: false
+            onTriggered: messagesList.positionViewAtEnd();
         }
 
         Component.onCompleted: {
@@ -215,7 +222,7 @@ Item {
             Text {
                 color: "#ffffff"
                 textFormat: Text.RichText
-                text: "<font color='" + row.platformNameToColor(row.platformName) + "'>" + row.timestamp + "</font> "+row.formatEventType(row.eventType)+" <font color='" + row.usernameToColor(row.username) + "'>" + row.username + "</font> " + row.formatMessage(row.message, row.messageFormatType)
+                text: "\u200E" + "<font color='" + row.platformNameToColor(row.platformName) + "'>" + row.timestamp + "</font> "+row.formatEventType(row.eventType)+" <font color='" + row.usernameToColor(row.username) + "'>" + row.username + "</font> " + row.formatMessage(row.message, row.messageFormatType)
                 wrapMode: Text.WordWrap
                 font.family: fontFreeSans.name
                 font.letterSpacing: 1
