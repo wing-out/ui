@@ -8,131 +8,6 @@ import Platform
 Item {
     id: chatView
 
-    function platformNameToColor(platformName): string {
-        switch (platformName) {
-        case "twitch":
-            return "#6441a5";
-        case "youtube":
-            return "#ff0000";
-        case "kick":
-            return "#00ff00";
-        }
-    }
-
-    function usernameToColor(username): string {
-        var hash = 0;
-        for (var i = 0; i < username.length; i++) {
-            hash = username.charCodeAt(i) + ((hash << 5) - hash);
-            hash = hash & hash;
-        }
-        var h = Math.abs(hash) % 360;
-        var s = 80 + (Math.abs(hash) % 20);
-        var l = 60 + (Math.abs(hash) % 20);
-        function hslToRgb(h, s, l) {
-            s /= 100;
-            l /= 100;
-            let c = (1 - Math.abs(2 * l - 1)) * s;
-            let x = c * (1 - Math.abs((h / 60) % 2 - 1));
-            let m = l - c / 2;
-            let r = 0, g = 0, b = 0;
-            if (h < 60) {
-                r = c;
-                g = x;
-                b = 0;
-            } else if (h < 120) {
-                r = x;
-                g = c;
-                b = 0;
-            } else if (h < 180) {
-                r = 0;
-                g = c;
-                b = x;
-            } else if (h < 240) {
-                r = 0;
-                g = x;
-                b = c;
-            } else if (h < 300) {
-                r = x;
-                g = 0;
-                b = c;
-            } else {
-                r = c;
-                g = 0;
-                b = x;
-            }
-            r = Math.round((r + m) * 255);
-            g = Math.round((g + m) * 255);
-            b = Math.round((b + m) * 255);
-            return [r, g, b];
-        }
-        var rgb = hslToRgb(h, s, l);
-        function rgbToHex(r, g, b) {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-        }
-        return rgbToHex(rgb[0], rgb[1], rgb[2]);
-    }
-
-    function scrollToBottom() {
-        Qt.callLater(function () {
-            messagesList.positionViewAtEnd();
-            Qt.callLater(function () {
-                messagesList.positionViewAtEnd();
-            });
-        });
-    }
-
-    function formatEventType(eventType) {
-        switch(eventType) {
-        case 0:
-            return "<font color='#ffffff'>undefined</font>"
-        case 1:
-            return ""
-        case 2:
-            return "<font color='#ff00ff'>cheer</font>"
-        case 3:
-            return "<font color='#ffff00'>hold</font>"
-        case 4:
-            return "<font color='#ffff00'>ad_break</font>"
-        case 5:
-            return "<font color='#ffff00'>ban</font>"
-        case 6:
-            return "<font color='#ff00ff'>follow</font>"
-        case 7:
-            return "<font color='#ff00ff'>raid</font>"
-        case 8:
-            return "<font color='#ff00ff'>shoutout</font>"
-        case 9:
-            return "<font color='#ff00ff'>subscribe</font>"
-        case 10:
-            return "<font color='#00ff00'>stream_online</font>"
-        case 11:
-            return "<font color='#ff0000'>stream_offline</font>"
-        case 12:
-            return "<font color='#ffffff'>other</font>"
-        }
-        return "<font color='#ffffff'>unknown_"+eventType+"</font>"
-    }
-    function escapeHtml(text) {
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#39;");
-    }
-
-    function formatMessage(message, messageFormatType) {
-        switch (messageFormatType) {
-        case "plain":
-            return escapeHtml(message);
-        case "html":
-            return message;
-        default:
-            console.warn("Unknown messageFormatType: " + messageFormatType);
-            return escapeHtml(message);
-        }
-    }
-
     property alias model: chatMessagesModel
     property alias list: messagesList
     property alias atYEnd: messagesList.atYEnd
@@ -190,56 +65,33 @@ Item {
         height: parent.height - y
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        model: ListModel {
-            id: chatMessagesModel
-            ListElement {
-                timestamp: "53"
-                platformName: "twitch"
-                eventType: 1
-                username: "some-twitch-user"
-                message: "message 1"
-                isTest: true
-            }
-            ListElement {
-                timestamp: "59"
-                eventType: 2
-                platformName: "youtube"
-                username: "some-youtube-user"
-                message: "message 2"
-                isTest: true
-            }
-        }
-        delegate: Row {
-            spacing: messagesList.spacing
-            visible: !isTest || chatView.parent == null
-            Text {
-                color: "#ffffff"
-                text: "<font color='" + platformNameToColor(platformName) + "'>" + timestamp + "</font> "+formatEventType(eventType)+" <font color='" + usernameToColor(username) + "'>" + username + "</font> " + formatMessage(message, typeof messageFormatType !== "undefined" ? messageFormatType : "undefined")
-                wrapMode: Text.WordWrap
-                font.family: fontFreeSans.name
-                font.letterSpacing: 1
-                font.pointSize: 20
-                font.bold: true
-                lineHeight: 1.2
-                width: messagesList.width
-            }
-        }
+
         property int spacing: 5
         property bool userInteracting: false
+
+        function scrollToBottom() {
+            Qt.callLater(function () {
+                messagesList.positionViewAtEnd();
+                Qt.callLater(function () {
+                    messagesList.positionViewAtEnd();
+                });
+            });
+        }
+
         Component.onCompleted: {
-            chatView.scrollToBottom();
+            messagesList.scrollToBottom();
         }
         onCountChanged: {
             if (userInteracting) {
                 return;
             }
-            chatView.scrollToBottom();
+            messagesList.scrollToBottom();
         }
         onHeightChanged: {
             if (userInteracting) {
                 return;
             }
-            chatView.scrollToBottom();
+            messagesList.scrollToBottom();
         }
 
         Connections {
@@ -250,7 +102,7 @@ Item {
                     return;
                 }
                 if (!messagesList.userInteracting) {
-                    chatView.scrollToBottom();
+                    messagesList.scrollToBottom();
                 }
                 switch(msg.username.toLowerCase()) {
                 case "savedggbot":
@@ -324,7 +176,169 @@ Item {
             }
 
             onClicked: {
-                chatView.scrollToBottom();
+                messagesList.scrollToBottom();
+            }
+        }
+
+        model: ListModel {
+            id: chatMessagesModel
+            ListElement {
+                timestamp: "53"
+                platformName: "twitch"
+                eventType: 1
+                username: "some-twitch-user"
+                message: "message 1"
+                messageFormatType: 0
+                isTest: true
+            }
+            ListElement {
+                timestamp: "59"
+                eventType: 2
+                platformName: "youtube"
+                username: "some-youtube-user"
+                message: "message 2"
+                messageFormatType: 0
+                isTest: true
+            }
+        }
+        delegate: Row {
+            id: row
+            required property string timestamp
+            required property string platformName
+            required property int    eventType
+            required property string username
+            required property string message
+            required property int    messageFormatType
+            required property bool   isTest
+            spacing: ListView.view.spacing
+            visible: !isTest || chatView.parent == null
+            Text {
+                color: "#ffffff"
+                textFormat: Text.RichText
+                text: "<font color='" + row.platformNameToColor(row.platformName) + "'>" + row.timestamp + "</font> "+row.formatEventType(row.eventType)+" <font color='" + row.usernameToColor(row.username) + "'>" + row.username + "</font> " + row.formatMessage(row.message, row.messageFormatType)
+                wrapMode: Text.WordWrap
+                font.family: fontFreeSans.name
+                font.letterSpacing: 1
+                font.pointSize: 20
+                font.bold: true
+                lineHeight: 1.2
+                width: messagesList.width
+            }
+
+            function platformNameToColor(platformName): string {
+                switch (platformName) {
+                case "twitch":
+                    return "#6441a5";
+                case "youtube":
+                    return "#ff0000";
+                case "kick":
+                    return "#00ff00";
+                }
+            }
+
+            function usernameToColor(username): string {
+                var hash = 0;
+                for (var i = 0; i < username.length; i++) {
+                    hash = username.charCodeAt(i) + ((hash << 5) - hash);
+                    hash = hash & hash;
+                }
+                var h = Math.abs(hash) % 360;
+                var s = 80 + (Math.abs(hash) % 20);
+                var l = 60 + (Math.abs(hash) % 20);
+                function hslToRgb(h, s, l) {
+                    s /= 100;
+                    l /= 100;
+                    let c = (1 - Math.abs(2 * l - 1)) * s;
+                    let x = c * (1 - Math.abs((h / 60) % 2 - 1));
+                    let m = l - c / 2;
+                    let r = 0, g = 0, b = 0;
+                    if (h < 60) {
+                        r = c;
+                        g = x;
+                        b = 0;
+                    } else if (h < 120) {
+                        r = x;
+                        g = c;
+                        b = 0;
+                    } else if (h < 180) {
+                        r = 0;
+                        g = c;
+                        b = x;
+                    } else if (h < 240) {
+                        r = 0;
+                        g = x;
+                        b = c;
+                    } else if (h < 300) {
+                        r = x;
+                        g = 0;
+                        b = c;
+                    } else {
+                        r = c;
+                        g = 0;
+                        b = x;
+                    }
+                    r = Math.round((r + m) * 255);
+                    g = Math.round((g + m) * 255);
+                    b = Math.round((b + m) * 255);
+                    return [r, g, b];
+                }
+                var rgb = hslToRgb(h, s, l);
+                function rgbToHex(r, g, b) {
+                    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+                }
+                return rgbToHex(rgb[0], rgb[1], rgb[2]);
+            }
+
+            function formatEventType(eventType) {
+                switch(eventType) {
+                case 0:
+                    return "<font color='#ffffff'>undefined</font>"
+                case 1:
+                    return ""
+                case 2:
+                    return "<font color='#ff00ff'>cheer</font>"
+                case 3:
+                    return "<font color='#ffff00'>hold</font>"
+                case 4:
+                    return "<font color='#ffff00'>ad_break</font>"
+                case 5:
+                    return "<font color='#ffff00'>ban</font>"
+                case 6:
+                    return "<font color='#ff00ff'>follow</font>"
+                case 7:
+                    return "<font color='#ff00ff'>raid</font>"
+                case 8:
+                    return "<font color='#ff00ff'>shoutout</font>"
+                case 9:
+                    return "<font color='#ff00ff'>subscribe</font>"
+                case 10:
+                    return "<font color='#00ff00'>stream_online</font>"
+                case 11:
+                    return "<font color='#ff0000'>stream_offline</font>"
+                case 12:
+                    return "<font color='#ffffff'>other</font>"
+                }
+                return "<font color='#ffffff'>unknown_"+eventType+"</font>"
+            }
+            function escapeHtml(text) {
+                return text
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            }
+
+            function formatMessage(message, messageFormatType) {
+                switch (messageFormatType) {
+                case 1: // plain
+                    return escapeHtml(message);
+                case 3: // HTML
+                    return message;
+                default:
+                    console.warn("Unknown messageFormatType: " + messageFormatType);
+                    return escapeHtml(message);
+                }
             }
         }
     }

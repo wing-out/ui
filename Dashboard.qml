@@ -121,6 +121,13 @@ Page {
         }
         latestChatMessageTimestampUNIXNano = chatMessage.createdAtUNIXNano;
         latestTimestampChatMessageIDs.push(chatMessage.messageID);
+
+        var messageFormatType = 0;
+        if (typeof chatMessage.messageFormatType === "undefined" || chatMessage.messageFormatType === null) {
+            console.warn("messageFormatType is undefined");
+        } else {
+            messageFormatType = chatMessage.messageFormatType;
+        }
         var item = {
             timestamp: String((new Date(Math.floor(chatMessage.createdAtUNIXNano / 1000000))).getMinutes()).padStart(2, "0"),
             isLive: chatMessage.isLive,
@@ -128,7 +135,7 @@ Page {
             platformName: chatMessage.platID,
             username: chatMessage.username,
             message: chatMessage.message,
-            messageFormatType: chatMessage.messageFormatType,
+            messageFormatType: messageFormatType,
         };
         if (chatView.model.count > 200) {
             chatView.model.remove(0);
