@@ -128,12 +128,19 @@ Page {
         } else {
             messageFormatType = chatMessage.messageFormatType;
         }
+        var usernameReadable = chatMessage.username;
+        if (typeof chatMessage.usernameReadable === "undefined" || chatMessage.usernameReadable === null) {
+            console.warn("usernameReadable is undefined");
+        } else {
+            usernameReadable = chatMessage.usernameReadable;
+        }
         var item = {
             timestamp: String((new Date(Math.floor(chatMessage.createdAtUNIXNano / 1000000))).getMinutes()).padStart(2, "0"),
             isLive: chatMessage.isLive,
             eventType: chatMessage.eventType,
             platformName: chatMessage.platID,
             username: chatMessage.username,
+            usernameReadable: chatMessage.usernameReadable,
             message: chatMessage.message,
             messageFormatType: messageFormatType,
         };

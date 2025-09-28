@@ -41,6 +41,10 @@ Item {
             text: "vibrate"
         }
         CheckBox {
+            id: simpleNicknamesEnabled
+            text: "nick:simple"
+        }
+        CheckBox {
             id: ttsEnabled
             enabled: tts.state !== TextToSpeech.Error
             text: "TTS"
@@ -194,6 +198,7 @@ Item {
                 platformName: "twitch"
                 eventType: 1
                 username: "some-twitch-user"
+                usernameReadable: "Some Twitch User"
                 message: "message 1"
                 messageFormatType: 0
                 isTest: true
@@ -203,6 +208,7 @@ Item {
                 eventType: 2
                 platformName: "youtube"
                 username: "some-youtube-user"
+                usernameReadable: "Some YouTube User"
                 message: "message 2"
                 messageFormatType: 0
                 isTest: true
@@ -214,6 +220,7 @@ Item {
             required property string platformName
             required property int    eventType
             required property string username
+            required property string usernameReadable
             required property string message
             required property int    messageFormatType
             required property bool   isTest
@@ -222,7 +229,7 @@ Item {
             Text {
                 color: "#ffffff"
                 textFormat: Text.RichText
-                text: "\u200E" + "<font color='" + row.platformNameToColor(row.platformName) + "'>" + row.timestamp + "</font> "+row.formatEventType(row.eventType)+" <font color='" + row.usernameToColor(row.username) + "'>" + row.username + "</font> " + row.formatMessage(row.message, row.messageFormatType)
+                text: "\u200E" + "<font color='" + row.platformNameToColor(row.platformName) + "'>" + row.timestamp + "</font> "+row.formatEventType(row.eventType)+" <font color='" + row.usernameToColor(row.username) + "'>" + row.formatUsername() + "</font> " + row.formatMessage(row.message, row.messageFormatType)
                 wrapMode: Text.WordWrap
                 font.family: fontFreeSans.name
                 font.letterSpacing: 1
@@ -294,6 +301,16 @@ Item {
                     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
                 }
                 return rgbToHex(rgb[0], rgb[1], rgb[2]);
+            }
+
+            function formatUsername() {
+                if (!simpleNicknamesEnabled.checked) {
+                    return username;
+                }
+                if (!row.usernameReadable) {
+                    return username;
+                }
+                return row.usernameReadable;
             }
 
             function formatEventType(eventType) {
