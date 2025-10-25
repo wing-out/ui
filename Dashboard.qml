@@ -105,7 +105,7 @@ Page {
     }
 
     function onChatNewMessage(chatMessage): void {
-        if (latestChatMessageTimestampUNIXNano != null && latestChatMessageTimestampUNIXNano == chatMessage.createdAtUNIXNano) {
+        if (latestChatMessageTimestampUNIXNano != null && latestChatMessageTimestampUNIXNano == chatMessage.content.createdAtUNIXNano) {
             var alreadyDisplayed = false;
             latestTimestampChatMessageIDs.foreach(function (item) {
                 if (chatMessage) {
@@ -113,35 +113,35 @@ Page {
                 }
             });
             if (alreadyDisplayed) {
-                console.log("message ", chatMessage.messageID, " is already displayed");
+                console.log("message ", chatMessage.content.messageID, " is already displayed");
                 return;
             }
         } else {
             latestTimestampChatMessageIDs.length = 0;
         }
-        latestChatMessageTimestampUNIXNano = chatMessage.createdAtUNIXNano;
-        latestTimestampChatMessageIDs.push(chatMessage.messageID);
+        latestChatMessageTimestampUNIXNano = chatMessage.content.createdAtUNIXNano;
+        latestTimestampChatMessageIDs.push(chatMessage.content.messageID);
 
         var messageFormatType = 0;
-        if (typeof chatMessage.messageFormatType === "undefined" || chatMessage.messageFormatType === null) {
+        if (typeof chatMessage.content.messageFormatType === "undefined" || chatMessage.content.messageFormatType === null) {
             console.warn("messageFormatType is undefined");
         } else {
-            messageFormatType = chatMessage.messageFormatType;
+            messageFormatType = chatMessage.content.messageFormatType;
         }
-        var usernameReadable = chatMessage.username;
-        if (typeof chatMessage.usernameReadable === "undefined" || chatMessage.usernameReadable === null) {
+        var usernameReadable = chatMessage.content.username;
+        if (typeof chatMessage.content.usernameReadable === "undefined" || chatMessage.content.usernameReadable === null) {
             console.warn("usernameReadable is undefined");
         } else {
-            usernameReadable = chatMessage.usernameReadable;
+            usernameReadable = chatMessage.content.usernameReadable;
         }
         var item = {
-            timestamp: String((new Date(Math.floor(chatMessage.createdAtUNIXNano / 1000000))).getMinutes()).padStart(2, "0"),
+            timestamp: String((new Date(Math.floor(chatMessage.content.createdAtUNIXNano / 1000000))).getMinutes()).padStart(2, "0"),
             isLive: chatMessage.isLive,
-            eventType: chatMessage.eventType,
+            eventType: chatMessage.content.eventType,
             platformName: chatMessage.platID,
-            username: chatMessage.username,
-            usernameReadable: chatMessage.usernameReadable,
-            message: chatMessage.message,
+            username: chatMessage.content.username,
+            usernameReadable: chatMessage.content.usernameReadable,
+            message: chatMessage.content.message,
             messageFormatType: messageFormatType,
         };
         if (chatView.model.count > 200) {

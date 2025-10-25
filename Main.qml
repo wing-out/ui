@@ -58,9 +58,9 @@ ApplicationWindow {
         id: swipeView
         anchors.fill: parent
         currentIndex: 1
-        Loader { source: "Settings.qml" }
+        //Loader { source: "Settings.qml" }
         Loader { source: "Dashboard.qml" }
-        Loader { source: "Cameras.qml" }
+        //Loader { source: "Cameras.qml" }
     }
 
     PageIndicator {

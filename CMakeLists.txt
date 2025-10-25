@@ -68,6 +68,14 @@ qt_add_qml_module(wingout
     android/AndroidManifest.xml android/build.gradle android/res/values/libs.xml android/res/xml/qtprovider_paths.xml
 )
 
+qt_add_protobuf(DXProducer.StreamControl
+    PROTO_FILES
+    ./import/streamctl/pkg/streamcontrol/protobuf/streamcontrol.proto
+    OUTPUT_DIRECTORY
+    ${CMAKE_CURRENT_BINARY_DIR}/streamcontrol/
+    QML
+)
+
 qt_add_protobuf(DXProducer.Player
     PROTO_FILES
     ./import/streamctl/pkg/streamd/grpc/player/player.proto
@@ -133,6 +141,7 @@ target_link_libraries(RemoteCameraController
 
 target_link_libraries(DXProducer
     PRIVATE
+    DXProducer.StreamControl
     DXProducer.Player
     Qt6::Core
     Qt6::Quick
@@ -151,6 +160,7 @@ endif()
 
 target_link_libraries(wingout
     PRIVATE
+    DXProducer.StreamControl
     DXProducer.Player
     DXProducer
     Platform
