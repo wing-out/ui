@@ -113,35 +113,35 @@ Page {
                 }
             });
             if (alreadyDisplayed) {
-                console.log("message ", chatMessage.content.messageID, " is already displayed");
+                console.log("message ", chatMessage.content.ID, " is already displayed");
                 return;
             }
         } else {
             latestTimestampChatMessageIDs.length = 0;
         }
         latestChatMessageTimestampUNIXNano = chatMessage.content.createdAtUNIXNano;
-        latestTimestampChatMessageIDs.push(chatMessage.content.messageID);
+        latestTimestampChatMessageIDs.push(chatMessage.content.ID);
 
         var messageFormatType = 0;
-        if (typeof chatMessage.content.messageFormatType === "undefined" || chatMessage.content.messageFormatType === null) {
-            console.warn("messageFormatType is undefined");
+        if (typeof chatMessage.content.message.formatType === "undefined" || chatMessage.content.message.formatType === null) {
+            console.warn("message.formatType is undefined");
         } else {
-            messageFormatType = chatMessage.content.messageFormatType;
+            messageFormatType = chatMessage.content.message.formatType;
         }
-        var usernameReadable = chatMessage.content.username;
-        if (typeof chatMessage.content.usernameReadable === "undefined" || chatMessage.content.usernameReadable === null) {
-            console.warn("usernameReadable is undefined");
+        var usernameReadable = chatMessage.content.user.name;
+        if (typeof chatMessage.content.user.nameReadable === "undefined" || chatMessage.content.user.nameReadable === null) {
+            console.warn("user.nameReadable is undefined");
         } else {
-            usernameReadable = chatMessage.content.usernameReadable;
+            usernameReadable = chatMessage.content.user.nameReadable;
         }
         var item = {
             timestamp: String((new Date(Math.floor(chatMessage.content.createdAtUNIXNano / 1000000))).getMinutes()).padStart(2, "0"),
             isLive: chatMessage.isLive,
             eventType: chatMessage.content.eventType,
             platformName: chatMessage.platID,
-            username: chatMessage.content.username,
-            usernameReadable: chatMessage.content.usernameReadable,
-            message: chatMessage.content.message,
+            username: chatMessage.content.user.name,
+            usernameReadable: chatMessage.content.user.nameReadable,
+            message: chatMessage.content.message.content,
             messageFormatType: messageFormatType,
         };
         if (chatView.model.count > 200) {

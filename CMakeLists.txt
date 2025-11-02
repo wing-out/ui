@@ -68,12 +68,24 @@ qt_add_qml_module(wingout
     android/AndroidManifest.xml android/build.gradle android/res/values/libs.xml android/res/xml/qtprovider_paths.xml
 )
 
+qt_add_protobuf(DXProducer.ChatWebHook
+    PROTO_FILES
+    ./import/streamctl/pkg/streamcontrol/protobuf/chat/chatwebhook.proto
+    OUTPUT_DIRECTORY
+    ${CMAKE_CURRENT_BINARY_DIR}/streamcontrol/chat/
+    QML
+)
+
 qt_add_protobuf(DXProducer.StreamControl
     PROTO_FILES
     ./import/streamctl/pkg/streamcontrol/protobuf/streamcontrol.proto
     OUTPUT_DIRECTORY
     ${CMAKE_CURRENT_BINARY_DIR}/streamcontrol/
     QML
+)
+
+add_dependencies(DXProducer.StreamControl
+    DXProducer.ChatWebHook
 )
 
 qt_add_protobuf(DXProducer.Player
@@ -141,6 +153,7 @@ target_link_libraries(RemoteCameraController
 
 target_link_libraries(DXProducer
     PRIVATE
+    DXProducer.ChatWebHook
     DXProducer.StreamControl
     DXProducer.Player
     Qt6::Core
@@ -160,6 +173,7 @@ endif()
 
 target_link_libraries(wingout
     PRIVATE
+    DXProducer.ChatWebHook
     DXProducer.StreamControl
     DXProducer.Player
     DXProducer
