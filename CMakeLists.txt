@@ -70,7 +70,7 @@ qt_add_qml_module(wingout
 
 qt_add_protobuf(DXProducer.ChatWebHook
     PROTO_FILES
-    ./import/streamctl/pkg/streamcontrol/protobuf/chat/chatwebhook.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/streamctl/pkg/streamcontrol/protobuf/chat/chatwebhook.proto
     OUTPUT_DIRECTORY
     ${CMAKE_CURRENT_BINARY_DIR}/streamcontrol/chat/
     QML
@@ -78,7 +78,7 @@ qt_add_protobuf(DXProducer.ChatWebHook
 
 qt_add_protobuf(DXProducer.StreamControl
     PROTO_FILES
-    ./import/streamctl/pkg/streamcontrol/protobuf/streamcontrol.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/streamctl/pkg/streamcontrol/protobuf/streamcontrol.proto
     OUTPUT_DIRECTORY
     ${CMAKE_CURRENT_BINARY_DIR}/streamcontrol/
     QML
@@ -90,7 +90,7 @@ add_dependencies(DXProducer.StreamControl
 
 qt_add_protobuf(DXProducer.Player
     PROTO_FILES
-    ./import/streamctl/pkg/streamd/grpc/player/player.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/streamctl/pkg/streamd/grpc/player/player.proto
     OUTPUT_DIRECTORY
     ${CMAKE_CURRENT_BINARY_DIR}/player/
     QML
@@ -98,7 +98,7 @@ qt_add_protobuf(DXProducer.Player
 
 qt_add_protobuf(DXProducer
     PROTO_FILES
-    ./import/streamctl/pkg/streamd/grpc/streamd.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/streamctl/pkg/streamd/grpc/streamd.proto
     QML
 )
 
@@ -110,7 +110,48 @@ target_sources(DXProducer
 
 qt_add_grpc(DXProducer CLIENT
     PROTO_FILES
-    ./import/streamctl/pkg/streamd/grpc/streamd.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/streamctl/pkg/streamd/grpc/streamd.proto
+    QML
+)
+
+qt_add_protobuf(AVPipeline.LibAV
+    PROTO_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/imports/avpipeline/protobuf/libav.proto
+    OUTPUT_DIRECTORY
+    ${CMAKE_CURRENT_BINARY_DIR}/imports/avpipeline/protobuf/
+    QML
+)
+
+qt_add_protobuf(AVPipeline
+    PROTO_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/imports/avpipeline/protobuf/avpipeline.proto
+    PROTO_INCLUDES
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/imports/avpipeline/protobuf/
+    OUTPUT_DIRECTORY
+    ${CMAKE_CURRENT_BINARY_DIR}/imports/avpipeline/protobuf/
+    QML
+)
+
+qt_add_protobuf(FFStream
+    PROTO_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/ffstream.proto
+    PROTO_INCLUDES
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/imports/avpipeline/protobuf/
+    QML
+)
+
+target_sources(FFStream
+    PRIVATE
+    ffstream_client.h ffstream_client.cpp
+)
+
+qt_add_grpc(FFStream CLIENT
+    PROTO_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/ffstream.proto
+    PROTO_INCLUDES
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/imports/avpipeline/protobuf/
     QML
 )
 
@@ -160,6 +201,21 @@ target_link_libraries(DXProducer
     Qt6::Quick
 )
 
+target_link_libraries(AVPipeline
+    PRIVATE
+    AVPipeline.LibAV
+    Qt6::Core
+    Qt6::Quick
+)
+
+target_link_libraries(FFStream
+    PRIVATE
+    AVPipeline.LibAV
+    AVPipeline
+    Qt6::Core
+    Qt6::Quick
+)
+
 if(ANDROID)
     include(FetchContent)
     FetchContent_Declare(
@@ -177,6 +233,9 @@ target_link_libraries(wingout
     DXProducer.StreamControl
     DXProducer.Player
     DXProducer
+    AVPipeline.LibAV
+    AVPipeline
+    FFStream
     Platform
     RemoteCameraController
     Qt6::Core
