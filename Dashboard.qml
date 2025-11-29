@@ -77,14 +77,17 @@ Page {
     }
 
     function onGetLatenciesSuccess(latencies) {
-        if (latencies.hasSendingLatency) {
-            sendingLatencyText.sendingLatency = latencies.sendingLatency;
-        } else {
-            sendingLatencyText.sendingLatency = -1;
-        }
+        var audioLatencies = latencies.latencies.audio;
+        var audioLatency = audioLatencies.preRecodingU + audioLatencies.recodingU + audioLatencies.recodedPreSendU + audioLatencies.sendingU;
+        var videoLatencies = latencies.latencies.video;
+        var videoLatency = videoLatencies.preRecodingU + videoLatencies.recodingU + videoLatencies.recodedPreSendU + videoLatencies.sendingU;
+        var totalLatency = Math.max(audioLatency, videoLatency)/1000000;
+        sendingLatencyText.sendingLatency = totalLatency;
+        //console.log("total latency:", totalLatency,"ms ; latencies: audio:", audioLatencies, audioLatency, "; video:", videoLatencies, videoLatency);
     }
 
     function onGetLatenciesError(error) {
+        sendingLatencyText.sendingLatency = -1;
         processFFStreamGRPCError(ffstreamClient, error);
     }
 
@@ -426,17 +429,36 @@ Page {
         return Qt.rgba(r, g, b, a);
     }
 
-    function pingColorFromMS(rttMS) {
+    function pingColorFromMS(rttMS, thresholdWarn, thresholdBad) {
         if (rttMS < 0) {
             return '#FF0000';
         }
-        if (rttMS < 100) {
-            return colorMix('#00FF00', '#FFFF00', rttMS / 100);
+        if (rttMS < thresholdWarn) {
+            return colorMix('#00FF00', '#FFFF00', rttMS / thresholdWarn);
         }
-        if (rttMS < 1000) {
-            return colorMix('#FFFF00', '#FF0000', (rttMS - 100) / 900);
+        if (rttMS < thresholdBad) {
+            return colorMix('#FFFF00', '#FF0000', (rttMS-thresholdWarn) / (thresholdBad-thresholdWarn));
         }
         return '#FF0000';
+    }
+
+    function formatDuration(durationMS) {
+        if (durationMS < 1000) {
+            return durationMS + " ms";
+        }
+        var deciSeconds = Math.floor(durationMS / 100);
+        var minutes = Math.floor(deciSeconds / 600);
+        var seconds = Math.floor(deciSeconds / 10) % 60;
+        if (minutes < 1) {
+            deciSeconds -= seconds * 10;
+            return seconds+"."+Math.floor(deciSeconds)+" s";
+        }
+        if (minutes < 60) {
+            return minutes + " m " + seconds + " s";
+        }
+        var hours = Math.floor(minutes / 60);
+        minutes = minutes % 60;
+        return hours + " h " + minutes + " m " + seconds + " s";
     }
 
     Image {
@@ -467,20 +489,21 @@ Page {
 
     Row {
         id: statusBarBottom
-        x: 20
-        y: parent.height - 16
+        x: 30
+        y: parent.height - 30
         width: parent.width - 40
-        height: 16
+        height: 20
         spacing: 10
 
         Text {
             id: pingStatus
             height: parent.height
             width: 100
-            font.pixelSize: 12
+            font.pixelSize: 24
+            font.bold: true
             property int rttMS: -1
-            text: rttMS < 0 ? "no data" : rttMS + "ms"
-            color: application.pingColorFromMS(rttMS)
+            text: rttMS < 0 ? "no data" : application.formatDuration(rttMS)
+            color: application.pingColorFromMS(rttMS, 100, 1000)
 
             Component.onCompleted: function () {
                 console.log("pingStatus: x,y,w,h: ", x, y, width, height);
@@ -491,7 +514,8 @@ Page {
             id: signalStatus
             height: parent.height
             width: 100
-            font.pixelSize: 12
+            font.pixelSize: 24
+            font.bold: true
             property int signalStrength: -1
             text: signalStrength < 0 ? "" : signalStrength
             color: '#FFFFFF'
@@ -501,10 +525,11 @@ Page {
             id: sendingLatencyText
             height: parent.height
             width: 100
-            font.pixelSize: 12
+            font.pixelSize: 24
+            font.bold: true
             property int sendingLatency: 0
-            text: sendingLatency < 0 ? "" : sendingLatency
-            color: application.pingColorFromMS(sendingLatency)
+            text: sendingLatency < 0 ? "N/A" : application.formatDuration(sendingLatency)
+            color: application.pingColorFromMS(sendingLatency, 680, 1500)
         }
 
         Component.onCompleted: function () {

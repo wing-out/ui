@@ -43,7 +43,7 @@ Item {
 
     Timer {
         id: updateFFStreamLatenciesTicker
-        interval: 1000
+        interval: 200
         repeat: true
         property var callback: null
         onTriggered: {
