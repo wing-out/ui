@@ -321,25 +321,31 @@ Item {
                     return ""
                 case 2:
                     return "<font color='#ff00ff'>cheer</font>"
-                case 3:
-                    return "<font color='#ffff00'>hold</font>"
                 case 4:
                     return "<font color='#ffff00'>ad_break</font>"
-                case 5:
-                    return "<font color='#ffff00'>ban</font>"
                 case 6:
                     return "<font color='#ff00ff'>follow</font>"
-                case 7:
-                    return "<font color='#ff00ff'>raid</font>"
-                case 8:
-                    return "<font color='#ff00ff'>shoutout</font>"
-                case 9:
-                    return "<font color='#ff00ff'>subscribe</font>"
-                case 10:
+                case 256:
                     return "<font color='#00ff00'>stream_online</font>"
-                case 11:
+                case 257:
                     return "<font color='#ff0000'>stream_offline</font>"
-                case 12:
+                case 258:
+                    return "<font color='#ff0000'>stream_info_update</font>"
+                case 512:
+                    return "<font color='#ff00ff'>sub_new</font>"
+                case 513:
+                    return "<font color='#ff00ff'>sub_renew</font>"
+                case 514:
+                    return "<font color='#ff00ff'>gifted_sub</font>"
+                case 768:
+                    return "<font color='#ff00ff'>raid</font>"
+                case 769:
+                    return "<font color='#ff00ff'>shoutout</font>"
+                case 1024:
+                    return "<font color='#ffff00'>ban</font>"
+                case 1025:
+                    return "<font color='#ffff00'>hold</font>"
+                case 65535:
                     return "<font color='#ffffff'>other</font>"
                 }
                 return "<font color='#ffffff'>unknown_"+eventType+"</font>"
