@@ -93,6 +93,18 @@ void Client::ping(const QString &payloadToReturn,
   this->Ping(arg, finishCallback, errorCallback, options);
 }
 
+void Client::getPlayerLag(
+    const QJSValue &finishCallback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::StreamPlayerGetLagRequest arg{};
+  arg.setStreamID("pixel/dji-osmo-pocket-3");
+  arg.setRequestUnixNano(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() *
+                         1000 * 1000);
+  this->StreamPlayerGetLag(arg, finishCallback, errorCallback, options);
+}
+
 void Client::subscribeToChatMessages(
     const QDateTime &since, const uint64_t limit,
     const QJSValue &messageCallback, const QJSValue &finishCallback,

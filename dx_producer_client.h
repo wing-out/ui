@@ -1,7 +1,6 @@
 #ifndef DX_PRODUCER_CLIENT_H
 #define DX_PRODUCER_CLIENT_H
 
-#include <stdint.h>
 #include <QAbstractGrpcChannel>
 #include <QDateTime>
 #include <QGrpcChannelOptions>
@@ -12,6 +11,7 @@
 #include <QQmlEngine>
 #include <QUrl>
 #include <qvariant.h>
+#include <stdint.h>
 
 #include "qmlstreamd_client.grpc.qpb.h"
 #include "streamd.qpb.h"
@@ -29,6 +29,9 @@ public:
        const uint32_t requestExtraPayload, const QJSValue &finishCallback,
        const QJSValue &errorCallback,
        const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void getPlayerLag(
+      const QJSValue &finishCallback, const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
   Q_INVOKABLE void subscribeToChatMessages(
       const QDateTime &since, const uint64_t limit,
       const QJSValue &messageCallback, const QJSValue &finishCallback,

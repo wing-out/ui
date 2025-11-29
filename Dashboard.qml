@@ -31,6 +31,8 @@ Page {
         updateFFStreamLatencies();
         timers.updateFFStreamLatenciesTicker.callback = updateFFStreamLatencies;
         timers.updateFFStreamLatenciesTicker.start();
+        timers.updatePlayerLagTicker.callback = updatePlayerLag;
+        timers.updatePlayerLagTicker.start();
     }
 
     function ping() {
@@ -89,6 +91,26 @@ Page {
     function onGetLatenciesError(error) {
         sendingLatencyText.sendingLatency = -1;
         processFFStreamGRPCError(ffstreamClient, error);
+    }
+
+    function updatePlayerLag() {
+        dxProducerClientPlayerLagGetter.getPlayerLag(onGetPlayerLagSuccess, onGetPlayerLagError, grpcCallOptions);
+    }
+
+    function onGetPlayerLagSuccess(lagReply) {
+        var now = new Date();
+        var currentUnixNano = Math.floor(now.getTime() * 1000000);
+        var replyUnixNano = lagReply.replyUnixNano > lagReply.requestUnixNano ? lagReply.replyUnixNano : lagReply.requestUnixNano; 
+        var couldBeConsumedU = currentUnixNano - replyUnixNano;
+        playerLagText.playerLagMin = (lagReply.lagU - couldBeConsumedU) / 1000000;
+        playerLagText.playerLagMax = lagReply.lagU / 1000000;
+        console.log("player lag min:", playerLagText.playerLagMin, "ms max:", playerLagText.playerLagMax, "ms couldBeConsumedU:", couldBeConsumedU, " replyUnixNano:", replyUnixNano, " currentUnixNano:", currentUnixNano);
+    }
+
+    function onGetPlayerLagError(error) {
+        playerLagText.playerLagMin = -1;
+        playerLagText.playerLagMax = -1;
+        processStreamDGRPCError(dxProducerClientPinger, error);
     }
 
     function subscribeToChatMessages() {
@@ -336,6 +358,10 @@ Page {
         id: dxProducerClientStreamStatusKick
         channel: dxProducerTarget.channel
     }
+    StreamD.Client {
+        id: dxProducerClientPlayerLagGetter
+        channel: dxProducerTarget.channel
+    }
     GrpcHttp2Channel {
         id: ffstreamTarget
         hostUri: "https://127.0.0.1:3593"
@@ -429,15 +455,37 @@ Page {
         return Qt.rgba(r, g, b, a);
     }
 
-    function pingColorFromMS(rttMS, thresholdWarn, thresholdBad) {
-        if (rttMS < 0) {
+    function pingColorFromMS(durMS, thresholdWarn, thresholdBad) {
+        if (durMS < 0) {
             return '#FF0000';
         }
-        if (rttMS < thresholdWarn) {
-            return colorMix('#00FF00', '#FFFF00', rttMS / thresholdWarn);
+        if (durMS < thresholdWarn) {
+            return colorMix('#00FF00', '#FFFF00', durMS / thresholdWarn);
         }
-        if (rttMS < thresholdBad) {
-            return colorMix('#FFFF00', '#FF0000', (rttMS-thresholdWarn) / (thresholdBad-thresholdWarn));
+        if (durMS < thresholdBad) {
+            return colorMix('#FFFF00', '#FF0000', (durMS-thresholdWarn) / (thresholdBad-thresholdWarn));
+        }
+        return '#FF0000';
+    }
+
+    function pingColor2FromMS(durMS, lowBad, lowWarn, lowGood, highGood, highWarn, highBad) {
+        if (durMS < lowBad) {
+            return '#FF0000';
+        }
+        if (durMS < lowWarn) {
+            return colorMix('#FF0000', '#FFFF00', (durMS-lowBad) / (lowWarn-lowBad));
+        }
+        if (durMS < lowGood) {
+            return colorMix('#FFFF00', '#00FF00', (durMS-lowWarn) / (lowGood-lowWarn));
+        }
+        if (durMS < highGood) {
+            return '#00FF00';
+        }
+        if (durMS < highWarn) {
+            return colorMix('#00FF00', '#FFFF00', (durMS-highGood) / (highWarn-highGood));
+        }
+        if (durMS < highBad) {
+            return colorMix('#FFFF00', '#FF0000', (durMS-highWarn) / (highBad-highWarn));
         }
         return '#FF0000';
     }
@@ -502,7 +550,7 @@ Page {
             font.pixelSize: 24
             font.bold: true
             property int rttMS: -1
-            text: rttMS < 0 ? "no data" : application.formatDuration(rttMS)
+            text: rttMS < 0 ? "no data" : "conn: "+application.formatDuration(rttMS)
             color: application.pingColorFromMS(rttMS, 100, 1000)
 
             Component.onCompleted: function () {
@@ -524,12 +572,24 @@ Page {
         Text {
             id: sendingLatencyText
             height: parent.height
-            width: 100
+            width: 250
             font.pixelSize: 24
             font.bold: true
             property int sendingLatency: 0
-            text: sendingLatency < 0 ? "N/A" : application.formatDuration(sendingLatency)
+            text: sendingLatency < 0 ? "N/A" : "sending: "+application.formatDuration(sendingLatency)
             color: application.pingColorFromMS(sendingLatency, 680, 1500)
+        }
+
+        Text {
+            id: playerLagText
+            height: parent.height
+            width: 350
+            font.pixelSize: 24
+            font.bold: true
+            property int playerLagMin: 0
+            property int playerLagMax: 0
+            text: playerLagMin < 0 || playerLagMax < 0 ? "N/A" : "player: "+application.formatDuration(playerLagMin)+" -- "+application.formatDuration(playerLagMax)
+            color: application.pingColor2FromMS(playerLagMin, 300, 500, 1000, 5000, 10000, 60000)
         }
 
         Component.onCompleted: function () {

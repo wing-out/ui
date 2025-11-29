@@ -51,9 +51,20 @@ Item {
         }
     }
 
+    Timer {
+        id: updatePlayerLagTicker
+        interval: 200
+        repeat: true
+        property var callback: null
+        onTriggered: {
+            callback()
+        }
+    }
+
     property alias retryTimerDXProducerClientSubscribeToChatMessages: retryTimerDXProducerClientSubscribeToChatMessages
     property alias retryTimerDXProducerClientSubscribeToScreenshot: retryTimerDXProducerClientSubscribeToScreenshot
     property alias pingTicker: pingTicker
     property alias streamStatusTicker: streamStatusTicker
     property alias updateFFStreamLatenciesTicker: updateFFStreamLatenciesTicker
+    property alias updatePlayerLagTicker: updatePlayerLagTicker
 }
