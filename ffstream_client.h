@@ -12,9 +12,9 @@
 #include <QUrl>
 #include <qvariant.h>
 
-#include "qmlffstream_client.grpc.qpb.h"
 #include "ffstream.qpb.h"
 #include "ffstream_client.grpc.qpb.h"
+#include "qmlffstream_client.grpc.qpb.h"
 
 namespace FFStream {
 class Client : public ffstream_grpc::FFStream::QmlClient {
@@ -24,7 +24,9 @@ public:
   explicit Client(QObject *parent = nullptr);
   ffstream_grpc::FFStream::Client *client();
   Q_INVOKABLE void processGRPCError(const QVariant &error);
-
+  Q_INVOKABLE void
+  getLatencies(const QJSValue &finishCallback, const QJSValue &errorCallback,
+               const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
 signals:
 private:
   void _onChannelChanged();

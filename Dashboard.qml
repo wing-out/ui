@@ -4,7 +4,8 @@ import QtQuick.Controls.Material
 import QtGrpc
 import Platform
 
-import streamd
+import streamd as StreamD
+import ffstream_grpc as FFStream
 
 Page {
     id: application
@@ -27,6 +28,9 @@ Page {
         timers.pingTicker.start();
         timers.streamStatusTicker.callback = updateStreamStatus;
         timers.streamStatusTicker.start();
+        updateFFStreamLatencies();
+        timers.updateFFStreamLatenciesTicker.callback = updateFFStreamLatencies;
+        timers.updateFFStreamLatenciesTicker.start();
     }
 
     function ping() {
@@ -68,6 +72,22 @@ Page {
         dxProducerClientPinger.ping(payload, "", 0, onPingSuccess, onPingFail, grpcCallOptions);
     }
 
+    function updateFFStreamLatencies() {
+        ffstreamClient.getLatencies(onGetLatenciesSuccess, onGetLatenciesError, grpcCallOptions);
+    }
+
+    function onGetLatenciesSuccess(latencies) {
+        if (latencies.hasSendingLatency) {
+            sendingLatencyText.sendingLatency = latencies.sendingLatency;
+        } else {
+            sendingLatencyText.sendingLatency = -1;
+        }
+    }
+
+    function onGetLatenciesError(error) {
+        processFFStreamGRPCError(ffstreamClient, error);
+    }
+
     function subscribeToChatMessages() {
         var since = null;
 
@@ -101,7 +121,7 @@ Page {
         pingInProgress = false;
         pingStatus.rttMS = -1;
         console.log("ping failed");
-        processGRPCError(dxProducerClientPinger, error);
+        processStreamDGRPCError(dxProducerClientPinger, error);
     }
 
     function onChatNewMessage(chatMessage): void {
@@ -156,7 +176,7 @@ Page {
 
     function onChatMessagesErrored(error): void {
         console.log("Errored", error);
-        processGRPCError(dxProducerClientChatListener, error);
+        processStreamDGRPCError(dxProducerClientChatListener, error);
         timers.retryTimerDXProducerClientSubscribeToChatMessages.start();
     }
 
@@ -169,12 +189,16 @@ Page {
     }
     function onScreenshotErrored(error): void {
         console.log("Errored", error);
-        processGRPCError(dxProducerClientScreenshotListener, error);
+        processStreamDGRPCError(dxProducerClientScreenshotListener, error);
         timers.retryTimerDXProducerClientSubscribeToScreenshot.start();
     }
 
-    function processGRPCError(dxProducer, error): void {
+    function processStreamDGRPCError(dxProducer, error): void {
         dxProducer.processGRPCError(error);
+    }
+
+    function processFFStreamGRPCError(ffstream, error): void {
+        ffstream.processGRPCError(error);
     }
 
     property var updateStreamStatusYouTubeInProgress: false
@@ -214,7 +238,7 @@ Page {
     }
     function onUpdateStreamStatusYouTubeError(error) {
         updateStreamStatusYouTubeInProgress = false;
-        processGRPCError(dxProducerClientStreamStatusYouTube, error);
+        processStreamDGRPCError(dxProducerClientStreamStatusYouTube, error);
     }
 
     function onUpdateStreamStatusTwitch(streamStatus) {
@@ -228,7 +252,7 @@ Page {
     }
     function onUpdateStreamStatusTwitchError(error) {
         updateStreamStatusTwitchInProgress = false;
-        processGRPCError(dxProducerClientStreamStatusTwitch, error);
+        processStreamDGRPCError(dxProducerClientStreamStatusTwitch, error);
     }
 
     function onUpdateStreamStatusKick(streamStatus) {
@@ -242,7 +266,7 @@ Page {
     }
     function onUpdateStreamStatusKickError(error) {
         updateStreamStatusKickInProgress = false;
-        processGRPCError(dxProducerClientStreamStatusTwitch, error);
+        processStreamDGRPCError(dxProducerClientStreamStatusTwitch, error);
     }
 
     Platform {
@@ -285,29 +309,40 @@ Page {
             deadlineTimeout: 365 * 24 * 3600 * 1000
         }
     }
-    Client {
+    StreamD.Client {
         id: dxProducerClientPinger
         channel: dxProducerTarget.channel
     }
-    Client {
+    StreamD.Client {
         id: dxProducerClientChatListener
         channel: dxProducerTarget.channel
     }
-    Client {
+    StreamD.Client {
         id: dxProducerClientScreenshotListener
         channel: dxProducerTarget.channel
     }
-    Client {
+    StreamD.Client {
         id: dxProducerClientStreamStatusYouTube
         channel: dxProducerTarget.channel
     }
-    Client {
+    StreamD.Client {
         id: dxProducerClientStreamStatusTwitch
         channel: dxProducerTarget.channel
     }
-    Client {
+    StreamD.Client {
         id: dxProducerClientStreamStatusKick
         channel: dxProducerTarget.channel
+    }
+    GrpcHttp2Channel {
+        id: ffstreamTarget
+        hostUri: "https://127.0.0.1:3593"
+        options: GrpcChannelOptions {
+            deadlineTimeout: 365 * 24 * 3600 * 1000
+        }
+    }
+    FFStream.Client {
+        id: ffstreamClient
+        channel: ffstreamTarget.channel
     }
 
     Image {
@@ -460,6 +495,16 @@ Page {
             property int signalStrength: -1
             text: signalStrength < 0 ? "" : signalStrength
             color: '#FFFFFF'
+        }
+
+        Text {
+            id: sendingLatencyText
+            height: parent.height
+            width: 100
+            font.pixelSize: 12
+            property int sendingLatency: 0
+            text: sendingLatency < 0 ? "" : sendingLatency
+            color: application.pingColorFromMS(sendingLatency)
         }
 
         Component.onCompleted: function () {

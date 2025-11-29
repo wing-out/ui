@@ -1,3 +1,4 @@
+
 #include <QBuffer>
 #include <QGrpcHttp2Channel>
 #include <QGrpcServerStream>
@@ -11,10 +12,9 @@
 #include <qlogging.h>
 
 #include "cpp_extensions.h"
-#include "ffstream_client.h"
 #include "ffstream.qpb.h"
 #include "ffstream_client.grpc.qpb.h"
-#include <cassert>
+#include "ffstream_client.h"
 
 namespace FFStream {
 
@@ -76,6 +76,15 @@ void Client::_reconnectIfNeeded() {
   defer[=] { qDebug() << "/re-creating the channel"; };
   this->attachChannel(std::make_shared<QGrpcHttp2Channel>(
       this->serverURI, this->serverChannelOptions));
+}
+
+void Client::getLatencies(
+    const QJSValue &finishCallback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  ffstream_grpc::GetLatenciesRequest arg{};
+  this->GetLatencies(arg, finishCallback, errorCallback, options);
 }
 
 } // namespace FFStream

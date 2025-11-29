@@ -1,6 +1,7 @@
 #ifndef DX_PRODUCER_CLIENT_H
 #define DX_PRODUCER_CLIENT_H
 
+#include <stdint.h>
 #include <QAbstractGrpcChannel>
 #include <QDateTime>
 #include <QGrpcChannelOptions>
