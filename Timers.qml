@@ -71,6 +71,36 @@ Item {
         }
     }
 
+    Timer {
+        id: updateFFStreamInputQualityTicker
+        interval: 200
+        repeat: true
+        property var callback: null
+        onTriggered: {
+            callback()
+        }
+    }
+
+    Timer {
+        id: updateFFStreamOutputQualityTicker
+        interval: 200
+        repeat: true
+        property var callback: null
+        onTriggered: {
+            callback()
+        }
+    }
+
+    Timer {
+        id: updateFFStreamBitRatesTicker
+        interval: 200
+        repeat: true
+        property var callback: null
+        onTriggered: {
+            callback()
+        }
+    }
+
     property alias retryTimerDXProducerClientSubscribeToChatMessages: retryTimerDXProducerClientSubscribeToChatMessages
     property alias retryTimerDXProducerClientSubscribeToScreenshot: retryTimerDXProducerClientSubscribeToScreenshot
     property alias pingTicker: pingTicker
@@ -78,4 +108,7 @@ Item {
     property alias updateFFStreamLatenciesTicker: updateFFStreamLatenciesTicker
     property alias updatePlayerLagTicker: updatePlayerLagTicker
     property alias fetchPlayerLagTicker: fetchPlayerLagTicker
+    property alias updateFFStreamInputQualityTicker: updateFFStreamInputQualityTicker
+    property alias updateFFStreamOutputQualityTicker: updateFFStreamOutputQualityTicker
+    property alias updateFFStreamBitRatesTicker: updateFFStreamBitRatesTicker
 }

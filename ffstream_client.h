@@ -27,6 +27,16 @@ public:
   Q_INVOKABLE void
   getLatencies(const QJSValue &finishCallback, const QJSValue &errorCallback,
                const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
+  Q_INVOKABLE void
+  getInputQuality(const QJSValue &finishCallback, const QJSValue &errorCallback,
+                  const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
+  Q_INVOKABLE void
+  getOutputQuality(const QJSValue &finishCallback,
+                   const QJSValue &errorCallback,
+                   const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
+  Q_INVOKABLE void
+  getBitRates(const QJSValue &finishCallback, const QJSValue &errorCallback,
+              const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
 signals:
 private:
   void _onChannelChanged();

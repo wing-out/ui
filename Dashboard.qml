@@ -31,12 +31,21 @@ Page {
         updateFFStreamLatencies();
         timers.updateFFStreamLatenciesTicker.callback = updateFFStreamLatencies;
         timers.updateFFStreamLatenciesTicker.start();
-        updatePlayerLag()
+        updatePlayerLag();
         timers.updatePlayerLagTicker.callback = updatePlayerLag;
         timers.updatePlayerLagTicker.start();
-        fetchPlayerLag()
+        fetchPlayerLag();
         timers.fetchPlayerLagTicker.callback = fetchPlayerLag;
         timers.fetchPlayerLagTicker.start();
+        updateFFStreamInputQuality();
+        timers.updateFFStreamInputQualityTicker.callback = updateFFStreamInputQuality;
+        timers.updateFFStreamInputQualityTicker.start();
+        updateFFStreamOutputQuality();
+        timers.updateFFStreamOutputQualityTicker.callback = updateFFStreamOutputQuality;
+        timers.updateFFStreamOutputQualityTicker.start();
+        updateFFStreamBitRates();
+        timers.updateFFStreamBitRatesTicker.callback = updateFFStreamBitRates;
+        timers.updateFFStreamBitRatesTicker.start();
     }
 
     function ping() {
@@ -79,7 +88,7 @@ Page {
     }
 
     function updateFFStreamLatencies() {
-        ffstreamClient.getLatencies(onGetLatenciesSuccess, onGetLatenciesError, grpcCallOptions);
+        ffstreamClientGetLatencier.getLatencies(onGetLatenciesSuccess, onGetLatenciesError, grpcCallOptions);
     }
 
     function onGetLatenciesSuccess(latencies) {
@@ -94,7 +103,50 @@ Page {
 
     function onGetLatenciesError(error) {
         sendingLatencyText.sendingLatency = -1;
-        processFFStreamGRPCError(ffstreamClient, error);
+        processFFStreamGRPCError(ffstreamClientGetLatencier, error);
+    }
+
+    function updateFFStreamInputQuality() {
+        ffstreamClientGetInputQualitier.getInputQuality(onGetInputQualitySuccess, onGetInputQualityError, grpcCallOptions);
+    }
+
+    function onGetInputQualitySuccess(inputQuality) {
+        inputFPSText.inputFPS = inputQuality.video.frameRate;
+        //console.log("input quality fps:", inputQuality.Video.frameRate);
+    }
+
+    function onGetInputQualityError(error) {
+        inputFPSText.inputFPS = -1;
+        processFFStreamGRPCError(ffstreamClientGetInputQualitier, error);
+    }
+
+    function updateFFStreamOutputQuality() {
+        ffstreamClientGetOutputQualitier.getOutputQuality(onGetOutputQualitySuccess, onGetOutputQualityError, grpcCallOptions);
+    }
+
+    function onGetOutputQualitySuccess(outputQuality) {
+        outputFPSText.outputFPS = outputQuality.video.frameRate;
+        //console.log("output quality fps:", outputQuality.Video.frameRate);
+    }
+
+    function onGetOutputQualityError(error) {
+        outputFPSText.outputFPS = -1;
+        processFFStreamGRPCError(ffstreamClientGetOutputQualitier, error);
+    }
+
+    function updateFFStreamBitRates() {
+        ffstreamClientGetBitRateser.getBitRates(onGetBitRatesSuccess, onGetBitRatesError, grpcCallOptions);
+    }
+
+    function onGetBitRatesSuccess(bitRates) {
+        //console.log("bitRates:", bitRates.bitRates.outputBitRate);
+        outputBWText.bw = bitRates.bitRates.outputBitRate.video;
+        //console.log("video bitrate:", bitRates.bitRates.outputBitRate.video);
+    }
+
+    function onGetBitRatesError(error) {
+        outputBWText.bw = -1;
+        processFFStreamGRPCError(ffstreamClientGetBitRateser, error);
     }
 
     function updatePlayerLag() {
@@ -103,7 +155,7 @@ Page {
         }
         var now = new Date().getTime();
         var tsDiff = now - playerLagText.lastUpdateAt;
-        console.log("decreasing player lag min by ", tsDiff, "ms");
+        //console.log("decreasing player lag min by ", tsDiff, "ms");
         playerLagText.playerLagMin -= tsDiff;
         if (playerLagText.playerLagMin < 0) {
             playerLagText.playerLagMin = 0;
@@ -126,7 +178,7 @@ Page {
             playerLagText.playerLagMin = playerLagText.playerLagMax;
         }
         playerLagText.lastUpdateAt = now;
-        console.log("player lag min:", playerLagText.playerLagMin, "ms max:", playerLagText.playerLagMax, "ms couldBeConsumedU:", couldBeConsumedU, " replyUnixNano:", replyUnixNano, " currentUnixNano:", currentUnixNano);
+        //console.log("player lag min:", playerLagText.playerLagMin, "ms max:", playerLagText.playerLagMax, "ms couldBeConsumedU:", couldBeConsumedU, " replyUnixNano:", replyUnixNano, " currentUnixNano:", currentUnixNano);
     }
 
     function onGetPlayerLagError(error) {
@@ -392,7 +444,19 @@ Page {
         }
     }
     FFStream.Client {
-        id: ffstreamClient
+        id: ffstreamClientGetLatencier
+        channel: ffstreamTarget.channel
+    }
+    FFStream.Client {
+        id: ffstreamClientGetInputQualitier
+        channel: ffstreamTarget.channel
+    }
+    FFStream.Client {
+        id: ffstreamClientGetOutputQualitier
+        channel: ffstreamTarget.channel
+    }
+    FFStream.Client {
+        id: ffstreamClientGetBitRateser
         channel: ffstreamTarget.channel
     }
 
@@ -477,6 +541,19 @@ Page {
         return Qt.rgba(r, g, b, a);
     }
 
+    function fpsColor(fps, thresholdBad, thresholdWarn, thresholdGood) {
+        if (fps < thresholdBad) {
+            return '#FF0000';
+        }
+        if (fps < thresholdWarn) {
+            return colorMix('#FF0000', '#FFFF00', (fps - thresholdBad) / (thresholdWarn - thresholdBad));
+        }
+        if (fps < thresholdGood) {
+            return colorMix('#FFFF00', '#00FF00', (fps - thresholdWarn) / (thresholdGood - thresholdWarn));
+        }
+        return '#00FF00';
+    }
+
     function pingColorFromMS(durMS, thresholdWarn, thresholdBad) {
         if (durMS < 0) {
             return '#FF0000';
@@ -510,6 +587,35 @@ Page {
             return colorMix('#FFFF00', '#FF0000', (durMS - highWarn) / (highBad - highWarn));
         }
         return '#FF0000';
+    }
+
+    function formatBandwidth(bw) {
+        if (bw < 1000) {
+            return bw + " bps";
+        }
+        var kbps = bw / 1000;
+        if (kbps < 1000) {
+            return kbps.toFixed(1) + " Kbps";
+        }
+        var mbps = kbps / 1000;
+        if (mbps < 1000) {
+            return mbps.toFixed(1) + " Mbps";
+        }
+        var gbps = mbps / 1000;
+        return gbps.toFixed(1) + " Gbps";
+    }
+
+    function bwColor(bw, thresholdBad, thresholdWarn, thresholdGood) {
+        if (bw < thresholdBad) {
+            return '#FF0000';
+        }
+        if (bw < thresholdWarn) {
+            return colorMix('#FF0000', '#FFFF00', (bw - thresholdBad) / (thresholdWarn - thresholdBad));
+        }
+        if (bw < thresholdGood) {
+            return colorMix('#FFFF00', '#00FF00', (bw - thresholdWarn) / (thresholdGood - thresholdWarn));
+        }
+        return '#00FF00';
     }
 
     function formatDuration(durationMS) {
@@ -547,24 +653,33 @@ Page {
         x: 0
         y: imageScreenshot.y + imageScreenshot.height
         width: parent.width
-        height: 30
+        height: 40
 
         Row {
-            x: 30
+            x: 0
             y: 0
-            width: parent.width - 40
-            height: 30
+            width: parent.width
+            height: parent.height / 2
             spacing: 10
+
+            Text {
+                id: reserved0
+                height: parent.height
+                width: 60
+                font.pixelSize: 20
+                font.bold: true
+                text: ""
+            }
 
             Text {
                 id: sendingLatencyText
                 height: parent.height
-                width: 120
+                width: 100
                 font.pixelSize: 20
                 font.bold: true
                 horizontalAlignment: Text.AlignRight
                 property int sendingLatency: 0
-                text: (sendingLatency < 0 ? "N/A" : application.formatDuration(sendingLatency))+"📱"
+                text: (sendingLatency < 0 ? "N/A" : application.formatDuration(sendingLatency)) + "📱"
                 color: application.pingColorFromMS(sendingLatency, 680, 1500)
             }
 
@@ -576,14 +691,13 @@ Page {
                 font.bold: true
                 horizontalAlignment: Text.AlignHCenter
                 property int rttMS: -1
-                text: rttMS < 0 ? "no data" : "⇒"+application.formatDuration(rttMS)+"⇒"
+                text: rttMS < 0 ? "no data" : "⇒" + application.formatDuration(rttMS) + "⇒"
                 color: application.pingColorFromMS(rttMS, 100, 1000)
 
                 Component.onCompleted: function () {
                     console.log("pingStatus: x,y,w,h: ", x, y, width, height);
                 }
             }
-
 
             Text {
                 id: playerLagText
@@ -595,7 +709,8 @@ Page {
                 property int lastUpdateAt: -1
                 property int playerLagMin: 0
                 property int playerLagMax: 0
-                text: "💻" + (playerLagMin < 0 || playerLagMax < 0 ? "N/A" : application.formatDuration(playerLagMin) + " -- " + application.formatDuration(playerLagMax))
+                //text: "💻" + (playerLagMin < 0 || playerLagMax < 0 ? "N/A" : application.formatDuration(playerLagMin) + " -- " + application.formatDuration(playerLagMax))
+                text: "💻" + (playerLagMin < 0 || playerLagMax < 0 ? "N/A" : application.formatDuration(playerLagMin))
                 color: application.pingColor2FromMS(playerLagMin, 300, 500, 1000, 5000, 10000, 60000)
             }
 
@@ -609,6 +724,49 @@ Page {
                 property int signalStrength: -1
                 text: signalStrength < 0 ? "" : signalStrength
                 color: '#FFFFFF'
+            }
+        }
+
+        Row {
+            x: 0
+            y: parent.height / 2
+            width: parent.width
+            height: parent.height / 2
+            spacing: 10
+
+            Text {
+                id: inputFPSText
+                height: parent.height
+                width: 100
+                font.pixelSize: 20
+                font.bold: true
+                horizontalAlignment: Text.AlignLeft
+                property int inputFPS: 0
+                text: "in-FPS: " + (inputFPS < 0 ? "N/A" : inputFPS)
+                color: application.fpsColor(inputFPS, 25, 27, 29)
+            }
+
+            Text {
+                id: outputFPSText
+                height: parent.height
+                width: 110
+                font.pixelSize: 20
+                font.bold: true
+                horizontalAlignment: Text.AlignRight
+                property int outputFPS: 0
+                text: "out-FPS: " + (outputFPS < 0 ? "N/A" : outputFPS)
+                color: application.fpsColor(outputFPS, 5, 10, 29)
+            }
+
+            Text {
+                id: outputBWText
+                height: parent.height
+                width: 110
+                font.pixelSize: 20
+                font.bold: true
+                property int bw: 0
+                text: bw < 0 ? "N/A" : "out-BW: " + application.formatBandwidth(bw)
+                color: application.bwColor(bw, 50000, 1000000, 5000000)
             }
         }
 
