@@ -53,6 +53,16 @@ Item {
 
     Timer {
         id: updatePlayerLagTicker
+        interval: 100
+        repeat: true
+        property var callback: null
+        onTriggered: {
+            callback()
+        }
+    }
+
+    Timer {
+        id: fetchPlayerLagTicker
         interval: 200
         repeat: true
         property var callback: null
@@ -67,4 +77,5 @@ Item {
     property alias streamStatusTicker: streamStatusTicker
     property alias updateFFStreamLatenciesTicker: updateFFStreamLatenciesTicker
     property alias updatePlayerLagTicker: updatePlayerLagTicker
+    property alias fetchPlayerLagTicker: fetchPlayerLagTicker
 }

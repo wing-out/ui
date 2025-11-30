@@ -31,8 +31,12 @@ Page {
         updateFFStreamLatencies();
         timers.updateFFStreamLatenciesTicker.callback = updateFFStreamLatencies;
         timers.updateFFStreamLatenciesTicker.start();
+        updatePlayerLag()
         timers.updatePlayerLagTicker.callback = updatePlayerLag;
         timers.updatePlayerLagTicker.start();
+        fetchPlayerLag()
+        timers.fetchPlayerLagTicker.callback = fetchPlayerLag;
+        timers.fetchPlayerLagTicker.start();
     }
 
     function ping() {
@@ -83,7 +87,7 @@ Page {
         var audioLatency = audioLatencies.preRecodingU + audioLatencies.recodingU + audioLatencies.recodedPreSendU + audioLatencies.sendingU;
         var videoLatencies = latencies.latencies.video;
         var videoLatency = videoLatencies.preRecodingU + videoLatencies.recodingU + videoLatencies.recodedPreSendU + videoLatencies.sendingU;
-        var totalLatency = Math.max(audioLatency, videoLatency)/1000000;
+        var totalLatency = Math.max(audioLatency, videoLatency) / 1000000;
         sendingLatencyText.sendingLatency = totalLatency;
         //console.log("total latency:", totalLatency,"ms ; latencies: audio:", audioLatencies, audioLatency, "; video:", videoLatencies, videoLatency);
     }
@@ -94,16 +98,34 @@ Page {
     }
 
     function updatePlayerLag() {
+        if (playerLagText.playerLagMin <= 0) {
+            return;
+        }
+        var now = new Date().getTime();
+        var tsDiff = now - playerLagText.lastUpdateAt;
+        console.log("decreasing player lag min by ", tsDiff, "ms");
+        playerLagText.playerLagMin -= tsDiff;
+        if (playerLagText.playerLagMin < 0) {
+            playerLagText.playerLagMin = 0;
+        }
+        playerLagText.lastUpdateAt = now;
+    }
+
+    function fetchPlayerLag() {
         dxProducerClientPlayerLagGetter.getPlayerLag(onGetPlayerLagSuccess, onGetPlayerLagError, grpcCallOptions);
     }
 
     function onGetPlayerLagSuccess(lagReply) {
-        var now = new Date();
-        var currentUnixNano = Math.floor(now.getTime() * 1000000);
-        var replyUnixNano = lagReply.replyUnixNano > lagReply.requestUnixNano ? lagReply.replyUnixNano : lagReply.requestUnixNano; 
+        var now = new Date().getTime();
+        var currentUnixNano = Math.floor(now * 1000000);
+        var replyUnixNano = lagReply.replyUnixNano > lagReply.requestUnixNano ? lagReply.replyUnixNano : lagReply.requestUnixNano;
         var couldBeConsumedU = currentUnixNano - replyUnixNano;
         playerLagText.playerLagMin = (lagReply.lagU - couldBeConsumedU) / 1000000;
         playerLagText.playerLagMax = lagReply.lagU / 1000000;
+        if (playerLagText.playerLagMin > playerLagText.playerLagMax) {
+            playerLagText.playerLagMin = playerLagText.playerLagMax;
+        }
+        playerLagText.lastUpdateAt = now;
         console.log("player lag min:", playerLagText.playerLagMin, "ms max:", playerLagText.playerLagMax, "ms couldBeConsumedU:", couldBeConsumedU, " replyUnixNano:", replyUnixNano, " currentUnixNano:", currentUnixNano);
     }
 
@@ -187,7 +209,7 @@ Page {
             username: chatMessage.content.user.name,
             usernameReadable: chatMessage.content.user.nameReadable,
             message: chatMessage.content.message.content,
-            messageFormatType: messageFormatType,
+            messageFormatType: messageFormatType
         };
         if (chatView.model.count > 200) {
             chatView.model.remove(0);
@@ -232,15 +254,15 @@ Page {
 
     function updateStreamStatus() {
         if (!updateStreamStatusYouTubeInProgress) {
-            updateStreamStatusYouTubeInProgress = true
+            updateStreamStatusYouTubeInProgress = true;
             dxProducerClientStreamStatusYouTube.getStreamStatus("youtube", false, onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, grpcCallOptions);
         }
         if (!updateStreamStatusTwitchInProgress) {
-            updateStreamStatusTwitchInProgress = true
+            updateStreamStatusTwitchInProgress = true;
             dxProducerClientStreamStatusTwitch.getStreamStatus("twitch", false, onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, grpcCallOptions);
         }
         if (!updateStreamStatusKickInProgress) {
-            updateStreamStatusKickInProgress = true
+            updateStreamStatusKickInProgress = true;
             dxProducerClientStreamStatusKick.getStreamStatus("kick", false, onUpdateStreamStatusKick, onUpdateStreamStatusKickError, grpcCallOptions);
         }
     }
@@ -463,7 +485,7 @@ Page {
             return colorMix('#00FF00', '#FFFF00', durMS / thresholdWarn);
         }
         if (durMS < thresholdBad) {
-            return colorMix('#FFFF00', '#FF0000', (durMS-thresholdWarn) / (thresholdBad-thresholdWarn));
+            return colorMix('#FFFF00', '#FF0000', (durMS - thresholdWarn) / (thresholdBad - thresholdWarn));
         }
         return '#FF0000';
     }
@@ -473,25 +495,25 @@ Page {
             return '#FF0000';
         }
         if (durMS < lowWarn) {
-            return colorMix('#FF0000', '#FFFF00', (durMS-lowBad) / (lowWarn-lowBad));
+            return colorMix('#FF0000', '#FFFF00', (durMS - lowBad) / (lowWarn - lowBad));
         }
         if (durMS < lowGood) {
-            return colorMix('#FFFF00', '#00FF00', (durMS-lowWarn) / (lowGood-lowWarn));
+            return colorMix('#FFFF00', '#00FF00', (durMS - lowWarn) / (lowGood - lowWarn));
         }
         if (durMS < highGood) {
             return '#00FF00';
         }
         if (durMS < highWarn) {
-            return colorMix('#00FF00', '#FFFF00', (durMS-highGood) / (highWarn-highGood));
+            return colorMix('#00FF00', '#FFFF00', (durMS - highGood) / (highWarn - highGood));
         }
         if (durMS < highBad) {
-            return colorMix('#FFFF00', '#FF0000', (durMS-highWarn) / (highBad-highWarn));
+            return colorMix('#FFFF00', '#FF0000', (durMS - highWarn) / (highBad - highWarn));
         }
         return '#FF0000';
     }
 
     function formatDuration(durationMS) {
-        if (durationMS < 1000) {
+        if (durationMS < 200) {
             return durationMS + " ms";
         }
         var deciSeconds = Math.floor(durationMS / 100);
@@ -499,7 +521,7 @@ Page {
         var seconds = Math.floor(deciSeconds / 10) % 60;
         if (minutes < 1) {
             deciSeconds -= seconds * 10;
-            return seconds+"."+Math.floor(deciSeconds)+" s";
+            return seconds + "." + Math.floor(deciSeconds) + " s";
         }
         if (minutes < 60) {
             return minutes + " m " + seconds + " s";
@@ -520,11 +542,86 @@ Page {
         smooth: false
     }
 
-    ChatView {
-        id: chatView
+    Page {
+        id: statusBarBottom
+        x: 0
         y: imageScreenshot.y + imageScreenshot.height
         width: parent.width
-        height: statusBarBottom.y - y
+        height: 30
+
+        Row {
+            x: 30
+            y: 0
+            width: parent.width - 40
+            height: 30
+            spacing: 10
+
+            Text {
+                id: sendingLatencyText
+                height: parent.height
+                width: 120
+                font.pixelSize: 20
+                font.bold: true
+                horizontalAlignment: Text.AlignRight
+                property int sendingLatency: 0
+                text: (sendingLatency < 0 ? "N/A" : application.formatDuration(sendingLatency))+"📱"
+                color: application.pingColorFromMS(sendingLatency, 680, 1500)
+            }
+
+            Text {
+                id: pingStatus
+                height: parent.height
+                width: 100
+                font.pixelSize: 20
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                property int rttMS: -1
+                text: rttMS < 0 ? "no data" : "⇒"+application.formatDuration(rttMS)+"⇒"
+                color: application.pingColorFromMS(rttMS, 100, 1000)
+
+                Component.onCompleted: function () {
+                    console.log("pingStatus: x,y,w,h: ", x, y, width, height);
+                }
+            }
+
+
+            Text {
+                id: playerLagText
+                height: parent.height
+                width: 120
+                font.pixelSize: 20
+                font.bold: true
+                horizontalAlignment: Text.AlignLeft
+                property int lastUpdateAt: -1
+                property int playerLagMin: 0
+                property int playerLagMax: 0
+                text: "💻" + (playerLagMin < 0 || playerLagMax < 0 ? "N/A" : application.formatDuration(playerLagMin) + " -- " + application.formatDuration(playerLagMax))
+                color: application.pingColor2FromMS(playerLagMin, 300, 500, 1000, 5000, 10000, 60000)
+            }
+
+            Text {
+                id: signalStatus
+                height: parent.height
+                width: 100
+                font.pixelSize: 20
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                property int signalStrength: -1
+                text: signalStrength < 0 ? "" : signalStrength
+                color: '#FFFFFF'
+            }
+        }
+
+        Component.onCompleted: function () {
+            console.log("statusBarBottom: x,y,w,h: ", x, y, width, height);
+        }
+    }
+
+    ChatView {
+        id: chatView
+        y: statusBarBottom.y + statusBarBottom.height
+        width: parent.width
+        height: parent.height - y
 
         onAtYEndChanged: function () {
             console.log("onAtYEndChanged", atYEnd);
@@ -532,68 +629,6 @@ Page {
         }
         Component.onCompleted: function () {
             console.log("ChatView: x,y,w,h: ", x, y, width, height);
-        }
-    }
-
-    Row {
-        id: statusBarBottom
-        x: 30
-        y: parent.height - 30
-        width: parent.width - 40
-        height: 20
-        spacing: 10
-
-        Text {
-            id: pingStatus
-            height: parent.height
-            width: 100
-            font.pixelSize: 24
-            font.bold: true
-            property int rttMS: -1
-            text: rttMS < 0 ? "no data" : "conn: "+application.formatDuration(rttMS)
-            color: application.pingColorFromMS(rttMS, 100, 1000)
-
-            Component.onCompleted: function () {
-                console.log("pingStatus: x,y,w,h: ", x, y, width, height);
-            }
-        }
-
-        Text {
-            id: signalStatus
-            height: parent.height
-            width: 100
-            font.pixelSize: 24
-            font.bold: true
-            property int signalStrength: -1
-            text: signalStrength < 0 ? "" : signalStrength
-            color: '#FFFFFF'
-        }
-
-        Text {
-            id: sendingLatencyText
-            height: parent.height
-            width: 250
-            font.pixelSize: 24
-            font.bold: true
-            property int sendingLatency: 0
-            text: sendingLatency < 0 ? "N/A" : "sending: "+application.formatDuration(sendingLatency)
-            color: application.pingColorFromMS(sendingLatency, 680, 1500)
-        }
-
-        Text {
-            id: playerLagText
-            height: parent.height
-            width: 350
-            font.pixelSize: 24
-            font.bold: true
-            property int playerLagMin: 0
-            property int playerLagMax: 0
-            text: playerLagMin < 0 || playerLagMax < 0 ? "N/A" : "player: "+application.formatDuration(playerLagMin)+" -- "+application.formatDuration(playerLagMax)
-            color: application.pingColor2FromMS(playerLagMin, 300, 500, 1000, 5000, 10000, 60000)
-        }
-
-        Component.onCompleted: function () {
-            console.log("statusBarBottom: x,y,w,h: ", x, y, width, height);
         }
     }
 }
