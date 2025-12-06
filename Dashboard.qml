@@ -49,6 +49,9 @@ Page {
         updateWiFiInfo();
         timers.updateWiFiInfoTicker.callback = updateWiFiInfo;
         timers.updateWiFiInfoTicker.start();
+        updateChannelQualityInfo();
+        timers.channelQualityInfoTicker.callback = updateChannelQualityInfo;
+        timers.channelQualityInfoTicker.start();
     }
 
     function ping() {
@@ -373,9 +376,9 @@ Page {
 
     function updateWiFiInfo() {
         var wifiInfo = platform.getCurrentWiFiConnection();
-        console.log("WiFi info:", wifiInfo.toJSON());
+        //console.log("WiFi info:", wifiInfo.toJSON());
         if (wifiInfo !== null && (wifiInfo.ssid !== "" || wifiInfo.bssid !== "")) {
-            console.log("updating WiFi status:", wifiInfo.ssid, wifiInfo.bssid, wifiInfo.rssi);
+            //console.log("updating WiFi status:", wifiInfo.ssid, wifiInfo.bssid, wifiInfo.rssi);
             wifiStatus.ssid = wifiInfo.ssid;
             wifiStatus.bssid = wifiInfo.bssid;
             wifiStatus.rssi = wifiInfo.rssi;
@@ -384,6 +387,26 @@ Page {
         wifiStatus.ssid = "";
         wifiStatus.bssid = "";
         wifiStatus.rssi = -32768;
+    }
+
+    function updateChannelQualityInfo() {
+        var channelsQualityInfo = platform.getChannelsQualityInfo();
+        //console.log("channels quality info:", channelsQualityInfo, "; len:", channelsQualityInfo.length);
+        for (var i = 0; i < channelsQualityInfo.length; i++) {
+            var qualityInfo = channelsQualityInfo[i];
+            //console.log(qualityInfo.toJSON());
+            switch (i) {
+            case 0:
+                channel1Quality.quality = qualityInfo.quality;
+                break;
+            case 1:
+                channel2Quality.quality = qualityInfo.quality;
+                break;
+            case 2:
+                channel3Quality.quality = qualityInfo.quality;
+                break;
+            }
+        }
     }
 
     Platform {
@@ -697,6 +720,19 @@ Page {
         }
     }
 
+    function channelQualityColor(quality) {
+        if (quality < -33) {
+            return '#FF0000';
+        }
+        if (quality < 0) {
+            return colorMix('#FF0000', '#FFFF00', (quality + 33) / 33);
+        }
+        if (quality < 5) {
+            return colorMix('#FFFF00', '#00FF00', quality / 5);
+        }
+        return '#00FF00';
+    }
+
     Image {
         id: imageScreenshot
         y: statusBarTop.height
@@ -720,15 +756,36 @@ Page {
             y: 0
             width: parent.width
             height: parent.height / 2
-            spacing: 10
+            spacing: 0
 
             Text {
-                id: reserved0
+                id: channel1Quality
                 height: parent.height
-                width: 60
                 font.pixelSize: 20
                 font.bold: true
-                text: ""
+                property int quality: -32768
+                text: quality > -32768 ? "◉" : ""
+                color: application.channelQualityColor(quality)
+            }
+            Text {
+                id: channel2Quality
+                width: channel1Quality.width
+                height: parent.height
+                font.pixelSize: channel1Quality.font.pixelSize
+                font.bold: true
+                property int quality: -32768
+                text: quality > -32768 ? "◉" : ""
+                color: application.channelQualityColor(quality)
+            }
+            Text {
+                id: channel3Quality
+                width: channel1Quality.width
+                height: parent.height
+                font.pixelSize: channel1Quality.font.pixelSize
+                font.bold: true
+                property int quality: -32768
+                text: quality > -32768 ? "◉" : ""
+                color: application.channelQualityColor(quality)
             }
 
             Text {

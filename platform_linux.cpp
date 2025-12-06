@@ -18,4 +18,10 @@ void Platform::setEnableRunningInBackground(bool value) { return; }
 
 void Platform::startMonitoringSignalStrength() { return; }
 
+extern QList<ChannelQualityInfo>
+parseFileWithChannelsQuality(const QString &filePath);
+QList<ChannelQualityInfo> getChannelsQualityInfo() {
+  return parseFileWithChannelsQuality("/tmp/quality");
+}
+
 #endif

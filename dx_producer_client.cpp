@@ -54,6 +54,9 @@ void Client::processGRPCError(const QVariant &error) {
   if (status.code() == QtGrpc::StatusCode::Cancelled) {
     return;
   }
+  if (status.message().contains("unable to get audio position")) {
+    return;
+  }
   {
     qDebug() << "processGRPCError(" << this->objectName() << ")" << error;
     defer[=] { qDebug() << "/processGRPCError" << error; };

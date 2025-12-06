@@ -1,7 +1,11 @@
 
+
 #include "wifi.h"
 #include <qglobal.h>
 #include <qvariant.h>
+
+#include <QFile>
+#include <QRegularExpression>
 
 #ifdef Q_OS_ANDROID
 #define _PLATFORM_IS_SET
@@ -24,12 +28,12 @@ WiFiInfo getCurrentWiFiConnection() {}
 void startWiFiScan() {}
 QVector<WiFiInfo> getWiFiScanResults() {}
 int connectToWiFiAP(const QString &ssid, const QString &bssid,
-                              const QString &security,
-                              const QString &password) {
+                    const QString &security, const QString &password) {
   return -1;
 }
 void disconnectRequestedWiFiAP(int requestId) {}
 void disconnectAllRequestedWiFiAPs() {}
+QList<ChannelQualityInfo> getChannelQualityInfo() { return {}; }
 #endif
 
 QWiFiInfo *Platform::getCurrentWiFiConnection() {
@@ -69,4 +73,45 @@ void Platform::disconnectRequestedWiFiAP(int requestId) {
 
 void Platform::disconnectAllRequestedWiFiAPs() {
   ::disconnectAllRequestedWiFiAPs();
+}
+
+QList<QChannelQualityInfo *> Platform::getChannelsQualityInfo() {
+  QList<QChannelQualityInfo *> result;
+  QList<ChannelQualityInfo> raw = ::getChannelsQualityInfo();
+  for (const ChannelQualityInfo &info : raw) {
+    QChannelQualityInfo *obj = new QChannelQualityInfo(this);
+    obj->setFrom(info);
+    result.append(obj);
+  }
+  return result;
+}
+
+QList<ChannelQualityInfo>
+parseFileWithChannelsQuality(const QString &filePath) {
+  QList<ChannelQualityInfo> list;
+  QFile file(filePath);
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    return list;
+
+  const QByteArray raw = file.readAll();
+  file.close();
+  const QString content = QString::fromUtf8(raw).trimmed();
+  if (content.isEmpty())
+    return list;
+
+  const QStringList parts =
+      content.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+  for (int i = 0; i < parts.size() && i < 3; ++i) {
+    bool ok = false;
+    const int quality = parts.at(i).toInt(&ok);
+    if (!ok)
+      continue;
+
+    ChannelQualityInfo info;
+    info.name = QStringLiteral("channel%1").arg(i + 1);
+    info.quality = quality;
+    list.append(info);
+  }
+
+  return list;
 }

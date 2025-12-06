@@ -63,4 +63,10 @@ void Platform::startMonitoringSignalStrength() {
   });
 }
 
+extern QList<ChannelQualityInfo>
+parseFileWithChannelsQuality(const QString &filePath);
+QList<ChannelQualityInfo> getChannelsQualityInfo() {
+  return parseFileWithChannelsQuality("/data/user/0/center.dx.wingout/files/channel-quality.txt");
+}
+
 #endif

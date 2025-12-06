@@ -6,6 +6,7 @@
 #include <qtmetamacros.h>
 
 #include "wifi.h"
+#include "channel_quality_info.h"
 
 class Platform : public QObject {
   Q_OBJECT
@@ -15,7 +16,7 @@ class Platform : public QObject {
                  NOTIFY onSignalStrengthChanged)
 public:
   explicit Platform(QObject *parent = nullptr)
-      : QObject(parent), m_currentWiFiConnection(new QWiFiInfo(this)) , signalStrength(-1) {}
+      : QObject(parent), m_currentWiFiConnection(new QWiFiInfo(this)), signalStrength(-1) {}
 
 // Power management:
   Q_INVOKABLE void setEnableRunningInBackground(bool value);
@@ -43,11 +44,15 @@ public:
   Q_INVOKABLE void disconnectRequestedWiFiAP(int requestId);
   Q_INVOKABLE void disconnectAllRequestedWiFiAPs();
 
+// Network:
+  Q_INVOKABLE QList<QChannelQualityInfo*> getChannelsQualityInfo();
+
 signals:
   void onSignalStrengthChanged(int strength);
 
 private:
   int signalStrength;
   QWiFiInfo *m_currentWiFiConnection = nullptr;
+  QList<QChannelQualityInfo*> m_channelsQualityInfo;
   QList<QWiFiInfo*> m_scanResults;
 };

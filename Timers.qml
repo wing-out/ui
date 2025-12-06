@@ -111,6 +111,16 @@ Item {
         }
     }
 
+    Timer {
+        id: channelQualityInfoTicker
+        interval: 1000
+        repeat: true
+        property var callback: null
+        onTriggered: {
+            callback()
+        }
+    }
+
     property alias retryTimerDXProducerClientSubscribeToChatMessages: retryTimerDXProducerClientSubscribeToChatMessages
     property alias retryTimerDXProducerClientSubscribeToScreenshot: retryTimerDXProducerClientSubscribeToScreenshot
     property alias pingTicker: pingTicker
@@ -122,4 +132,5 @@ Item {
     property alias updateFFStreamOutputQualityTicker: updateFFStreamOutputQualityTicker
     property alias updateFFStreamBitRatesTicker: updateFFStreamBitRatesTicker
     property alias updateWiFiInfoTicker: updateWiFiInfoTicker
+    property alias channelQualityInfoTicker: channelQualityInfoTicker
 }
