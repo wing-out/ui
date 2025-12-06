@@ -46,6 +46,9 @@ Page {
         updateFFStreamBitRates();
         timers.updateFFStreamBitRatesTicker.callback = updateFFStreamBitRates;
         timers.updateFFStreamBitRatesTicker.start();
+        updateWiFiInfo();
+        timers.updateWiFiInfoTicker.callback = updateWiFiInfo;
+        timers.updateWiFiInfoTicker.start();
     }
 
     function ping() {
@@ -140,12 +143,12 @@ Page {
 
     function onGetBitRatesSuccess(bitRates) {
         //console.log("bitRates:", bitRates.bitRates.outputBitRate);
-        outputBWText.bw = bitRates.bitRates.outputBitRate.video;
+        encodingBitrateText.videoBitrate = bitRates.bitRates.outputBitRate.video;
         //console.log("video bitrate:", bitRates.bitRates.outputBitRate.video);
     }
 
     function onGetBitRatesError(error) {
-        outputBWText.bw = -1;
+        encodingBitrateText.videoBitrate = -1;
         processFFStreamGRPCError(ffstreamClientGetBitRateser, error);
     }
 
@@ -368,11 +371,27 @@ Page {
         processStreamDGRPCError(dxProducerClientStreamStatusTwitch, error);
     }
 
+    function updateWiFiInfo() {
+        var wifiInfo = platform.getCurrentWiFiConnection();
+        console.log("WiFi info:", wifiInfo.toJSON());
+        if (wifiInfo !== null && (wifiInfo.ssid !== "" || wifiInfo.bssid !== "")) {
+            console.log("updating WiFi status:", wifiInfo.ssid, wifiInfo.bssid, wifiInfo.rssi);
+            wifiStatus.ssid = wifiInfo.ssid;
+            wifiStatus.bssid = wifiInfo.bssid;
+            wifiStatus.rssi = wifiInfo.rssi;
+            return;
+        }
+        wifiStatus.ssid = "";
+        wifiStatus.bssid = "";
+        wifiStatus.rssi = -32768;
+    }
+
     Platform {
         id: platform
         Component.onCompleted: {
             platform.setEnableRunningInBackground(true);
             platform.startMonitoringSignalStrength();
+            platform.startWiFiScan();
         }
     }
 
@@ -637,6 +656,47 @@ Page {
         return hours + " h " + minutes + " m " + seconds + " s";
     }
 
+    function rssiColor(rssi) {
+        if (rssi >= -50) {
+            return '#00FF00';
+        }
+        if (rssi >= -60) {
+            return colorMix('#FFFF00', '#00FF00', (-50 - rssi) / 10);
+        }
+        if (rssi >= -70) {
+            return '#FFFF00';
+        }
+        if (rssi >= -80) {
+            return colorMix('#FF0000', '#FFFF00', (-70 - rssi) / 10);
+        }
+        return '#FF0000';
+    }
+
+    function formatSSID(ssid, bssid) {
+        console.log("formatSSID called with ssid:", ssid, " bssid:", bssid);
+        switch (ssid) {
+        case "home.dx.center":
+        case "dslmodem.dx.center":
+        case "slow.dslmodem.dx.center":
+            switch ((bssid || "").toUpperCase()) {
+            case "A8:29:48:3E:E2:F4":
+                return "🏡◉";
+            case "A8:29:48:3E:E7:A6":
+                return "🏘◉";
+            case "A8:29:48:3E:E3:B2":
+                return "🏠◉";
+            case "3C:A6:2F:15:B1:04":
+                return "☎◉";
+            default:
+                return "?🏠◉";
+            }
+        case "":
+            return "🚫";
+        default:
+            return "🛜◉";
+        }
+    }
+
     Image {
         id: imageScreenshot
         y: statusBarTop.height
@@ -754,19 +814,35 @@ Page {
                 font.bold: true
                 horizontalAlignment: Text.AlignRight
                 property int outputFPS: 0
-                text: "out-FPS: " + (outputFPS < 0 ? "N/A" : outputFPS)
-                color: application.fpsColor(outputFPS, 5, 10, 29)
+                //text: "out-FPS: " + (outputFPS < 0 ? "N/A" : outputFPS)
+                //color: application.fpsColor(outputFPS, 5, 10, 29)
+                text: "out-FPS: ?"
+                color: '#808080'
             }
 
             Text {
-                id: outputBWText
+                id: encodingBitrateText
                 height: parent.height
-                width: 110
+                width: 90
                 font.pixelSize: 20
                 font.bold: true
-                property int bw: 0
-                text: bw < 0 ? "N/A" : "out-BW: " + application.formatBandwidth(bw)
-                color: application.bwColor(bw, 50000, 1000000, 5000000)
+                property int videoBitrate: 0
+                text: "enc: " + (videoBitrate < 0 ? "N/A" : application.formatBandwidth(videoBitrate))
+                color: application.bwColor(videoBitrate, 50000, 1000000, 5000000)
+            }
+
+            Text {
+                id: wifiStatus
+                height: parent.height
+                width: 100
+                font.pixelSize: 20
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                property string ssid: ""
+                property string bssid: ""
+                property int rssi: -32768
+                text: application.formatSSID(ssid, bssid)
+                color: application.rssiColor(rssi)
             }
         }
 

@@ -2,10 +2,15 @@
 #include <QQmlApplicationEngine>
 #ifdef Q_OS_ANDROID
 #include <QtCore/private/qandroidextras_p.h>
+#include "android_permissions_wifi.cpp"
 #endif
 
 int app(int argc, char *argv[]) {
   QGuiApplication app(argc, argv);
+
+#ifdef Q_OS_ANDROID
+  androidEnsureWifiLocationPermission();
+#endif
 
   QQmlApplicationEngine engine;
   QObject::connect(

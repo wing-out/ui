@@ -1,0 +1,10 @@
+CompileFlags:
+  Add:
+  - "-isystem/usr/include/c++/14"
+  - "-isystem/usr/include/x86_64-linux-gnu/c++/14"
+  - "-isystem/usr/include/c++/14/backward"
+  - "-isystem/usr/lib/gcc/x86_64-linux-gnu/14/include"
+  - "-isystem/usr/local/include"
+  - "-isystem/usr/include/x86_64-linux-gnu"
+  - "-isystem/usr/include"
+

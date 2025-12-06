@@ -1,5 +1,6 @@
 
 #include <qglobal.h>
+
 #ifdef Q_OS_ANDROID
 #include "platform.h"
 
@@ -7,10 +8,16 @@
 #include <QJniObject>
 #include <QtCore/private/qandroidextras_p.h>
 
-void Platform::vibrate(uint64_t duration_ms, bool is_notification) {
-  QJniObject activity = QJniObject::callStaticObjectMethod(
+QJniObject getAndroidAppContext() {
+  return QJniObject::callStaticObjectMethod(
       "org/qtproject/qt/android/QtNative", "activity",
       "()Landroid/app/Activity;");
+}
+
+#include "wifi_android.cpp"
+
+void Platform::vibrate(uint64_t duration_ms, bool is_notification) {
+  QJniObject activity = getAndroidAppContext();
   if (!activity.isValid()) {
     qWarning() << "unable to find the activity";
     return;
@@ -21,16 +28,16 @@ void Platform::vibrate(uint64_t duration_ms, bool is_notification) {
     effect = 0x00000080;
   }
 
-  QJniObject::callStaticMethod<void>("center/dx/wingout/VibratorWrapper",
-                                     "vibrate", "(Landroid/content/Context;JI)V",
-                                     activity.object<jobject>(),
-                                     static_cast<jlong>(duration_ms), static_cast<jint>(effect));
+  QJniObject::callStaticMethod<void>(
+      "center/dx/wingout/VibratorWrapper", "vibrate",
+      "(Landroid/content/Context;JI)V", activity.object<jobject>(),
+      static_cast<jlong>(duration_ms), static_cast<jint>(effect));
 }
 
 void Platform::setEnableRunningInBackground(bool value) {
   return;
   /*
-  auto activity = QJniObject(QNativeInterface::QAndroidApplication::context());
+  auto activity = getAndroidAppContext();
   if (!activity.isValid()) {
     qWarning() << "unable to find the activity";
     return;

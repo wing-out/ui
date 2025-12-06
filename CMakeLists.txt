@@ -160,6 +160,7 @@ qt_add_qml_module(Platform
     VERSION 1.0
     SOURCES
     platform.h platform.cpp
+    wifi_info.h wifi_info.cpp
     OUTPUT_DIRECTORY
     ${CMAKE_CURRENT_BINARY_DIR}/Platform/
 )
