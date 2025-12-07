@@ -1,19 +1,22 @@
-#include "RtmpGstController.h"
-#include <QDebug>
 
-RtmpGstController::RtmpGstController(QObject* parent)
+#include <QDebug>
+#include <QQuickItem>
+
+#include "rtmp_gst_controller.h"
+
+RTMPGstController::RTMPGstController(QObject* parent)
     : QObject(parent)
 {
     // We’ll poll the bus on the Qt event loop (portable across OSes)
     m_busTimer.setInterval(0);
-    connect(&m_busTimer, &QTimer::timeout, this, &RtmpGstController::pollBus);
+    connect(&m_busTimer, &QTimer::timeout, this, &RTMPGstController::pollBus);
 }
 
-RtmpGstController::~RtmpGstController() {
+RTMPGstController::~RTMPGstController() {
     teardown();
 }
 
-void RtmpGstController::ensurePipeline() {
+void RTMPGstController::ensurePipeline() {
     if (m_playbin) return;
 
     // Create elements
@@ -43,7 +46,7 @@ void RtmpGstController::ensurePipeline() {
     m_busTimer.start();
 }
 
-void RtmpGstController::attachSink() {
+void RTMPGstController::attachSink() {
     if (!m_qmlsink || !m_target) return;
 
     // qml6glsink expects a QQuickItem* via its "widget" property
@@ -55,14 +58,14 @@ void RtmpGstController::attachSink() {
     g_object_set(m_qmlsink, "widget", item, nullptr);
 }
 
-void RtmpGstController::setState(GstState s) {
+void RTMPGstController::setState(GstState s) {
     if (!m_playbin) return;
     gst_element_set_state(m_playbin, s);
     m_state = s;
     emit playingChanged();
 }
 
-void RtmpGstController::teardown() {
+void RTMPGstController::teardown() {
     m_busTimer.stop();
 
     if (m_playbin) {
@@ -82,7 +85,7 @@ void RtmpGstController::teardown() {
     emit playingChanged();
 }
 
-void RtmpGstController::setUrl(const QString& u) {
+void RTMPGstController::setURL(const QString& u) {
     if (m_url == u) return;
     m_url = u;
     emit urlChanged();
@@ -96,7 +99,7 @@ void RtmpGstController::setUrl(const QString& u) {
     if (m_autoPlay) play();
 }
 
-void RtmpGstController::setTarget(QObject* t) {
+void RTMPGstController::setTarget(QObject* t) {
     if (m_target == t) return;
     m_target = t;
     emit targetChanged();
@@ -105,27 +108,27 @@ void RtmpGstController::setTarget(QObject* t) {
     attachSink();
 }
 
-void RtmpGstController::setAutoPlay(bool v) {
+void RTMPGstController::setAutoPlay(bool v) {
     if (m_autoPlay == v) return;
     m_autoPlay = v;
     emit autoPlayChanged();
 }
 
-void RtmpGstController::play() {
+void RTMPGstController::play() {
     ensurePipeline();
     attachSink();
     if (m_playbin) setState(GST_STATE_PLAYING);
 }
 
-void RtmpGstController::pause() {
+void RTMPGstController::pause() {
     if (m_playbin) setState(GST_STATE_PAUSED);
 }
 
-void RtmpGstController::stop() {
+void RTMPGstController::stop() {
     if (m_playbin) setState(GST_STATE_READY);
 }
 
-void RtmpGstController::pollBus() {
+void RTMPGstController::pollBus() {
     if (!m_playbin) return;
 
     GstBus* bus = gst_element_get_bus(m_playbin);

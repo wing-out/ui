@@ -185,7 +185,7 @@ void Client::subscribeToVariable(
 
 void Client::setIgnoreImages(const bool value) {
   QMutexLocker locker(&this->locker);
-  qInfo() << "setIgnoreImages" << value;
+  //qInfo() << "setIgnoreImages" << value;
   this->ignoreImages = value;
 }
 

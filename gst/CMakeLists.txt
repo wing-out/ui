@@ -17,8 +17,8 @@ if (NOT ANDROID)
   )
 
   add_library(gst_rtmp_qml SHARED
-    src/RtmpGstController.cpp
-    src/RtmpGstController.h
+    rtmp_gst_controller.cpp
+    rtmp_gst_controller.h
   )
 
   target_include_directories(gst_rtmp_qml PRIVATE ${GST_INCLUDE_DIRS})
@@ -29,7 +29,7 @@ if (NOT ANDROID)
   qt_add_qml_module(gst_rtmp_qml
     URI GstRtmp
     VERSION 1.0
-    QML_FILES src/RtmpVideo.qml
+    QML_FILES RTMPVideo.qml
     # C++ types are auto-registered because they’re in this target
     # Add this if using QML_ELEMENT in header (not required here)
   )
@@ -38,14 +38,14 @@ endif()
 # ===== Android =====
 if (ANDROID)
   add_library(gst_rtmp_qml SHARED
-    src/RtmpGstController.cpp
-    src/RtmpGstController.h
+    rtmp_gst_controller.cpp
+    rtmp_gst_controller.h
   )
 
   qt_add_qml_module(gst_rtmp_qml
     URI GstRtmp
     VERSION 1.0
-    QML_FILES src/RtmpVideo.qml
+    QML_FILES RTMPVideo.qml
   )
 
   # Point this env var to the official GStreamer Android universal bundle

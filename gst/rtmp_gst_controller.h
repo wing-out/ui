@@ -1,23 +1,22 @@
 #pragma once
 #include <QObject>
 #include <QPointer>
-#include <QQuickItem>
 #include <QTimer>
 #include <gst/gst.h>
 
-class RtmpGstController : public QObject {
+class RTMPGstController : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QString url READ url WRITE setUrl NOTIFY urlChanged)
+    Q_PROPERTY(QString url READ url WRITE setURL NOTIFY urlChanged)
     Q_PROPERTY(QObject* target READ target WRITE setTarget NOTIFY targetChanged)
     Q_PROPERTY(bool autoPlay READ autoPlay WRITE setAutoPlay NOTIFY autoPlayChanged)
     Q_PROPERTY(bool playing READ playing NOTIFY playingChanged)
 
 public:
-    explicit RtmpGstController(QObject* parent = nullptr);
-    ~RtmpGstController() override;
+    explicit RTMPGstController(QObject* parent = nullptr);
+    ~RTMPGstController() override;
 
     QString url() const { return m_url; }
-    void setUrl(const QString& u);
+    void setURL(const QString& u);
 
     QObject* target() const { return m_target; }
     void setTarget(QObject* t);

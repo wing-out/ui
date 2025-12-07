@@ -4,6 +4,7 @@ project(wingout VERSION 0.1 LANGUAGES CXX)
 
 #set(SANITIZER_FLAGS "-fsanitize=address -fsanitize-recover=address")
 set(DEBUG_FLAGS "-fno-omit-frame-pointer -ggdb3")
+set(QT_QML_GENERATE_QMLLS_INI ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_COMPILER_LAUNCHER ccache)
@@ -50,6 +51,9 @@ qt_add_executable(wingout
     main.cpp
 )
 add_dependencies(wingout fonts)
+
+add_subdirectory(gst)
+target_link_libraries(wingout PRIVATE gst_rtmp_qml)
 
 qt_add_qml_module(wingout
     URI WingOut

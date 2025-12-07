@@ -1,11 +1,13 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
+import QtQuick.Shapes
 import QtGrpc
 import Platform
 
 import streamd as StreamD
 import ffstream_grpc as FFStream
+import GstRtmp 1.0
 
 Page {
     id: application
@@ -16,7 +18,7 @@ Page {
     property var latestChatMessageTimestampUNIXNano: null
     property var latestTimestampChatMessageIDs: []
     property var pingCurrentID: 0
-    property var pingTimestamps: {}
+    property var pingTimestamps: ({})
     property var pingInProgress: false
 
     Component.onCompleted: {
@@ -733,6 +735,9 @@ Page {
         return '#00FF00';
     }
 
+    RTMPVideo {
+
+    }
     Image {
         id: imageScreenshot
         y: statusBarTop.height
@@ -742,6 +747,38 @@ Page {
         retainWhileLoading: true
         asynchronous: true
         smooth: false
+
+        Shape {
+            id: overlayGrid
+
+            anchors.fill: parent
+            z: 1
+
+            ShapePath {
+                strokeWidth: 3
+                strokeColor: '#80FFFFFF'
+                fillColor: "transparent"
+
+                startX: overlayGrid.width * 0.34179687499986157227
+                startY: 0
+                PathLine {
+                    x: overlayGrid.width * 0.34179687499986157227
+                    y: overlayGrid.height
+                }
+            }
+
+            ShapePath {
+                strokeWidth: 3
+                strokeColor: '#80FFFFFF'
+                fillColor: "transparent"
+                startX: overlayGrid.width * 0.65820312500013842773
+                startY: 0
+                PathLine {
+                    x: overlayGrid.width * 0.65820312500013842773
+                    y: overlayGrid.height
+                }
+            }
+        }
     }
 
     Page {
@@ -915,7 +952,7 @@ Page {
         height: parent.height - y
 
         onAtYEndChanged: function () {
-            console.log("onAtYEndChanged", atYEnd);
+            //console.log("onAtYEndChanged", atYEnd);
             dxProducerClientScreenshotListener.setIgnoreImages(!atYEnd);
         }
         Component.onCompleted: function () {
