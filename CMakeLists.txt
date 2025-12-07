@@ -15,6 +15,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SANITIZER_FLAGS} $
 
 find_package(Qt6 REQUIRED COMPONENTS Bluetooth)
 find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS CorePrivate)
 find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 find_package(Qt6 REQUIRED COMPONENTS Connectivity)
 find_package(Qt6 REQUIRED COMPONENTS Grpc)
@@ -27,7 +28,7 @@ find_package(Qt6 REQUIRED COMPONENTS ProtobufQuick)
 find_package(Qt6 REQUIRED COMPONENTS Quick)
 find_package(Qt6 REQUIRED COMPONENTS TextToSpeech)
 
-qt_standard_project_setup(REQUIRES 6.9)
+qt_standard_project_setup(REQUIRES 6.10)
 
 find_program(FONTFORGE_EXECUTABLE fontforge)
 if(NOT FONTFORGE_EXECUTABLE)
@@ -51,9 +52,6 @@ qt_add_executable(wingout
     main.cpp
 )
 add_dependencies(wingout fonts)
-
-add_subdirectory(gst)
-target_link_libraries(wingout PRIVATE gst_rtmp_qml)
 
 qt_add_qml_module(wingout
     URI WingOut
@@ -168,6 +166,12 @@ qt_add_qml_module(Platform
     channel_quality_info.h channel_quality_info.cpp
     OUTPUT_DIRECTORY
     ${CMAKE_CURRENT_BINARY_DIR}/Platform/
+)
+
+
+target_link_libraries(Platform
+    PRIVATE
+    Qt6::CorePrivate
 )
 
 qt_add_qml_module(RemoteCameraController

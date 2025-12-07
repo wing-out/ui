@@ -7,6 +7,7 @@
 RTMPGstController::RTMPGstController(QObject* parent)
     : QObject(parent)
 {
+    gst_init(nullptr, nullptr);
     // We’ll poll the bus on the Qt event loop (portable across OSes)
     m_busTimer.setInterval(0);
     connect(&m_busTimer, &QTimer::timeout, this, &RTMPGstController::pollBus);

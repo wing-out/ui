@@ -4,10 +4,10 @@ import QtQuick.Controls.Material
 import QtQuick.Shapes
 import QtGrpc
 import Platform
+import QtMultimedia
 
 import streamd as StreamD
 import ffstream_grpc as FFStream
-import GstRtmp 1.0
 
 Page {
     id: application
@@ -23,7 +23,6 @@ Page {
 
     Component.onCompleted: {
         subscribeToChatMessages();
-        subscribeToScreenshots();
         pingTimestamps = {};
         ping();
         timers.pingTicker.callback = ping;
@@ -207,9 +206,6 @@ Page {
         console.log("since: ", since);
         dxProducerClientChatListener.subscribeToChatMessages(since, 200, onChatNewMessage, onChatMessagesFinished, onChatMessagesErrored);
     }
-    function subscribeToScreenshots() {
-        dxProducerClientScreenshotListener.subscribeToImage("screenshot", onNewScreenshot, onScreenshotFinished, onScreenshotErrored);
-    }
 
     function onPingSuccess(reply): void {
         pingInProgress = false;
@@ -285,19 +281,6 @@ Page {
         console.log("Errored", error);
         processStreamDGRPCError(dxProducerClientChatListener, error);
         timers.retryTimerDXProducerClientSubscribeToChatMessages.start();
-    }
-
-    function onNewScreenshot(screenshotURI): void {
-        imageScreenshot.source = screenshotURI;
-    }
-    function onScreenshotFinished(status): void {
-        console.log("Finished", status);
-        timers.retryTimerDXProducerClientSubscribeToScreenshot.start();
-    }
-    function onScreenshotErrored(error): void {
-        console.log("Errored", error);
-        processStreamDGRPCError(dxProducerClientScreenshotListener, error);
-        timers.retryTimerDXProducerClientSubscribeToScreenshot.start();
     }
 
     function processStreamDGRPCError(dxProducer, error): void {
@@ -435,10 +418,6 @@ Page {
                 console.log("re-subscribing to chat messages");
                 subscribeToChatMessages();
             };
-            timers.retryTimerDXProducerClientSubscribeToScreenshot.callback = function () {
-                console.log("re-subscribing to the screenshots");
-                subscribeToScreenshots();
-            };
         }
     }
     GrpcCallOptions {
@@ -461,7 +440,7 @@ Page {
         channel: dxProducerTarget.channel
     }
     StreamD.Client {
-        id: dxProducerClientScreenshotListener
+        id: dxProducerClientVideoRequester
         channel: dxProducerTarget.channel
     }
     StreamD.Client {
@@ -502,14 +481,6 @@ Page {
     FFStream.Client {
         id: ffstreamClientGetBitRateser
         channel: ffstreamTarget.channel
-    }
-
-    Image {
-        id: screenshot
-        x: 0
-        y: 0
-        width: parent.width
-        height: parent.width * 9 / 16
     }
 
     Row {
@@ -735,18 +706,13 @@ Page {
         return '#00FF00';
     }
 
-    RTMPVideo {
 
-    }
-    Image {
+    VideoPlayerRTMP{
         id: imageScreenshot
         y: statusBarTop.height
         width: parent.width
-        height: parent.width * sourceSize.height / sourceSize.width
-        fillMode: Image.PreserveAspectFit
-        retainWhileLoading: true
-        asynchronous: true
-        smooth: false
+        height: parent.width * 9 / 16
+        streamName: "test"
 
         Shape {
             id: overlayGrid
@@ -950,11 +916,6 @@ Page {
         y: statusBarBottom.y + statusBarBottom.height
         width: parent.width
         height: parent.height - y
-
-        onAtYEndChanged: function () {
-            //console.log("onAtYEndChanged", atYEnd);
-            dxProducerClientScreenshotListener.setIgnoreImages(!atYEnd);
-        }
         Component.onCompleted: function () {
             console.log("ChatView: x,y,w,h: ", x, y, width, height);
         }

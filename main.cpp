@@ -25,7 +25,6 @@ static void filteredQtHandler(QtMsgType type,
     }
 }
 
-
 int app(int argc, char *argv[]) {
   QGuiApplication app(argc, argv);
   g_prevHandler = qInstallMessageHandler(filteredQtHandler);

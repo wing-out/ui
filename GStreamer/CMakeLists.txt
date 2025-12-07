@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(gst_rtmp_qml LANGUAGES CXX)
+project(gstreamer_qml LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
@@ -16,18 +16,20 @@ if (NOT ANDROID)
     gstreamer-gl-1.0
   )
 
-  add_library(gst_rtmp_qml SHARED
+  add_library(gstreamer_qml SHARED
+    gstreamer.cpp
+    gstreamer.h
     rtmp_gst_controller.cpp
     rtmp_gst_controller.h
   )
 
-  target_include_directories(gst_rtmp_qml PRIVATE ${GST_INCLUDE_DIRS})
-  target_compile_options(gst_rtmp_qml PRIVATE ${GST_CFLAGS_OTHER})
-  target_link_libraries(gst_rtmp_qml PRIVATE Qt6::Quick ${GST_LIBRARIES})
+  target_include_directories(gstreamer_qml PRIVATE ${GST_INCLUDE_DIRS})
+  target_compile_options(gstreamer_qml PRIVATE ${GST_CFLAGS_OTHER})
+  target_link_libraries(gstreamer_qml PRIVATE Qt6::Quick ${GST_LIBRARIES})
 
   # Create a QML module plugin called "GstRtmp"
-  qt_add_qml_module(gst_rtmp_qml
-    URI GstRtmp
+  qt_add_qml_module(gstreamer_qml
+    URI GStreamer
     VERSION 1.0
     QML_FILES RTMPVideo.qml
     # C++ types are auto-registered because they’re in this target
@@ -37,13 +39,15 @@ endif()
 
 # ===== Android =====
 if (ANDROID)
-  add_library(gst_rtmp_qml SHARED
+  add_library(gstreamer_qml SHARED
+    gstreamer.cpp
+    gstreamer.h
     rtmp_gst_controller.cpp
     rtmp_gst_controller.h
   )
 
-  qt_add_qml_module(gst_rtmp_qml
-    URI GstRtmp
+  qt_add_qml_module(gstreamer_qml
+    URI GStreamer
     VERSION 1.0
     QML_FILES RTMPVideo.qml
   )
@@ -62,7 +66,7 @@ if (ANDROID)
     IMPORTED_LOCATION "${GST_LIBDIR}/libgstreamer_android.so"
   )
 
-  target_include_directories(gst_rtmp_qml PRIVATE
+  target_include_directories(gstreamer_qml PRIVATE
     "${GST_INCDIR}/gstreamer-1.0"
     "${GST_INCDIR}/glib-2.0"
     "${GST_LIBDIR}/glib-2.0/include"
@@ -75,7 +79,7 @@ if (ANDROID)
     "${GST_LIBDIR}/libgstgl-1.0.so"
   )
 
-  target_link_libraries(gst_rtmp_qml PRIVATE Qt6::Quick gstreamer_android ${GST_CORE_LIBS} log android)
+  target_link_libraries(gstreamer_qml PRIVATE Qt6::Quick gstreamer_android ${GST_CORE_LIBS} log android)
 
   # Ensure required plugins are bundled into the APK
   set(ANDROID_EXTRA_LIBS
@@ -86,5 +90,5 @@ if (ANDROID)
     "${GST_LIBDIR}/gstreamer-1.0/libgstflv.so"
     "${GST_LIBDIR}/gstreamer-1.0/libgstrtmp2.so"
   )
-  set_target_properties(gst_rtmp_qml PROPERTIES ANDROID_EXTRA_LIBS "${ANDROID_EXTRA_LIBS}")
+  set_target_properties(gstreamer_qml PROPERTIES ANDROID_EXTRA_LIBS "${ANDROID_EXTRA_LIBS}")
 endif()

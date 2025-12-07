@@ -1,7 +1,6 @@
 import QtQuick
 // The sink’s QML surface:
 import org.freedesktop.gstreamer.Qt6GLVideoItem 1.0
-import GstRtmp 1.0
 
 Item {
     id: root
