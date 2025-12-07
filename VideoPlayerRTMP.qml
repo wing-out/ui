@@ -8,30 +8,20 @@ Rectangle {
 
     property string streamName: ""
 
-    property int portStart: 21935
-    property int portEnd: 21999
-    property int port: portStart
-    property bool foundFreePort: false
-
     property alias audioMuted: audioOutput.muted
     property alias source: mediaPlayer.source
-
-    function urlFor(p) {
-        return `rtmp://0.0.0.0:${p}/${streamName}`;
-    }
-    function tryPort(p) {
-        mediaPlayer.stop();
-        mediaPlayer.source = urlFor(p);
-        mediaPlayer.play();
-    }
+    property alias mediaPlayer: mediaPlayer
+    property alias videoOutput: videoOutput
+    property alias audioOutput: audioOutput
+    property alias muteToggleButton: muteToggleButton
 
     MediaPlayer {
         id: mediaPlayer
-        source: "rtmp://0.0.0.0:" + videoPlayerRTMP.port + "/" + videoPlayerRTMP.streamName
+        source: videoPlayerRTMP.source
         autoPlay: true
         playbackOptions.playbackIntent: PlaybackOptions.LowLatencyStreaming
         playbackOptions.probeSize: 2048
-        playbackOptions.networkTimeoutMs: 500
+        playbackOptions.networkTimeoutMs: 0
 
         videoOutput: videoOutput
         audioOutput: AudioOutput {
@@ -39,21 +29,7 @@ Rectangle {
             muted: true
         }
         onErrorOccurred: (code, msg) => {
-            if (videoPlayerRTMP.foundFreePort) {
-                console.log("onErrorOccurred:", code, " ", msg);
-                return;
-            }
-            if (msg.indexOf("Address already in use") === -1 || msg.indexOf("bind") === -1 || msg.indexOf("listen") === -1) {
-                console.warn("Media error:", code, msg);
-                return;
-            }
-            if (videoPlayerRTMP.port < videoPlayerRTMP.portEnd) {
-                console.log("Port", videoPlayerRTMP.port, "in use, trying next port");
-                videoPlayerRTMP.port += 1;
-                Qt.callLater(() => tryPort(videoPlayerRTMP.port));
-                return;
-            }
-            console.error("No free port in range", videoPlayerRTMP.portStart, "…", videoPlayerRTMP.portEnd);
+            console.log("onErrorOccurred:", code, " ", msg);
         }
         onPlaybackStateChanged: function () {
             console.log("onPlaybackStateChanged: ", mediaPlayer.errorString);
@@ -71,10 +47,10 @@ Rectangle {
 
     }
     ToolButton {
-        id: muteToggle
+        id: muteToggleButton
         anchors.margins: 12
-        anchors.top: parent.top
-        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
         font.pixelSize: 60
         checkable: true
         checked: audioOutput.muted

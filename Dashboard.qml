@@ -712,7 +712,7 @@ Page {
         y: statusBarTop.height
         width: parent.width
         height: parent.width * 9 / 16
-        streamName: "test"
+        source: videoSourceToggle.checked ? "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3" : "rtmp://192.168.0.134:1935/preview/horizontal"
 
         Shape {
             id: overlayGrid
@@ -744,6 +744,24 @@ Page {
                     y: overlayGrid.height
                 }
             }
+        }
+
+        ToolButton {
+            id: videoSourceToggle
+            anchors.margins: 12
+            anchors.top: parent.top
+            anchors.left: parent.left
+            font.pixelSize: 60
+            checkable: true
+            checked: false
+            onToggled: function() {
+                console.log("toggling video source to ", checked ? "raw" : "prod");
+                //imageScreenshot.mediaPlayer.stop();
+                //imageScreenshot.mediaPlayer.play();
+            }
+            text: checked ? "📷" : "🌐"
+            ToolTip.visible: hovered
+            ToolTip.text: checked ? "Switch to prod" : "Switch to raw"
         }
     }
 
