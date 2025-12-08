@@ -712,7 +712,9 @@ Page {
         y: statusBarTop.height
         width: parent.width
         height: parent.width * 9 / 16
-        source: "rtmp://192.168.0.134:1935/preview/horizontal"
+        source: sourcePreview
+        property string sourcePreview: "rtmp://192.168.0.134:1935/preview/horizontal"
+        property string sourceRawCamera: "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3"
 
         Shape {
             id: overlayGrid
@@ -756,9 +758,7 @@ Page {
             checked: false
             onToggled: function() {
                 console.log("toggling video source to ", checked ? "raw" : "prod");
-                imageScreenshot.stop();
-                imageScreenshot.setSource(videoSourceToggle.checked ? "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3" : "rtmp://192.168.0.134:1935/preview/horizontal");
-                imageScreenshot.play();
+                imageScreenshot.source = videoSourceToggle.checked ? imageScreenshot.sourceRawCamera : imageScreenshot.sourcePreview;
             }
             text: checked ? "📷" : "🌐"
             ToolTip.visible: hovered
@@ -908,6 +908,21 @@ Page {
                 property int videoBitrate: 0
                 text: "enc: " + (videoBitrate < 0 ? "N/A" : application.formatBandwidth(videoBitrate))
                 color: application.bwColor(videoBitrate, 50000, 1000000, 5000000)
+                onVideoBitrateChanged: {
+                    if (videoBitrate <= 0) {
+                        return;
+                    }
+                    var isPreviewEnabled = imageScreenshot.source === imageScreenshot.sourcePreview;
+                    var lowBitRateSource = "/tmp/low_bitrate.flv";
+                    if (videoBitrate < 2000000) {
+                        imageScreenshot.sourcePreview = lowBitRateSource;
+                    } else {
+                        imageScreenshot.sourcePreview = "rtmp://192.168.0.134:1935/preview/horizontal"
+                    }
+                    if (isPreviewEnabled) {
+                        imageScreenshot.source = imageScreenshot.sourcePreview;
+                    }
+                }
             }
 
             Text {

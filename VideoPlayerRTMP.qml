@@ -35,6 +35,12 @@ Rectangle {
             muted: true
         }
 
+        onSourceChanged: function (newSource) {
+            console.log("onSourceChanged: ", newSource);
+            mediaPlayer.stop();
+            mediaPlayer.setSource(newSource);
+            mediaPlayer.play();
+        }
         onErrorOccurred: function (code, msg) {
             //console.log("onErrorOccurred:", code, " ", msg);
             if (!retryTimer.running)
