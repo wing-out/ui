@@ -15,10 +15,16 @@ Rectangle {
     property alias audioOutput: audioOutput
     property alias muteToggleButton: muteToggleButton
 
+    function stop() { mediaPlayer.stop() }
+    function play() { mediaPlayer.play() }
+    function pause() { mediaPlayer.pause() }
+    function setSource(newSource) { mediaPlayer.setSource(newSource) }
+
     MediaPlayer {
         id: mediaPlayer
         source: videoPlayerRTMP.source
         autoPlay: true
+        playbackRate: audioOutput.muted ? 10.0 : 1.0
         playbackOptions.playbackIntent: PlaybackOptions.LowLatencyStreaming
         playbackOptions.probeSize: 2048
         playbackOptions.networkTimeoutMs: 0
@@ -28,14 +34,19 @@ Rectangle {
             id: audioOutput
             muted: true
         }
-        onErrorOccurred: (code, msg) => {
-            console.log("onErrorOccurred:", code, " ", msg);
+
+        onErrorOccurred: function (code, msg) {
+            //console.log("onErrorOccurred:", code, " ", msg);
+            if (!retryTimer.running)
+                retryTimer.start()
         }
-        onPlaybackStateChanged: function () {
-            console.log("onPlaybackStateChanged: ", mediaPlayer.errorString);
+        onPlaybackStateChanged: {
+            console.log("onPlaybackStateChanged: ", mediaPlayer.playbackState);
+            if (playbackState === MediaPlayer.PlayingState && retryTimer.running)
+                retryTimer.stop()
         }
         onPlayingChanged: function () {
-            console.log("onPlayingChanged: ", mediaPlayer.errorString);
+            console.log("onPlayingChanged: ", mediaPlayer.playing);
         }
         Component.onCompleted: function () {
             console.log("MediaPlayer source: ", mediaPlayer.source);
@@ -58,5 +69,25 @@ Rectangle {
         text: checked ? "🔇" : "🔊"
         ToolTip.visible: hovered
         ToolTip.text: checked ? "Unmute" : "Mute"
+    }
+
+    Timer {
+        id: retryTimer
+        interval: 100
+        repeat: true
+        running: false
+        triggeredOnStart: true
+        onTriggered: {
+            if (mediaPlayer.playbackState === MediaPlayer.PlayingState ||
+                mediaPlayer.mediaStatus === MediaPlayer.LoadingMedia) {
+                return;
+            }
+            mediaPlayer.stop()
+            var source = mediaPlayer.source
+            mediaPlayer.setSource("")
+            mediaPlayer.setSource(source)
+            //console.log("Retrying stream: ", source);
+            mediaPlayer.play()
+        }
     }
 }

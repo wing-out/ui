@@ -11,9 +11,11 @@ static void filteredQtHandler(QtMsgType type,
                               const QMessageLogContext &ctx,
                               const QString &msg)
 {
-    // Drop only the noisy connection-refused messages
     if (msg.contains("QAbstractSocket::ConnectionRefusedError")) {
-        return; // swallow it
+        return;
+    }
+    if (msg.contains("Could not open media")) {
+        return;
     }
 
     // Forward everything else to the previous handler (or stderr)

@@ -712,7 +712,7 @@ Page {
         y: statusBarTop.height
         width: parent.width
         height: parent.width * 9 / 16
-        source: videoSourceToggle.checked ? "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3" : "rtmp://192.168.0.134:1935/preview/horizontal"
+        source: "rtmp://192.168.0.134:1935/preview/horizontal"
 
         Shape {
             id: overlayGrid
@@ -756,8 +756,9 @@ Page {
             checked: false
             onToggled: function() {
                 console.log("toggling video source to ", checked ? "raw" : "prod");
-                //imageScreenshot.mediaPlayer.stop();
-                //imageScreenshot.mediaPlayer.play();
+                imageScreenshot.stop();
+                imageScreenshot.setSource(videoSourceToggle.checked ? "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3" : "rtmp://192.168.0.134:1935/preview/horizontal");
+                imageScreenshot.play();
             }
             text: checked ? "📷" : "🌐"
             ToolTip.visible: hovered
@@ -881,7 +882,7 @@ Page {
                 horizontalAlignment: Text.AlignLeft
                 property int inputFPS: 0
                 text: "in-FPS: " + (inputFPS < 0 ? "N/A" : inputFPS)
-                color: application.fpsColor(inputFPS, 25, 27, 29)
+                color: application.fpsColor(inputFPS, 15, 21, 24)
             }
 
             Text {
