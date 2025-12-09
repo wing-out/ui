@@ -14,11 +14,20 @@ Rectangle {
     property alias videoOutput: videoOutput
     property alias audioOutput: audioOutput
     property alias muteToggleButton: muteToggleButton
+    property alias lastProgressAt: mediaPlayer.lastProgressAt
 
-    function stop() { mediaPlayer.stop() }
-    function play() { mediaPlayer.play() }
-    function pause() { mediaPlayer.pause() }
-    function setSource(newSource) { mediaPlayer.setSource(newSource) }
+    function stop() {
+        mediaPlayer.stop();
+    }
+    function play() {
+        mediaPlayer.play();
+    }
+    function pause() {
+        mediaPlayer.pause();
+    }
+    function setSource(newSource) {
+        mediaPlayer.setSource(newSource);
+    }
 
     MediaPlayer {
         id: mediaPlayer
@@ -28,6 +37,8 @@ Rectangle {
         playbackOptions.playbackIntent: PlaybackOptions.LowLatencyStreaming
         playbackOptions.probeSize: 2048
         playbackOptions.networkTimeoutMs: 0
+
+        property var lastProgressAt: Date.now()
 
         videoOutput: videoOutput
         audioOutput: AudioOutput {
@@ -44,15 +55,33 @@ Rectangle {
         onErrorOccurred: function (code, msg) {
             //console.log("onErrorOccurred:", code, " ", msg);
             if (!retryTimer.running)
-                retryTimer.start()
+                retryTimer.start();
+        }
+        onMediaStatusChanged: {
+            console.log("onMediaStatusChanged: ", mediaPlayer.mediaStatus);
         }
         onPlaybackStateChanged: {
             console.log("onPlaybackStateChanged: ", mediaPlayer.playbackState);
             if (playbackState === MediaPlayer.PlayingState && retryTimer.running)
-                retryTimer.stop()
+                retryTimer.stop();
         }
         onPlayingChanged: function () {
             console.log("onPlayingChanged: ", mediaPlayer.playing);
+        }
+        onPositionChanged: function () {
+            mediaPlayer.lastProgressAt = Date.now();
+        }
+        onDurationChanged: function () {
+            console.log("onDurationChanged: ", mediaPlayer.duration);
+        }
+        onBufferProgressChanged: function () {
+            console.log("onBufferProgressChanged: ", mediaPlayer.bufferProgress);
+        }
+        onPlaybackRateChanged: function () {
+            console.log("onPlaybackRateChanged: ", mediaPlayer.playbackRate);
+        }
+        onMetaDataChanged: function () {
+            console.log("onMetaDataChanged: ", mediaPlayer.metaData);
         }
         Component.onCompleted: function () {
             console.log("MediaPlayer source: ", mediaPlayer.source);
@@ -61,7 +90,6 @@ Rectangle {
     VideoOutput {
         id: videoOutput
         anchors.fill: parent
-
     }
     ToolButton {
         id: muteToggleButton
@@ -84,16 +112,18 @@ Rectangle {
         running: false
         triggeredOnStart: true
         onTriggered: {
-            if (mediaPlayer.playbackState === MediaPlayer.PlayingState ||
-                mediaPlayer.mediaStatus === MediaPlayer.LoadingMedia) {
+            var now = Date.now();
+            if ((mediaPlayer.playbackState === MediaPlayer.PlayingState || mediaPlayer.mediaStatus === MediaPlayer.LoadingMedia) && (now - mediaPlayer.lastProgressAt < 1000)) {
                 return;
             }
-            mediaPlayer.stop()
-            var source = mediaPlayer.source
-            mediaPlayer.setSource("")
-            mediaPlayer.setSource(source)
+            console.log("RetryTimer triggered: playbackState=", mediaPlayer.playbackState, " mediaStatus=", mediaPlayer.mediaStatus, " lastProgressAt=", mediaPlayer.lastProgressAt, " now=", now);
+            mediaPlayer.lastProgressAt = now;
+            mediaPlayer.stop();
+            var source = mediaPlayer.source;
+            mediaPlayer.setSource("");
+            mediaPlayer.setSource(source);
             //console.log("Retrying stream: ", source);
-            mediaPlayer.play()
+            mediaPlayer.play();
         }
     }
 }
