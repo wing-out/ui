@@ -38,7 +38,6 @@ ApplicationWindow {
         TabButton {
             text: "Cameras"
         }
-        //TabButton { text: "Settings" }
     }
 
     StackLayout {
@@ -61,7 +60,7 @@ ApplicationWindow {
 
     Button {
         id: lockButton
-        visible: !application.locked
+        visible: !application.locked && stack.currentIndex === 0
         text: "🔒"
         anchors.top: parent.top
         anchors.right: parent.right

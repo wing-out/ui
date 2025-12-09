@@ -47,18 +47,16 @@ Rectangle {
         }
 
         onSourceChanged: function (newSource) {
-            console.log("onSourceChanged: ", newSource);
+            //console.log("onSourceChanged: ", newSource);
             mediaPlayer.stop();
             mediaPlayer.setSource(newSource);
             mediaPlayer.play();
         }
         onErrorOccurred: function (code, msg) {
             //console.log("onErrorOccurred:", code, " ", msg);
-            if (!retryTimer.running)
-                retryTimer.start();
         }
         onMediaStatusChanged: {
-            console.log("onMediaStatusChanged: ", mediaPlayer.mediaStatus);
+            //console.log("onMediaStatusChanged: ", mediaPlayer.mediaStatus);
         }
         onPlaybackStateChanged: {
             console.log("onPlaybackStateChanged: ", mediaPlayer.playbackState);
@@ -81,7 +79,7 @@ Rectangle {
             console.log("onPlaybackRateChanged: ", mediaPlayer.playbackRate);
         }
         onMetaDataChanged: function () {
-            console.log("onMetaDataChanged: ", mediaPlayer.metaData);
+            //console.log("onMetaDataChanged: ", mediaPlayer.metaData);
         }
         Component.onCompleted: function () {
             console.log("MediaPlayer source: ", mediaPlayer.source);
@@ -111,14 +109,14 @@ Rectangle {
         id: retryTimer
         interval: 100
         repeat: true
-        running: false
+        running: true
         triggeredOnStart: true
         onTriggered: {
             var now = Date.now();
             if ((mediaPlayer.playbackState === MediaPlayer.PlayingState || mediaPlayer.mediaStatus === MediaPlayer.LoadingMedia) && (now - mediaPlayer.lastProgressAt < 1000)) {
                 return;
             }
-            console.log("RetryTimer triggered: playbackState=", mediaPlayer.playbackState, " mediaStatus=", mediaPlayer.mediaStatus, " lastProgressAt=", mediaPlayer.lastProgressAt, " now=", now);
+            //console.log("RetryTimer triggered: playbackState=", mediaPlayer.playbackState, " mediaStatus=", mediaPlayer.mediaStatus, " lastProgressAt=", mediaPlayer.lastProgressAt, " now=", now);
             mediaPlayer.lastProgressAt = now;
             mediaPlayer.stop();
             var source = mediaPlayer.source;
