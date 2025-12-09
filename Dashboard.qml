@@ -4,7 +4,6 @@ import QtQuick.Controls.Material
 import QtQuick.Shapes
 import QtGrpc
 import Platform
-import QtMultimedia
 
 import streamd as StreamD
 import ffstream_grpc as FFStream
@@ -706,7 +705,6 @@ Page {
         return '#00FF00';
     }
 
-
     VideoPlayerRTMP{
         id: imageScreenshot
         y: statusBarTop.height
@@ -753,9 +751,11 @@ Page {
             anchors.margins: 12
             anchors.bottom: parent.bottom
             anchors.right: parent.right
-            font.pixelSize: 60
+            font.pixelSize: 40
             checkable: true
             checked: false
+            property real defaultOpacity: 0.6
+            opacity: hovered ? 1.0 : defaultOpacity
             onToggled: function() {
                 console.log("toggling video source to ", checked ? "raw" : "prod");
                 imageScreenshot.source = videoSourceToggle.checked ? imageScreenshot.sourceRawCamera : imageScreenshot.sourcePreview;

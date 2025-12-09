@@ -12,6 +12,7 @@ set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
 set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
+set(QT_NO_PRIVATE_MODULE_WARNING ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Bluetooth)
 find_package(Qt6 REQUIRED COMPONENTS Core)
@@ -58,16 +59,23 @@ qt_add_qml_module(wingout
     VERSION 1.0
     QML_FILES
     Cameras.qml
-    Dashboard.qml
-    Main.qml
+    CamerasBuiltin.qml
     ChatView.qml
+    Dashboard.qml
+    LockState.qml
+    Main.qml
     Settings.qml
+    SwipeLockOverlay.qml
     Timers.qml
     VideoPlayerRTMP.qml
     RESOURCES
     ${FONT_PATH}
     audio/chat_message_add.wav
     android/AndroidManifest.xml android/build.gradle android/res/values/libs.xml android/res/xml/qtprovider_paths.xml
+)
+
+set_source_files_properties(LockState.qml
+    PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 
 qt_add_protobuf(DXProducer.ChatWebHook
@@ -225,6 +233,8 @@ target_link_libraries(FFStream
     Qt6::Core
     Qt6::Quick
 )
+
+#add_subdirectory(LibAV)
 
 if(ANDROID)
     include(FetchContent)

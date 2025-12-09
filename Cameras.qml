@@ -22,4 +22,9 @@ Page {
             }
         }
     }
+
+    CamerasBuiltin {
+        id: builtinCameraSettings
+        anchors.fill: parent
+    }
 }

@@ -96,9 +96,11 @@ Rectangle {
         anchors.margins: 12
         anchors.top: parent.top
         anchors.left: parent.left
-        font.pixelSize: 60
+        font.pixelSize: 40
         checkable: true
         checked: audioOutput.muted
+        property real defaultOpacity: 0.5
+        opacity: hovered ? 1.0 : defaultOpacity
         onToggled: audioOutput.muted = checked
         text: checked ? "🔇" : "🔊"
         ToolTip.visible: hovered
