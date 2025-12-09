@@ -41,7 +41,6 @@ Dialog {
 
     contentItem: ColumnLayout {
         spacing: 8
-        padding: 12
 
         RowLayout {
             Layout.fillWidth: true

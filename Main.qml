@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
+import QtQuick.Layouts
 import Platform
 
 ApplicationWindow {
@@ -29,7 +30,7 @@ ApplicationWindow {
 
     header: TabBar {
         id: tabBar
-        currentIndex: stack.currentIndex
+        currentIndex: 0
 
         TabButton {
             text: "Dashboard"
@@ -38,21 +39,18 @@ ApplicationWindow {
             text: "Cameras"
         }
         //TabButton { text: "Settings" }
-
-        onCurrentIndexChanged: stack.currentIndex = currentIndex
     }
 
-    SwipeView {
+    StackLayout {
         id: stack
         anchors.fill: parent
-        currentIndex: 0
-        Loader {
-            source: "Dashboard.qml"
+        currentIndex: tabBar.currentIndex
+        Dashboard {
+            id: dashboardPage
         }
-        Loader {
-            source: "Cameras.qml"
+        Cameras {
+            id: camerasPage
         }
-        //Loader { source: "Settings.qml" }
     }
 
     SwipeLockOverlay {
