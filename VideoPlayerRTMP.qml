@@ -66,8 +66,8 @@ Rectangle {
     ToolButton {
         id: muteToggleButton
         anchors.margins: 12
-        anchors.bottom: parent.bottom
-        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.left: parent.left
         font.pixelSize: 60
         checkable: true
         checked: audioOutput.muted

@@ -751,8 +751,8 @@ Page {
         ToolButton {
             id: videoSourceToggle
             anchors.margins: 12
-            anchors.top: parent.top
-            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
             font.pixelSize: 60
             checkable: true
             checked: false
