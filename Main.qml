@@ -14,6 +14,10 @@ ApplicationWindow {
     title: qsTr("Wing Out")
 
     property bool locked: false
+    readonly property bool isLandscape: width > height
+    readonly property bool isMobileOs: Qt.platform.os === "android" || Qt.platform.os === "ios"
+
+    visibility: isLandscape && isMobileOs ? Window.FullScreen : Window.AutomaticVisibility
 
     onClosing: {
         close.accepted = false;
@@ -31,6 +35,7 @@ ApplicationWindow {
     header: TabBar {
         id: tabBar
         currentIndex: 0
+        visible: !application.isLandscape
 
         TabButton {
             text: "Dashboard"

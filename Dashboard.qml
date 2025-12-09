@@ -9,7 +9,7 @@ import streamd as StreamD
 import ffstream_grpc as FFStream
 
 Page {
-    id: application
+    id: dashboard
     Material.theme: Material.Dark
     Material.accent: Material.Purple
     title: qsTr("Dashboard")
@@ -19,6 +19,7 @@ Page {
     property var pingCurrentID: 0
     property var pingTimestamps: ({})
     property var pingInProgress: false
+    readonly property bool isLandscape: width > height
 
     Component.onCompleted: {
         subscribeToChatMessages();
@@ -487,8 +488,9 @@ Page {
         x: 0
         y: 0
         width: parent.width
-        height: 40
+        height: dashboard.isLandscape ? 0 : 40
         spacing: 10
+        visible: !dashboard.isLandscape
 
         Text {
             id: youtubeCounter
@@ -707,7 +709,7 @@ Page {
 
     VideoPlayerRTMP{
         id: imageScreenshot
-        y: statusBarTop.height
+        anchors.top: statusBarTop.bottom
         width: parent.width
         height: parent.width * 9 / 16
         source: sourcePreview
@@ -787,7 +789,7 @@ Page {
                 font.bold: true
                 property int quality: -32768
                 text: quality > -32768 ? "◉" : ""
-                color: application.channelQualityColor(quality)
+                color: dashboard.channelQualityColor(quality)
             }
             Text {
                 id: channel2Quality
@@ -797,7 +799,7 @@ Page {
                 font.bold: true
                 property int quality: -32768
                 text: quality > -32768 ? "◉" : ""
-                color: application.channelQualityColor(quality)
+                color: dashboard.channelQualityColor(quality)
             }
             Text {
                 id: channel3Quality
@@ -807,7 +809,7 @@ Page {
                 font.bold: true
                 property int quality: -32768
                 text: quality > -32768 ? "◉" : ""
-                color: application.channelQualityColor(quality)
+                color: dashboard.channelQualityColor(quality)
             }
 
             Text {
@@ -818,8 +820,8 @@ Page {
                 font.bold: true
                 horizontalAlignment: Text.AlignRight
                 property int sendingLatency: 0
-                text: (sendingLatency < 0 ? "N/A" : application.formatDuration(sendingLatency)) + "📱"
-                color: application.pingColorFromMS(sendingLatency, 680, 1500)
+                text: (sendingLatency < 0 ? "N/A" : dashboard.formatDuration(sendingLatency)) + "📱"
+                color: dashboard.pingColorFromMS(sendingLatency, 680, 1500)
             }
 
             Text {
@@ -830,8 +832,8 @@ Page {
                 font.bold: true
                 horizontalAlignment: Text.AlignHCenter
                 property int rttMS: -1
-                text: rttMS < 0 ? "no data" : "⇒" + application.formatDuration(rttMS) + "⇒"
-                color: application.pingColorFromMS(rttMS, 100, 1000)
+                text: rttMS < 0 ? "no data" : "⇒" + dashboard.formatDuration(rttMS) + "⇒"
+                color: dashboard.pingColorFromMS(rttMS, 100, 1000)
 
                 Component.onCompleted: function () {
                     console.log("pingStatus: x,y,w,h: ", x, y, width, height);
@@ -849,8 +851,8 @@ Page {
                 property int playerLagMin: 0
                 property int playerLagMax: 0
                 //text: "💻" + (playerLagMin < 0 || playerLagMax < 0 ? "N/A" : application.formatDuration(playerLagMin) + " -- " + application.formatDuration(playerLagMax))
-                text: "💻" + (playerLagMin < 0 || playerLagMax < 0 ? "N/A" : application.formatDuration(playerLagMin))
-                color: application.pingColor2FromMS(playerLagMin, 300, 500, 1000, 5000, 10000, 60000)
+                text: "💻" + (playerLagMin < 0 || playerLagMax < 0 ? "N/A" : dashboard.formatDuration(playerLagMin))
+                color: dashboard.pingColor2FromMS(playerLagMin, 300, 500, 1000, 5000, 10000, 60000)
             }
 
             Text {
@@ -882,7 +884,7 @@ Page {
                 horizontalAlignment: Text.AlignLeft
                 property int inputFPS: 0
                 text: "in-FPS: " + (inputFPS < 0 ? "N/A" : inputFPS)
-                color: application.fpsColor(inputFPS, 15, 21, 24)
+                color: dashboard.fpsColor(inputFPS, 15, 21, 24)
             }
 
             Text {
@@ -906,8 +908,8 @@ Page {
                 font.pixelSize: 20
                 font.bold: true
                 property int videoBitrate: 0
-                text: "enc: " + (videoBitrate < 0 ? "N/A" : application.formatBandwidth(videoBitrate))
-                color: application.bwColor(videoBitrate, 50000, 1000000, 5000000)
+                text: "enc: " + (videoBitrate < 0 ? "N/A" : dashboard.formatBandwidth(videoBitrate))
+                color: dashboard.bwColor(videoBitrate, 50000, 1000000, 5000000)
                 onVideoBitrateChanged: {
                     if (videoBitrate <= 0) {
                         return;
@@ -935,8 +937,8 @@ Page {
                 property string ssid: ""
                 property string bssid: ""
                 property int rssi: -32768
-                text: application.formatSSID(ssid, bssid)
-                color: application.rssiColor(rssi)
+                text: dashboard.formatSSID(ssid, bssid)
+                color: dashboard.rssiColor(rssi)
             }
         }
 
