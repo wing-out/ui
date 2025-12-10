@@ -35,10 +35,12 @@ Rectangle {
         autoPlay: true
         playbackRate: audioOutput.muted ? 10.0 : 1.0
         playbackOptions.playbackIntent: PlaybackOptions.LowLatencyStreaming
-        playbackOptions.probeSize: 2048
+        playbackOptions.probeSize: -1
         playbackOptions.networkTimeoutMs: 0
 
         property var lastProgressAt: Date.now()
+        property var lastRestartAt: 0
+        property var started: false
 
         videoOutput: videoOutput
         audioOutput: AudioOutput {
@@ -60,14 +62,17 @@ Rectangle {
         }
         onPlaybackStateChanged: {
             console.log("onPlaybackStateChanged: ", mediaPlayer.playbackState);
-            if (playbackState === MediaPlayer.PlayingState && retryTimer.running)
-                retryTimer.stop();
         }
         onPlayingChanged: function () {
             console.log("onPlayingChanged: ", mediaPlayer.playing);
+            if (!mediaPlayer.playing) {
+                mediaPlayer.started = false;
+            }
         }
         onPositionChanged: function () {
+            //console.log("onPositionChanged: ", mediaPlayer.position);
             mediaPlayer.lastProgressAt = Date.now();
+            mediaPlayer.started = true;
         }
         onDurationChanged: function () {
             console.log("onDurationChanged: ", mediaPlayer.duration);
@@ -108,16 +113,21 @@ Rectangle {
     Timer {
         id: retryTimer
         interval: 100
-        repeat: true
         running: true
+        repeat: true
         triggeredOnStart: true
         onTriggered: {
             var now = Date.now();
+            //console.log("RetryTimer check: playbackState=", mediaPlayer.playbackState, " mediaStatus=", mediaPlayer.mediaStatus, " lastProgressAt=", mediaPlayer.lastProgressAt, " now=", now);
             if ((mediaPlayer.playbackState === MediaPlayer.PlayingState || mediaPlayer.mediaStatus === MediaPlayer.LoadingMedia) && (now - mediaPlayer.lastProgressAt < 1000)) {
+                return;
+            }
+            if ((!mediaPlayer.started) && (now - mediaPlayer.lastRestartAt < 10000)) {
                 return;
             }
             //console.log("RetryTimer triggered: playbackState=", mediaPlayer.playbackState, " mediaStatus=", mediaPlayer.mediaStatus, " lastProgressAt=", mediaPlayer.lastProgressAt, " now=", now);
             mediaPlayer.lastProgressAt = now;
+            mediaPlayer.lastRestartAt = now;
             mediaPlayer.stop();
             var source = mediaPlayer.source;
             mediaPlayer.setSource("");

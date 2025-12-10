@@ -1,30 +1,28 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #ifdef Q_OS_ANDROID
-#include <QtCore/private/qandroidextras_p.h>
 #include "android_permissions_wifi.cpp"
+#include <QtCore/private/qandroidextras_p.h>
 #endif
 
 static QtMessageHandler g_prevHandler = nullptr;
 
-static void filteredQtHandler(QtMsgType type,
-                              const QMessageLogContext &ctx,
-                              const QString &msg)
-{
-    if (msg.contains("QAbstractSocket::ConnectionRefusedError")) {
-        return;
-    }
-    if (msg.contains("Could not open media")) {
-        return;
-    }
+static void filteredQtHandler(QtMsgType type, const QMessageLogContext &ctx,
+                              const QString &msg) {
+  if (msg.contains("QAbstractSocket::ConnectionRefusedError")) {
+    return;
+  }
+  if (msg.contains("Could not open media")) {
+    return;
+  }
 
-    // Forward everything else to the previous handler (or stderr)
-    if (g_prevHandler) {
-        g_prevHandler(type, ctx, msg);
-    } else {
-        QByteArray local = msg.toLocal8Bit();
-        std::fprintf(stderr, "%s\n", local.constData());
-    }
+  // Forward everything else to the previous handler (or stderr)
+  if (g_prevHandler) {
+    g_prevHandler(type, ctx, msg);
+  } else {
+    QByteArray local = msg.toLocal8Bit();
+    std::fprintf(stderr, "%s\n", local.constData());
+  }
 }
 
 int app(int argc, char *argv[]) {
@@ -47,15 +45,15 @@ int app(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
 #ifdef Q_OS_ANDROID
   if (argc <= 1) {
-      return app(argc, argv);
+    return app(argc, argv);
   }
-  
+
   if (argc > 1 && strcmp(argv[1], "-service") == 0) {
-      qDebug() << "Service starting with from the same .so file";
-      QAndroidService app(argc, argv);
-      return app.exec();
+    qDebug() << "Service starting with from the same .so file";
+    QAndroidService app(argc, argv);
+    return app.exec();
   }
-  
+
   qWarning() << "Unrecognized command line argument";
   return -1;
 #else
