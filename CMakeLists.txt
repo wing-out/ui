@@ -30,6 +30,7 @@ find_package(Qt6 REQUIRED COMPONENTS Protobuf)
 find_package(Qt6 REQUIRED COMPONENTS ProtobufTools)
 find_package(Qt6 REQUIRED COMPONENTS ProtobufQuick)
 find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Qml)
 find_package(Qt6 REQUIRED COMPONENTS TextToSpeech)
 
 qt_standard_project_setup(REQUIRES 6.10)
