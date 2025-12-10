@@ -84,4 +84,4 @@ CMakeLists.txt.user*
 /build*/
 /android/.gradle
 /.cache
-
+/keystores

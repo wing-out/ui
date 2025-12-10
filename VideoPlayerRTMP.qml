@@ -43,10 +43,7 @@ Rectangle {
         property var started: false
 
         videoOutput: videoOutput
-        audioOutput: AudioOutput {
-            id: audioOutput
-            muted: true
-        }
+        audioOutput: audioOutput
 
         onSourceChanged: function (newSource) {
             //console.log("onSourceChanged: ", newSource);
@@ -55,7 +52,7 @@ Rectangle {
             mediaPlayer.play();
         }
         onErrorOccurred: function (code, msg) {
-            //console.log("onErrorOccurred:", code, " ", msg);
+        //console.log("onErrorOccurred:", code, " ", msg);
         }
         onMediaStatusChanged: {
             //console.log("onMediaStatusChanged: ", mediaPlayer.mediaStatus);
@@ -84,16 +81,22 @@ Rectangle {
             console.log("onPlaybackRateChanged: ", mediaPlayer.playbackRate);
         }
         onMetaDataChanged: function () {
-            //console.log("onMetaDataChanged: ", mediaPlayer.metaData);
+        //console.log("onMetaDataChanged: ", mediaPlayer.metaData);
         }
         Component.onCompleted: function () {
             console.log("MediaPlayer source: ", mediaPlayer.source);
         }
     }
+
     VideoOutput {
         id: videoOutput
         anchors.fill: parent
     }
+    AudioOutput {
+        id: audioOutput
+        muted: true
+    }
+
     ToolButton {
         id: muteToggleButton
         anchors.margins: 12
