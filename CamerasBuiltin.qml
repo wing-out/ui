@@ -1,14 +1,28 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import StreamingSettingsController
 
 ColumnLayout {
     spacing: 8
+
+    StreamingSettingsController {
+        id: settingsController
+
+        onSettingsSaved: function(filePath) {
+            console.log("Settings saved to:", filePath)
+        }
+
+        onSaveFailed: function(filePath, errorString) {
+            console.warn("Failed to save settings to", filePath, "error:", errorString)
+        }
+    }
 
     RowLayout {
         Layout.fillWidth: true
 
         SpinBox {
+            id: widthSpin
             Layout.fillWidth: true
             font.pointSize: 20
             from: 160
@@ -27,6 +41,7 @@ ColumnLayout {
         }
 
         SpinBox {
+            id: heightSpin
             Layout.fillWidth: true
             font.pointSize: 20
             from: 120
@@ -48,6 +63,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignVCenter
         }
         SpinBox {
+            id: fpsSpin
             Layout.fillWidth: true
             font.pointSize: 20
             from: 5
@@ -66,6 +82,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignVCenter
         }
         SpinBox {
+            id: bitrateSpin
             Layout.fillWidth: true
             font.pointSize: 20
             from: 256
@@ -84,6 +101,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignVCenter
         }
         ComboBox {
+            id: cameraCombo
             Layout.fillWidth: true
             font.pointSize: 20
             model: ["Front", "Back"]
@@ -92,10 +110,23 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
+
         Button {
             Layout.fillWidth: true
             font.pointSize: 20
             text: "Activate"
+
+            onClicked: {
+                const ok = settingsController.saveSettings(
+                    widthSpin.value,
+                    heightSpin.value,
+                    fpsSpin.value,
+                    bitrateSpin.value,
+                    cameraCombo.currentText
+                )
+                console.log("saveSettings returned:", ok,
+                            "path:", settingsController.settingsFilePath)
+            }
         }
     }
 }
