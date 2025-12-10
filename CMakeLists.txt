@@ -179,11 +179,29 @@ qt_add_qml_module(Platform
     ${CMAKE_CURRENT_BINARY_DIR}/Platform/
 )
 
-
 target_link_libraries(Platform
     PRIVATE
     Qt6::CorePrivate
 )
+
+#add_subdirectory(LibAV)
+#
+#qt_add_qml_module(StreamingController
+#    URI StreamingController
+#    VERSION 1.0
+#    SOURCES
+#    streaming_controller.h streaming_controller.cpp
+#    OUTPUT_DIRECTORY
+#    ${CMAKE_CURRENT_BINARY_DIR}/StreamingController/
+#)
+#
+#target_link_libraries(StreamingController
+#    PRIVATE
+#    LibAV
+#    Qt6::Core
+#    Qt6::Gui
+#    Qt6::Multimedia
+#)
 
 qt_add_qml_module(RemoteCameraController
     URI RemoteCameraController
@@ -236,8 +254,6 @@ target_link_libraries(FFStream
     Qt6::Core
     Qt6::Quick
 )
-
-#add_subdirectory(LibAV)
 
 if(ANDROID)
     include(FetchContent)

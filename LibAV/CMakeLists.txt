@@ -9,17 +9,17 @@ qt_standard_project_setup(REQUIRES 6.10)
 
 set(LIBAV_SOURCES
     encoder.h
-    rtmp_encoder.h
-    rtmp_encoder.cpp
-    encoder_worker.h
-    encoder_worker.cpp
+    encoder_rtmp.h
+    encoder_rtmp.cpp
+    worker_encoder.h
+    worker_encoder.cpp
 )
 
-add_library(libav_stream STATIC
+add_library(LibAV STATIC
     ${LIBAV_SOURCES}
 )
 
-target_link_libraries(libav_stream
+target_link_libraries(LibAV
     PRIVATE
     Qt6::Core # QString, QObject
     Qt6::Gui # QImage
@@ -29,7 +29,7 @@ target_link_libraries(libav_stream
     swscale
 )
 
-target_include_directories(libav_stream
+target_include_directories(LibAV
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
