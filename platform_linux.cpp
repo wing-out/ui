@@ -24,4 +24,13 @@ QList<ChannelQualityInfo> getChannelsQualityInfo() {
   return parseFileWithChannelsQuality("/tmp/quality");
 }
 
+QVariantMap Platform::getSafeAreaInsets() {
+  QVariantMap insets;
+  insets["top"] = 0;
+  insets["bottom"] = 0;
+  insets["left"] = 0;
+  insets["right"] = 0;
+  return insets;
+}
+
 #endif

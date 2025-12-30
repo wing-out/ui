@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
@@ -15,11 +16,26 @@ ApplicationWindow {
 
     property bool locked: false
     readonly property bool isLandscape: width > height
-    readonly property bool isMobileOs: Qt.platform.os === "android" || Qt.platform.os === "ios"
 
-    visibility: isLandscape && isMobileOs ? Window.FullScreen : Window.AutomaticVisibility
+    property var safeAreaInsets: platform.getSafeAreaInsets()
+    onWidthChanged: safeAreaInsets = platform.getSafeAreaInsets()
+    onHeightChanged: safeAreaInsets = platform.getSafeAreaInsets()
 
-    onClosing: {
+    readonly property real safeAreaTop: ((safeAreaInsets && safeAreaInsets.top) || 0) / Screen.devicePixelRatio
+    readonly property real safeAreaBottom: ((safeAreaInsets && safeAreaInsets.bottom) || 0) / Screen.devicePixelRatio
+    readonly property real safeAreaLeft: ((safeAreaInsets && safeAreaInsets.left) || 0) / Screen.devicePixelRatio
+    readonly property real safeAreaRight: ((safeAreaInsets && safeAreaInsets.right) || 0) / Screen.devicePixelRatio
+
+    topPadding: safeAreaTop
+    leftPadding: safeAreaLeft
+    rightPadding: safeAreaRight
+    bottomPadding: safeAreaBottom
+
+    Component.onCompleted: {
+        console.log("Main: ApplicationWindow completed")
+    }
+
+    onClosing: (close) => {
         close.accepted = false;
         application.locked = true;
     }
@@ -32,34 +48,53 @@ ApplicationWindow {
         }
     }
 
-    header: TabBar {
-        id: tabBar
-        currentIndex: 0
-        visible: !application.isLandscape
-
-        TabButton {
-            text: "Dashboard"
-        }
-        TabButton {
-            text: "Cameras"
-        }
-    }
-
-    StackLayout {
-        id: stack
+    ColumnLayout {
         anchors.fill: parent
-        currentIndex: tabBar.currentIndex
-        Dashboard {
-            id: dashboardPage
+        anchors.topMargin: application.topPadding
+        anchors.leftMargin: application.leftPadding
+        anchors.rightMargin: application.rightPadding
+        anchors.bottomMargin: application.bottomPadding
+        spacing: 0
+
+        TabBar {
+            id: tabBar
+            Layout.fillWidth: true
+            currentIndex: 0
+            visible: !application.isLandscape
+
+            TabButton {
+                text: "Dashboard"
+            }
+            TabButton {
+                text: "Cameras"
+            }
+            TabButton {
+                text: "DJI"
+            }
         }
-        Cameras {
-            id: camerasPage
+
+        StackLayout {
+            id: stack
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            currentIndex: tabBar.currentIndex
+            Dashboard {
+                id: dashboardPage
+            }
+            Cameras {
+                id: camerasPage
+            }
+            DJIControl {
+                id: djiControlPage
+                Component.onCompleted: console.log("Main: DJIControl page completed")
+            }
         }
     }
 
     SwipeLockOverlay {
         id: lockOverlay
         locked: application.locked
+        topPadding: application.safeAreaTop
         onUnlockRequested: application.locked = false
     }
 
@@ -67,8 +102,8 @@ ApplicationWindow {
         id: lockButton
         visible: !application.locked && stack.currentIndex === 0
         text: "🔒"
-        anchors.top: parent.top
-        anchors.right: parent.right
+        anchors.top: stack.top
+        anchors.right: stack.right
         anchors.margins: 16
         font.pixelSize: 40
         property real defaultOpacity: 0.7

@@ -1,3 +1,18 @@
 [submodule "import/gnu-freefont"]
 	path = import/gnu-freefont
 	url = https://github.com/zrajm/gnu-freefont
+[submodule "import/libdji"]
+	path = import/libdji
+	url = https://github.com/xaionaro/libdji
+[submodule "import/streamctl"]
+	path = import/streamctl
+	url = https://github.com/xaionaro-go/streamctl
+[submodule "import/player"]
+	path = import/player
+	url = https://github.com/xaionaro-go/player
+[submodule "import/ffstream"]
+	path = import/ffstream
+	url = https://github.com/xaionaro-go/ffstream
+[submodule "import/avpipeline"]
+	path = import/avpipeline
+	url = https://github.com/xaionaro-go/avpipeline

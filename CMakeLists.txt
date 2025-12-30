@@ -2,38 +2,54 @@ cmake_minimum_required(VERSION 3.16)
 
 project(wingout VERSION 0.1 LANGUAGES CXX)
 
+
 #set(SANITIZER_FLAGS "-fsanitize=address -fsanitize-recover=address")
 set(DEBUG_FLAGS "-fno-omit-frame-pointer -ggdb3")
 set(QT_QML_GENERATE_QMLLS_INI ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_C_COMPILER_LAUNCHER ccache)
-set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
 set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
 set(QT_NO_PRIVATE_MODULE_WARNING ON)
-if(ANDROID AND CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(QT_ANDROID_SIGN_APK ON)
+if(ANDROID)
+    set(QT_ANDROID_BUILD_ALL_ABIS ON)
+    set(QT_ANDROID_ABIS arm64-v8a)
+    set(CMAKE_ANDROID_SDK $ENV{ANDROID_SDK_ROOT})
+    set(CMAKE_ANDROID_NDK $ENV{ANDROID_NDK_ROOT})
+    set(CMAKE_ANDROID_STL_TYPE c++_shared)
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(QT_ANDROID_SIGN_APK ON)
+    endif()
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Bluetooth)
-find_package(Qt6 REQUIRED COMPONENTS Core)
-find_package(Qt6 REQUIRED COMPONENTS CorePrivate)
-find_package(Qt6 REQUIRED COMPONENTS Concurrent)
-find_package(Qt6 REQUIRED COMPONENTS Connectivity)
-find_package(Qt6 REQUIRED COMPONENTS Grpc)
-find_package(Qt6 REQUIRED COMPONENTS GrpcTools)
-find_package(Qt6 REQUIRED COMPONENTS GrpcQuick)
-find_package(Qt6 REQUIRED COMPONENTS Multimedia)
-find_package(Qt6 REQUIRED COMPONENTS Protobuf)
-find_package(Qt6 REQUIRED COMPONENTS ProtobufTools)
-find_package(Qt6 REQUIRED COMPONENTS ProtobufQuick)
-find_package(Qt6 REQUIRED COMPONENTS Quick)
-find_package(Qt6 REQUIRED COMPONENTS Qml)
-find_package(Qt6 REQUIRED COMPONENTS TextToSpeech)
+find_package(Qt6 REQUIRED COMPONENTS
+    Bluetooth
+    Core
+    CorePrivate
+    Concurrent
+    Network
+    Gui
+    Grpc
+    GrpcTools
+    GrpcQuick
+    Multimedia
+    Protobuf
+    ProtobufTools
+    ProtobufQuick
+    Quick
+    Qml
+    TextToSpeech
+    Test
+)
 
-qt_standard_project_setup(REQUIRES 6.10)
+
+qt_standard_project_setup(REQUIRES 6.8)
 
 find_program(FONTFORGE_EXECUTABLE fontforge)
 if(NOT FONTFORGE_EXECUTABLE)
@@ -66,6 +82,7 @@ qt_add_qml_module(wingout
     CamerasBuiltin.qml
     ChatView.qml
     Dashboard.qml
+    DJIControl.qml
     LockState.qml
     Main.qml
     Settings.qml
@@ -104,7 +121,7 @@ add_dependencies(DXProducer.StreamControl
 
 qt_add_protobuf(DXProducer.Player
     PROTO_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/import/streamctl/pkg/streamd/grpc/player/player.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/player/pkg/player/protobuf/player.proto
     OUTPUT_DIRECTORY
     ${CMAKE_CURRENT_BINARY_DIR}/player/
     QML
@@ -130,7 +147,7 @@ qt_add_grpc(DXProducer CLIENT
 
 qt_add_protobuf(AVPipeline.LibAV
     PROTO_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/imports/avpipeline/protobuf/libav.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/avpipeline/protobuf/libav.proto
     OUTPUT_DIRECTORY
     ${CMAKE_CURRENT_BINARY_DIR}/imports/avpipeline/protobuf/
     QML
@@ -138,9 +155,9 @@ qt_add_protobuf(AVPipeline.LibAV
 
 qt_add_protobuf(AVPipeline
     PROTO_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/imports/avpipeline/protobuf/avpipeline.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/avpipeline/protobuf/avpipeline.proto
     PROTO_INCLUDES
-    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/imports/avpipeline/protobuf/
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/avpipeline/protobuf/
     OUTPUT_DIRECTORY
     ${CMAKE_CURRENT_BINARY_DIR}/imports/avpipeline/protobuf/
     QML
@@ -151,7 +168,7 @@ qt_add_protobuf(FFStream
     ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/ffstream.proto
     PROTO_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/
-    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/imports/avpipeline/protobuf/
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/avpipeline/protobuf/
     QML
 )
 
@@ -165,7 +182,7 @@ qt_add_grpc(FFStream CLIENT
     ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/ffstream.proto
     PROTO_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/
-    ${CMAKE_CURRENT_SOURCE_DIR}/import/ffstream/pkg/ffstreamserver/grpc/imports/avpipeline/protobuf/
+    ${CMAKE_CURRENT_SOURCE_DIR}/import/avpipeline/protobuf/
     QML
 )
 
@@ -182,11 +199,14 @@ qt_add_qml_module(Platform
 
 target_link_libraries(Platform
     PRIVATE
+    Qt6::Core
+    Qt6::Qml
     Qt6::CorePrivate
 )
 
 #add_subdirectory(StreamingController)
 add_subdirectory(StreamingSettingsController)
+add_subdirectory(import/libdji libdji)
 
 qt_add_qml_module(RemoteCameraController
     URI RemoteCameraController
@@ -194,9 +214,11 @@ qt_add_qml_module(RemoteCameraController
     SOURCES
     ble_characteristic.h ble_remote_device.h ble_remote_device.cpp ble_service.h
     remote_camera_controller.h remote_camera_controller.cpp
+    dji_controller.h dji_controller.cpp
     OUTPUT_DIRECTORY
     ${CMAKE_CURRENT_BINARY_DIR}/RemoteCameraController/
 )
+
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
@@ -212,9 +234,13 @@ set_target_properties(wingout PROPERTIES
 
 target_link_libraries(RemoteCameraController
     PRIVATE
+    Qt6::Core
+    Qt6::Qml
     Qt6::Bluetooth
-    Qt6::Connectivity
+    dji
+    # Qt6::Connectivity
 )
+
 
 target_link_libraries(DXProducer
     PRIVATE
@@ -269,6 +295,7 @@ target_link_libraries(wingout
     Qt6::Quick
     Qt6::TextToSpeech
     Qt6::Network
+    Qt6::Multimedia
 )
 
 include(GNUInstallDirs)

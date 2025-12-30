@@ -87,3 +87,8 @@ CMakeLists.txt.user*
 /.cache
 /*/.cache
 /keystores
+/.github/instructions/current_summary.md
+*Plugin.cpp
+*Plugin_in.cpp
+*.apk
+/import/gnu-freefont

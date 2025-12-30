@@ -1,7 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #ifdef Q_OS_ANDROID
-#include "android_permissions_wifi.cpp"
+#include "android_permissions.cpp"
 #include <QtCore/private/qandroidextras_p.h>
 #endif
 
@@ -26,11 +26,13 @@ static void filteredQtHandler(QtMsgType type, const QMessageLogContext &ctx,
 }
 
 int app(int argc, char *argv[]) {
+  qDebug() << "Main: Starting app";
   QGuiApplication app(argc, argv);
-  g_prevHandler = qInstallMessageHandler(filteredQtHandler);
+  // g_prevHandler = qInstallMessageHandler(filteredQtHandler);
 
 #ifdef Q_OS_ANDROID
   androidEnsureWifiLocationPermission();
+  androidEnsureBluetoothPermission();
 #endif
 
   QQmlApplicationEngine engine;

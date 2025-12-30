@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QTime>
+#include <QVariantMap>
 #include <QtQml/qqmlengine.h>
 #include <qtmetamacros.h>
 
@@ -46,6 +47,9 @@ public:
 
 // Network:
   Q_INVOKABLE QList<QChannelQualityInfo*> getChannelsQualityInfo();
+
+// UI:
+  Q_INVOKABLE QVariantMap getSafeAreaInsets();
 
 signals:
   void onSignalStrengthChanged(int strength);

@@ -1,45 +1,35 @@
 #ifndef REMOTE_CAMERA_CONTROLLER_H
 #define REMOTE_CAMERA_CONTROLLER_H
 
-#include <QList>
 #include <QObject>
-#include <QQmlEngine>
 #include <QVariant>
-#include <QtBluetooth/QBluetoothDeviceDiscoveryAgent>
-#include <QtBluetooth/QBluetoothDeviceInfo>
-#include <QtBluetooth/QLowEnergyController>
-#include <QtBluetooth/QLowEnergyService>
-
-#include "ble_remote_device.h"
 
 class RemoteCameraController : public QObject {
   Q_OBJECT
-  QML_ELEMENT
-  QML_SINGLETON
   Q_PROPERTY(QVariant devicesList READ getDevices NOTIFY devicesUpdated)
+  Q_PROPERTY(QString deviceNameFilter READ deviceNameFilter WRITE setDeviceNameFilter NOTIFY deviceNameFilterChanged)
+  Q_PROPERTY(QString deviceAddressFilter READ deviceAddressFilter WRITE setDeviceAddressFilter NOTIFY deviceAddressFilterChanged)
 
 public:
-  RemoteCameraController();
-  ~RemoteCameraController();
-  QVariant getDevices();
-  QString getUpdate();
+  using QObject::QObject;
+  virtual ~RemoteCameraController() = default;
+
+  virtual QVariant getDevices() = 0;
+  virtual QString deviceNameFilter() const = 0;
+  virtual void setDeviceNameFilter(const QString &filter) = 0;
+  virtual QString deviceAddressFilter() const = 0;
+  virtual void setDeviceAddressFilter(const QString &filter) = 0;
 
 public slots:
-  void startDeviceDiscovery();
-  void stopDeviceDiscovery();
-
-private slots:
-  void addDevice(const QBluetoothDeviceInfo &);
-  void deviceScanFinished();
-  void deviceScanError(QBluetoothDeviceDiscoveryAgent::Error);
+  virtual void startDeviceDiscovery() = 0;
+  virtual void stopDeviceDiscovery() = 0;
 
 signals:
   void devicesUpdated();
-
-private:
-  QBluetoothDeviceDiscoveryAgent *discoveryAgent;
-  BLERemoteDevice *currentDevice = nullptr;
-  QList<BLERemoteDevice *> devices;
+  void deviceScanFinished();
+  void deviceScanError(const QString &msg);
+  void deviceNameFilterChanged();
+  void deviceAddressFilterChanged();
 };
 
-#endif // REMOTE_CAMERA_CONTROLLER_H
+#endif

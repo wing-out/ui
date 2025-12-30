@@ -3,8 +3,21 @@
     {
       "name": "Linux",
       "includePath": [
-        "${workspaceFolder}/build/${buildKit}/${buildType}"
-      ]
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/../libdji/include/**",
+        "/usr/include/x86_64-linux-gnu/qt6/**",
+        "/usr/include/x86_64-linux-gnu/qt6/QtCore/**",
+        "/usr/include/x86_64-linux-gnu/qt6/QtBluetooth/**",
+        "/usr/include/x86_64-linux-gnu/qt6/QtNetwork/**",
+        "/usr/include/x86_64-linux-gnu/qt6/QtDBus/**",
+        "/usr/include/x86_64-linux-gnu/qt6/QtQml/**",
+        "/usr/include/x86_64-linux-gnu/qt6/QtQuick/**",
+        "/usr/include/x86_64-linux-gnu/qt6/QtGui/**",
+        "/usr/include/x86_64-linux-gnu/qt6/QtTest/**"
+      ],
+      "compileCommands": "${workspaceFolder}/compile_commands.json",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "linux-gcc-x64"
     }
   ],
   "version": 4

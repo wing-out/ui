@@ -69,4 +69,60 @@ QList<ChannelQualityInfo> getChannelsQualityInfo() {
   return parseFileWithChannelsQuality("/data/user/0/center.dx.wingout/files/channel-quality.txt");
 }
 
+QVariantMap Platform::getSafeAreaInsets() {
+  QVariantMap insets;
+  insets["top"] = 0;
+  insets["bottom"] = 0;
+  insets["left"] = 0;
+  insets["right"] = 0;
+
+  QJniObject activity = getAndroidAppContext();
+  if (!activity.isValid()) {
+    return insets;
+  }
+
+  QJniObject window =
+      activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
+  if (!window.isValid()) {
+    return insets;
+  }
+
+  QJniObject decorView =
+      window.callObjectMethod("getDecorView", "()Landroid/view/View;");
+  if (!decorView.isValid()) {
+    return insets;
+  }
+
+  QJniObject rootWindowInsets = decorView.callObjectMethod(
+      "getRootWindowInsets", "()Landroid/view/WindowInsets;");
+  if (!rootWindowInsets.isValid()) {
+    return insets;
+  }
+
+  // Type.systemBars() is 7 (statusBars | navigationBars | captionBar)
+  QJniObject systemBarsInsets = rootWindowInsets.callObjectMethod(
+      "getInsets", "(I)Landroid/graphics/Insets;", 7);
+  if (systemBarsInsets.isValid()) {
+    insets["top"] = systemBarsInsets.getField<jint>("top");
+    insets["bottom"] = systemBarsInsets.getField<jint>("bottom");
+    insets["left"] = systemBarsInsets.getField<jint>("left");
+    insets["right"] = systemBarsInsets.getField<jint>("right");
+  }
+
+  QJniObject displayCutout = rootWindowInsets.callObjectMethod(
+      "getDisplayCutout", "()Landroid/view/DisplayCutout;");
+  if (displayCutout.isValid()) {
+    insets["top"] =
+        qMax(insets["top"].toInt(), displayCutout.callMethod<jint>("getSafeInsetTop"));
+    insets["bottom"] = qMax(insets["bottom"].toInt(),
+                            displayCutout.callMethod<jint>("getSafeInsetBottom"));
+    insets["left"] = qMax(insets["left"].toInt(),
+                          displayCutout.callMethod<jint>("getSafeInsetLeft"));
+    insets["right"] = qMax(insets["right"].toInt(),
+                           displayCutout.callMethod<jint>("getSafeInsetRight"));
+  }
+
+  return insets;
+}
+
 #endif

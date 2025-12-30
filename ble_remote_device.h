@@ -18,6 +18,7 @@ class BLERemoteDevice : public QObject, QBluetoothDeviceInfo {
   Q_PROPERTY(QVariant services READ getServices NOTIFY servicesUpdated)
   Q_PROPERTY(QVariant characteristics READ getCharacteristics NOTIFY
                  characteristicsUpdated)
+  Q_PROPERTY(int deviceType READ deviceType WRITE setDeviceType NOTIFY deviceTypeChanged)
 
 public:
   BLERemoteDevice(const QBluetoothDeviceInfo &d, QObject *parent = nullptr);
@@ -32,6 +33,16 @@ public:
   QVariant getCharacteristics();
   void scanServices();
   void discoverServiceDetails(const QString &uuid);
+  bool getConnected() const;
+  void connectToDevice();
+
+  int deviceType() const { return m_deviceType; }
+  void setDeviceType(int type) {
+    if (m_deviceType != type) {
+      m_deviceType = type;
+      emit deviceTypeChanged();
+    }
+  }
 
 private slots:
   void addService(const QBluetoothUuid &serviceUUID);
@@ -44,8 +55,10 @@ private slots:
 signals:
   void servicesUpdated();
   void characteristicsUpdated();
+  void deviceTypeChanged();
 
 private:
+  int m_deviceType = 0; // dji::DeviceType::Undefined
   QList<BLECharacteristic *> characteristics;
   QList<BLEService *> services;
   QLowEnergyController *controller;

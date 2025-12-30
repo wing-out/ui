@@ -5,6 +5,7 @@ Popup {
     id: root
 
     property bool locked: false
+    property real safeAreaTop: 0
     signal unlockRequested
 
     modal: true
@@ -18,12 +19,15 @@ Popup {
     width: parent ? parent.width : 0
     height: parent ? parent.height : 0
 
-    property real handleTopMargin: 5
+    property real handleTopMargin: 5 + safeAreaTop
     property real unlockThreshold: height * 0.5
 
     background: Rectangle {
         anchors.fill: parent
         color: "transparent"
+        Keys.onPressed: function (event) {
+            event.accepted = true;
+        }
     }
 
     onLockedChanged: {
@@ -76,10 +80,6 @@ Popup {
         anchors.centerIn: handle
         color: "white"
         font.pixelSize: 14
-    }
-
-    Keys.onPressed: function (event) {
-        event.accepted = true;
     }
 
     onOpened: {

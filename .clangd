@@ -1,10 +1,23 @@
 CompileFlags:
+  CompilationDatabase: .
   Add:
-  - "-isystem/usr/include/c++/14"
-  - "-isystem/usr/include/x86_64-linux-gnu/c++/14"
-  - "-isystem/usr/include/c++/14/backward"
-  - "-isystem/usr/lib/gcc/x86_64-linux-gnu/14/include"
-  - "-isystem/usr/local/include"
-  - "-isystem/usr/include/x86_64-linux-gnu"
-  - "-isystem/usr/include"
+    - -xc++
+    - -I.
+    - -I../libdji/include
+    - -isystem/usr/include/x86_64-linux-gnu/qt6
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtCore
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtBluetooth
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtNetwork
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtDBus
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtQml
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtQuick
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtGui
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtTest
+    - -isystem/usr/include/x86_64-linux-gnu/qt6
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtCore
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtBluetooth
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtNetwork
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtDBus
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtQml
+    - -isystem/usr/include/x86_64-linux-gnu/qt6/QtQuick
 

@@ -7,6 +7,9 @@
         "${workspaceFolder}/build/${buildKit}/${buildType}"
     ],
     "cmake.options.statusBarVisibility": "visible",
+    "cmake.configureArgs": [
+        "-DCMAKE_PREFIX_PATH=/workspaces/xaionaro-go/Qt/6.10.1/gcc_64"
+    ],
     "cmake.buildDirectory": "${workspaceFolder}/build/${buildKit}/${buildType}",
     "cmake.useCMakePresets": "never",
     "java.project.referencedLibraries": [
