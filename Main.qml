@@ -61,10 +61,6 @@ ApplicationWindow {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.topMargin: application.topPadding
-        anchors.leftMargin: application.leftPadding
-        anchors.rightMargin: application.rightPadding
-        anchors.bottomMargin: application.bottomPadding
         spacing: 0
 
         TabBar {
