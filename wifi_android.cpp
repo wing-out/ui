@@ -112,6 +112,26 @@ bool isLocalHotspotEnabled() {
       activity.object<jobject>());
 }
 
+QString getHotspotIPAddress() {
+  QJniObject activity = getAndroidAppContext();
+  if (!activity.isValid()) {
+    qWarning() << "unable to find the activity";
+    return "";
+  }
+
+  if (!QJniObject::isClassAvailable(JAVA_WIFI_CLASS)) {
+    qWarning() << "WiFi Java class not found";
+    return "";
+  }
+
+  QJniObject ipStr = QJniObject::callStaticObjectMethod(
+      JAVA_WIFI_CLASS, "getHotspotIPAddress",
+      "(Landroid/content/Context;)Ljava/lang/String;",
+      activity.object<jobject>());
+
+  return ipStr.toString();
+}
+
 void setLocalHotspotEnabled(bool enabled) {
   QJniObject activity = getAndroidAppContext();
   if (!activity.isValid()) {

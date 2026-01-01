@@ -17,9 +17,11 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,6 +37,8 @@ public final class WiFi {
             new ConcurrentHashMap<>();
 
     private static WifiManager.LocalOnlyHotspotReservation localOnlyHotspotReservation = null;
+    private static String lastSoftApIp = "";
+    private static boolean softApCallbackRegistered = false;
 
     // For tracking current WiFi AP via NetworkCallback (FLAG_INCLUDE_LOCATION_INFO)
     private static final Object currentWiFiLock = new Object();
@@ -533,7 +537,16 @@ public final class WiFi {
             } else {
                 // Fallback: try to open the hotspot settings page if we can't do it programmatically
                 Log.i(TAG, "Opening hotspot settings as fallback");
-                android.content.Intent intent = new android.content.Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS);
+                android.content.Intent intent = new android.content.Intent();
+                intent.setAction("android.settings.WIFI_AP_SETTINGS");
+                if (context.getPackageManager().resolveActivity(intent, 0) == null) {
+                    // Fallback to tethering settings if specific hotspot settings not found
+                    intent.setAction("android.settings.TETHER_SETTINGS");
+                }
+                if (context.getPackageManager().resolveActivity(intent, 0) == null) {
+                    // Final fallback to wireless settings
+                    intent.setAction(android.provider.Settings.ACTION_WIRELESS_SETTINGS);
+                }
                 intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
             }
@@ -554,6 +567,16 @@ public final class WiFi {
             if (android.os.Build.VERSION.SDK_INT >= 26) { // Oreo+
                 if (enabled) {
                     if (localOnlyHotspotReservation != null) return;
+
+                    if (android.os.Build.VERSION.SDK_INT >= 33) {
+                        if (context.checkSelfPermission(android.Manifest.permission.NEARBY_WIFI_DEVICES)
+                                != PackageManager.PERMISSION_GRANTED) {
+                            Log.w(TAG, "setLocalHotspotEnabled: NEARBY_WIFI_DEVICES permission not granted, requesting...");
+                            requestNearbyDevicesPermission(context);
+                            return;
+                        }
+                    }
+
                     wifiManager.startLocalOnlyHotspot(new WifiManager.LocalOnlyHotspotCallback() {
                         @Override
                         public void onStarted(WifiManager.LocalOnlyHotspotReservation reservation) {
@@ -566,6 +589,7 @@ public final class WiFi {
                         public void onStopped() {
                             super.onStopped();
                             localOnlyHotspotReservation = null;
+                            lastSoftApIp = "";
                             Log.i(TAG, "Local-only hotspot stopped");
                         }
 
@@ -613,5 +637,71 @@ public final class WiFi {
             Log.e(TAG, "getLocalOnlyHotspotInfoJSON failed", e);
             return "{}";
         }
+    }
+
+    public static String getHotspotIPAddress(Context context) {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            String activeIface = "";
+            if (cm != null) {
+                Network activeNet = cm.getActiveNetwork();
+                if (activeNet != null) {
+                    android.net.LinkProperties lp = cm.getLinkProperties(activeNet);
+                    if (lp != null) {
+                        activeIface = lp.getInterfaceName();
+                    }
+                }
+            }
+
+            java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
+            String bestIp = "";
+            int bestScore = -1;
+
+            while (interfaces.hasMoreElements()) {
+                java.net.NetworkInterface iface = interfaces.nextElement();
+                if (!iface.isUp() || iface.isLoopback()) continue;
+
+                String name = iface.getName().toLowerCase();
+                Log.d(TAG, "Checking interface: " + name);
+
+                if (name.equals(activeIface)) {
+                    Log.d(TAG, "Skipping active internet interface: " + name);
+                    continue;
+                }
+
+                int score = 0;
+                if (name.contains("ap")) score = 100;
+                else if (name.contains("softap")) score = 90;
+                else if (name.contains("wlan1")) score = 80;
+                else if (name.contains("wlan2")) score = 70;
+                else if (name.contains("wlan")) score = 10; // wlan0 is usually client, but could be AP
+                if (score <= 0) {
+                    continue;
+                }
+
+                java.util.Enumeration<java.net.InetAddress> addresses = iface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    java.net.InetAddress addr = addresses.nextElement();
+                    if (addr instanceof java.net.Inet4Address) {
+                        String ip = addr.getHostAddress();
+                        Log.d(TAG, "Interface " + name + " has IP: " + ip + " (score " + score + ")");
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestIp = ip;
+                        }
+                    }
+                }
+            }
+
+            if (!bestIp.isEmpty()) {
+                Log.i(TAG, "Detected hotspot IP: " + bestIp + " (score " + bestScore + ")");
+                return bestIp;
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "getHotspotIPAddress failed", e);
+        }
+
+        return "";
     }
 }

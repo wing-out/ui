@@ -8,7 +8,6 @@ Page {
     id: djiControlPage
     Material.theme: Material.Dark
     Material.accent: Material.Purple
-    title: qsTr("DJI Control")
 
     property bool flowStarted: false
     property bool streamingButtonCooldown: false
@@ -25,6 +24,7 @@ Page {
         interval: 2000
         repeat: false
         onTriggered: {
+            platform.refreshWiFiState()
             var info = platform.getLocalOnlyHotspotInfo()
             if (info && info.ssid) {
                 wifiSsidField.text = info.ssid
@@ -93,12 +93,6 @@ Page {
         anchors.margins: 20
         spacing: 20
 
-        Label {
-            text: "DJI Osmo Control"
-            font.pointSize: 24
-            Layout.alignment: Qt.AlignHCenter
-        }
-
         ComboBox {
             id: deviceSelector
             Layout.fillWidth: true
@@ -126,7 +120,11 @@ Page {
                     Switch {
                         id: hotspotSwitch
                         checked: platform.isHotspotEnabled
-                        onToggled: platform.setHotspotEnabled(checked)
+                        enabled: !localHotspotSwitch.checked
+                        onToggled: {
+                            platform.setHotspotEnabled(checked)
+                            hotspotInfoTimer.start()
+                        }
                     }
                     Label {
                         text: "Local Hotspot:"
@@ -134,26 +132,12 @@ Page {
                     Switch {
                         id: localHotspotSwitch
                         checked: platform.isLocalHotspotEnabled
+                        enabled: !hotspotSwitch.checked
                         onToggled: {
                             platform.setLocalHotspotEnabled(checked)
                             if (checked) hotspotInfoTimer.start()
                         }
                     }
-                }
-                Button {
-                    text: "Auto-fill from Local Hotspot"
-                    Layout.fillWidth: true
-                    onClicked: {
-                        var info = platform.getLocalOnlyHotspotInfo()
-                        if (info && info.ssid) {
-                            wifiSsidField.text = info.ssid
-                            wifiPskField.text = info.psk
-                            console.log("[DJI-BLE] QML: Auto-filled from local hotspot:", info.ssid)
-                        } else {
-                            console.log("[DJI-BLE] QML: No local hotspot info available")
-                        }
-                    }
-                    enabled: localHotspotSwitch.checked
                 }
                 TextField {
                     id: wifiSsidField
@@ -181,7 +165,11 @@ Page {
                 TextField {
                     id: rtmpUrlField
                     placeholderText: "RTMP URL"
-                    text: DJIController.localWlan1Ip ? "rtmp://" + DJIController.localWlan1Ip + ":1935/proxy/dji-osmo-pocket3" : ""
+                    text: {
+                        var ip = platform.hotspotIPAddress
+                        if (!ip) ip = DJIController.localWlan1Ip
+                        return ip ? "rtmp://" + ip + ":1935/proxy/dji-osmo-pocket3" : ""
+                    }
                     Layout.fillWidth: true
                 }
 

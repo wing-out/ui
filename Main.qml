@@ -45,6 +45,17 @@ ApplicationWindow {
         Component.onCompleted: {
             platform.setEnableRunningInBackground(true);
             platform.startMonitoringSignalStrength();
+            platform.refreshWiFiState();
+        }
+    }
+
+    Connections {
+        target: Qt.application
+        function onStateChanged() {
+            if (Qt.application.state === Qt.ApplicationActive) {
+                console.log("Main: Application active, refreshing WiFi state")
+                platform.refreshWiFiState()
+            }
         }
     }
 

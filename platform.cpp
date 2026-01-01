@@ -38,6 +38,7 @@ bool isHotspotEnabled() { return false; }
 void setHotspotEnabled(bool enabled) {}
 bool isLocalHotspotEnabled() { return false; }
 void setLocalHotspotEnabled(bool enabled) {}
+QString getHotspotIPAddress() { return ""; }
 QString getLocalOnlyHotspotInfoJSON() { return "{}"; }
 QString getHotspotConfigurationJSON() { return "{}"; }
 void saveHotspotConfiguration(const QString &ssid, const QString &psk) {}
@@ -50,7 +51,7 @@ QWiFiInfo *Platform::getCurrentWiFiConnection() {
 }
 
 bool Platform::isHotspotEnabled() {
-  return ::isHotspotEnabled();
+  return m_isHotspotEnabled;
 }
 
 void Platform::setHotspotEnabled(bool enabled) {
@@ -62,7 +63,7 @@ void Platform::setHotspotEnabled(bool enabled) {
 }
 
 bool Platform::isLocalHotspotEnabled() {
-  return ::isLocalHotspotEnabled();
+  return m_isLocalHotspotEnabled;
 }
 
 void Platform::setLocalHotspotEnabled(bool enabled) {
@@ -71,6 +72,10 @@ void Platform::setLocalHotspotEnabled(bool enabled) {
     m_isLocalHotspotEnabled = enabled;
     emit isLocalHotspotEnabledChanged(enabled);
   }
+}
+
+QString Platform::getHotspotIPAddress() {
+  return ::getHotspotIPAddress();
 }
 
 QVariantMap Platform::getLocalOnlyHotspotInfo() {
@@ -126,6 +131,22 @@ void Platform::disconnectRequestedWiFiAP(int requestId) {
 
 void Platform::disconnectAllRequestedWiFiAPs() {
   ::disconnectAllRequestedWiFiAPs();
+}
+
+void Platform::refreshWiFiState() {
+  bool hotspot = ::isHotspotEnabled();
+  if (m_isHotspotEnabled != hotspot) {
+    m_isHotspotEnabled = hotspot;
+    emit isHotspotEnabledChanged(hotspot);
+  }
+
+  bool localHotspot = ::isLocalHotspotEnabled();
+  if (m_isLocalHotspotEnabled != localHotspot) {
+    m_isLocalHotspotEnabled = localHotspot;
+    emit isLocalHotspotEnabledChanged(localHotspot);
+  }
+
+  emit hotspotIPAddressChanged();
 }
 
 QList<QChannelQualityInfo *> Platform::getChannelsQualityInfo() {

@@ -246,6 +246,10 @@ bool isLocalHotspotEnabled() {
 void setLocalHotspotEnabled(bool enabled) {
 }
 
+QString getHotspotIPAddress() {
+  return "";
+}
+
 QString getLocalOnlyHotspotInfoJSON() {
   return "{}";
 }

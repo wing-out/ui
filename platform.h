@@ -20,6 +20,7 @@ class Platform : public QObject {
                  NOTIFY isHotspotEnabledChanged)
   Q_PROPERTY(bool isLocalHotspotEnabled READ isLocalHotspotEnabled WRITE setLocalHotspotEnabled
                  NOTIFY isLocalHotspotEnabledChanged)
+  Q_PROPERTY(QString hotspotIPAddress READ getHotspotIPAddress NOTIFY hotspotIPAddressChanged)
 public:
   explicit Platform(QObject *parent = nullptr)
       : QObject(parent), m_currentWiFiConnection(new QWiFiInfo(this)), signalStrength(-1), m_isHotspotEnabled(false), m_isLocalHotspotEnabled(false) {}
@@ -46,6 +47,7 @@ public:
   Q_INVOKABLE void setHotspotEnabled(bool enabled);
   Q_INVOKABLE bool isLocalHotspotEnabled();
   Q_INVOKABLE void setLocalHotspotEnabled(bool enabled);
+  Q_INVOKABLE QString getHotspotIPAddress();
   Q_INVOKABLE QVariantMap getLocalOnlyHotspotInfo();
   Q_INVOKABLE QVariantMap getHotspotConfiguration();
   Q_INVOKABLE void saveHotspotConfiguration(const QString &ssid, const QString &psk);
@@ -56,6 +58,7 @@ public:
                                   const QString &password);
   Q_INVOKABLE void disconnectRequestedWiFiAP(int requestId);
   Q_INVOKABLE void disconnectAllRequestedWiFiAPs();
+  Q_INVOKABLE void refreshWiFiState();
 
 // Network:
   Q_INVOKABLE QList<QChannelQualityInfo*> getChannelsQualityInfo();
@@ -67,6 +70,7 @@ signals:
   void onSignalStrengthChanged(int strength);
   void isHotspotEnabledChanged(bool enabled);
   void isLocalHotspotEnabledChanged(bool enabled);
+  void hotspotIPAddressChanged();
 
 private:
   int signalStrength;
