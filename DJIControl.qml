@@ -11,6 +11,28 @@ Page {
     title: qsTr("DJI Control")
 
     property bool flowStarted: false
+    property bool streamingButtonCooldown: false
+
+    Timer {
+        id: streamingCooldownTimer
+        interval: 10000
+        repeat: false
+        onTriggered: streamingButtonCooldown = false
+    }
+
+    Timer {
+        id: hotspotInfoTimer
+        interval: 2000
+        repeat: false
+        onTriggered: {
+            var info = platform.getLocalOnlyHotspotInfo()
+            if (info && info.ssid) {
+                wifiSsidField.text = info.ssid
+                wifiPskField.text = info.psk
+                console.log("[DJI-BLE] QML: Auto-filled from local hotspot (auto):", info.ssid)
+            }
+        }
+    }
 
     Connections {
         target: DJIController
@@ -57,6 +79,13 @@ Page {
     Component.onCompleted: {
         console.log("[DJI-BLE] QML: Starting auto-discovery...")
         DJIController.startDeviceDiscovery()
+
+        var hotspot = platform.getHotspotConfiguration()
+        if (hotspot && hotspot.ssid) {
+            console.log("[DJI-BLE] QML: Auto-filled hotspot info for SSID:", hotspot.ssid)
+            wifiSsidField.text = hotspot.ssid
+            wifiPskField.text = hotspot.psk
+        }
     }
 
     ColumnLayout {
@@ -82,23 +111,6 @@ Page {
             }
         }
 
-        Button {
-            text: DJIController.isStreaming ? "Stop Streaming" : "Start Streaming"
-            Layout.fillWidth: true
-            onClicked: {
-                if (DJIController.isStreaming) {
-                    DJIController.stopStreaming()
-                } else {
-                    var res = resolutionSelector.currentIndex === 0 ? 1080 : (resolutionSelector.currentIndex === 1 ? 720 : 480)
-                    var fps = parseInt(fpsSelector.currentText)
-                    DJIController.wifiSSID = wifiSsidField.text
-                    DJIController.wifiPSK = wifiPskField.text
-                    DJIController.startStreaming(rtmpUrlField.text, res, fps, bitrateSelector.value)
-                }
-            }
-            enabled: DJIController.device !== null
-        }
-
         GroupBox {
             title: "WiFi Settings"
             Layout.fillWidth: true
@@ -106,16 +118,53 @@ Page {
 
             ColumnLayout {
                 anchors.fill: parent
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        text: "Hotspot:"
+                    }
+                    Switch {
+                        id: hotspotSwitch
+                        checked: platform.isHotspotEnabled
+                        onToggled: platform.setHotspotEnabled(checked)
+                    }
+                    Label {
+                        text: "Local Hotspot:"
+                    }
+                    Switch {
+                        id: localHotspotSwitch
+                        checked: platform.isLocalHotspotEnabled
+                        onToggled: {
+                            platform.setLocalHotspotEnabled(checked)
+                            if (checked) hotspotInfoTimer.start()
+                        }
+                    }
+                }
+                Button {
+                    text: "Auto-fill from Local Hotspot"
+                    Layout.fillWidth: true
+                    onClicked: {
+                        var info = platform.getLocalOnlyHotspotInfo()
+                        if (info && info.ssid) {
+                            wifiSsidField.text = info.ssid
+                            wifiPskField.text = info.psk
+                            console.log("[DJI-BLE] QML: Auto-filled from local hotspot:", info.ssid)
+                        } else {
+                            console.log("[DJI-BLE] QML: No local hotspot info available")
+                        }
+                    }
+                    enabled: localHotspotSwitch.checked
+                }
                 TextField {
                     id: wifiSsidField
                     placeholderText: "WiFi SSID"
-                    text: "slow.dslmodem.dx.center"
+                    text: ""
                     Layout.fillWidth: true
                 }
                 TextField {
                     id: wifiPskField
                     placeholderText: "WiFi PSK"
-                    text: "12345678"
+                    text: ""
                     echoMode: TextInput.Password
                     Layout.fillWidth: true
                 }
@@ -132,7 +181,7 @@ Page {
                 TextField {
                     id: rtmpUrlField
                     placeholderText: "RTMP URL"
-                    text: "rtmp://192.168.0.131:1935/test/stream0?user=dx&pass=kleenex-quickstep-hurried-revolt-turret-script"
+                    text: DJIController.localWlan1Ip ? "rtmp://" + DJIController.localWlan1Ip + ":1935/proxy/dji-osmo-pocket3" : ""
                     Layout.fillWidth: true
                 }
 
@@ -152,18 +201,38 @@ Page {
                 }
 
                 RowLayout {
-                    Label { text: "Bitrate (kbps):" }
+                    Label { text: "Bitrate (Kbps):" }
                     SpinBox {
                         id: bitrateSelector
                         from: 500
-                        to: 10000
-                        value: 4000
+                        to: 20000
+                        value: 10000
                         stepSize: 500
                         editable: true
                         Layout.fillWidth: true
                     }
                 }
             }
+        }
+
+        Button {
+            text: DJIController.isStreaming ? "Stop Streaming" : "Start Streaming"
+            Layout.fillWidth: true
+            onClicked: {
+                streamingButtonCooldown = true
+                streamingCooldownTimer.start()
+                if (DJIController.isStreaming) {
+                    DJIController.stopStreaming()
+                } else {
+                    var res = resolutionSelector.currentIndex === 0 ? 1080 : (resolutionSelector.currentIndex === 1 ? 720 : 480)
+                    var fps = parseInt(fpsSelector.currentText)
+                    DJIController.wifiSSID = wifiSsidField.text
+                    DJIController.wifiPSK = wifiPskField.text
+                    platform.saveHotspotConfiguration(wifiSsidField.text, wifiPskField.text)
+                    DJIController.startStreaming(rtmpUrlField.text, res, fps, bitrateSelector.value)
+                }
+            }
+            enabled: !streamingButtonCooldown && (DJIController.isStreaming || (DJIController.device !== null && wifiSsidField.text !== "" && wifiPskField.text !== "" && rtmpUrlField.text !== ""))
         }
 
         ScrollView {

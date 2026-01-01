@@ -34,12 +34,65 @@ int connectToWiFiAP(const QString &ssid, const QString &bssid,
 void disconnectRequestedWiFiAP(int requestId) {}
 void disconnectAllRequestedWiFiAPs() {}
 QList<ChannelQualityInfo> getChannelQualityInfo() { return {}; }
+bool isHotspotEnabled() { return false; }
+void setHotspotEnabled(bool enabled) {}
+bool isLocalHotspotEnabled() { return false; }
+void setLocalHotspotEnabled(bool enabled) {}
+QString getLocalOnlyHotspotInfoJSON() { return "{}"; }
+QString getHotspotConfigurationJSON() { return "{}"; }
+void saveHotspotConfiguration(const QString &ssid, const QString &psk) {}
 #endif
 
 QWiFiInfo *Platform::getCurrentWiFiConnection() {
   WiFiInfo info = ::getCurrentWiFiConnection();
   m_currentWiFiConnection->setFrom(info);
   return m_currentWiFiConnection;
+}
+
+bool Platform::isHotspotEnabled() {
+  return ::isHotspotEnabled();
+}
+
+void Platform::setHotspotEnabled(bool enabled) {
+  ::setHotspotEnabled(enabled);
+  if (m_isHotspotEnabled != enabled) {
+    m_isHotspotEnabled = enabled;
+    emit isHotspotEnabledChanged(enabled);
+  }
+}
+
+bool Platform::isLocalHotspotEnabled() {
+  return ::isLocalHotspotEnabled();
+}
+
+void Platform::setLocalHotspotEnabled(bool enabled) {
+  ::setLocalHotspotEnabled(enabled);
+  if (m_isLocalHotspotEnabled != enabled) {
+    m_isLocalHotspotEnabled = enabled;
+    emit isLocalHotspotEnabledChanged(enabled);
+  }
+}
+
+QVariantMap Platform::getLocalOnlyHotspotInfo() {
+  QString jsonStr = ::getLocalOnlyHotspotInfoJSON();
+  const QJsonDocument doc = QJsonDocument::fromJson(jsonStr.toUtf8());
+  if (!doc.isObject()) {
+    return QVariantMap();
+  }
+  return doc.object().toVariantMap();
+}
+
+QVariantMap Platform::getHotspotConfiguration() {
+  QString jsonStr = ::getHotspotConfigurationJSON();
+  const QJsonDocument doc = QJsonDocument::fromJson(jsonStr.toUtf8());
+  if (!doc.isObject()) {
+    return QVariantMap();
+  }
+  return doc.object().toVariantMap();
+}
+
+void Platform::saveHotspotConfiguration(const QString &ssid, const QString &psk) {
+  ::saveHotspotConfiguration(ssid, psk);
 }
 
 QVector<QWiFiInfo *> Platform::getWiFiScanResults() {

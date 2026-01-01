@@ -228,6 +228,28 @@ void disconnectRequestedWiFiAP(int requestId) {
 
 void disconnectAllRequestedWiFiAPs() { disconnectRequestedWiFiAP(1); }
 
+QString getHotspotConfigurationJSON() {
+  return "{}";
+}
+
+bool isHotspotEnabled() {
+  return false;
+}
+
+void setHotspotEnabled(bool enabled) {
+}
+
+bool isLocalHotspotEnabled() {
+  return false;
+}
+
+void setLocalHotspotEnabled(bool enabled) {
+}
+
+QString getLocalOnlyHotspotInfoJSON() {
+  return "{}";
+}
+
 WiFiInfo getCurrentWiFiConnection() {
   WiFiInfo result;
 

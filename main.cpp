@@ -33,6 +33,7 @@ int app(int argc, char *argv[]) {
 #ifdef Q_OS_ANDROID
   androidEnsureWifiLocationPermission();
   androidEnsureBluetoothPermission();
+  androidEnsureNearbyDevicesPermission();
 #endif
 
   QQmlApplicationEngine engine;

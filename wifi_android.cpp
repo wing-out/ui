@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <qobject.h>
+#include <jni.h>
 
 #include "wifi.h"
 
@@ -32,6 +33,141 @@ QString getCurrentWiFiConnectionJSON() {
       activity.object<jobject>());
 
   return jsonStr.toString();
+}
+
+QString getHotspotConfigurationJSON() {
+  QJniObject activity = getAndroidAppContext();
+  if (!activity.isValid()) {
+    qWarning() << "unable to find the activity";
+    return "{}";
+  }
+
+  if (!QJniObject::isClassAvailable(JAVA_WIFI_CLASS)) {
+    qWarning() << "WiFi Java class not found";
+    return "{}";
+  }
+
+  QJniObject jsonStr = QJniObject::callStaticObjectMethod(
+      JAVA_WIFI_CLASS, "getHotspotConfigurationJSON",
+      "(Landroid/content/Context;)Ljava/lang/String;",
+      activity.object<jobject>());
+
+  return jsonStr.toString();
+}
+
+bool isHotspotEnabled() {
+  QJniObject activity = getAndroidAppContext();
+  if (!activity.isValid()) {
+    qWarning() << "unable to find the activity";
+    return false;
+  }
+
+  if (!QJniObject::isClassAvailable(JAVA_WIFI_CLASS)) {
+    qWarning() << "WiFi Java class not found";
+    return false;
+  }
+
+  return QJniObject::callStaticMethod<jboolean>(
+      JAVA_WIFI_CLASS, "isHotspotEnabled", "(Landroid/content/Context;)Z",
+      activity.object<jobject>());
+}
+
+void setHotspotEnabled(bool enabled) {
+  QJniObject activity = getAndroidAppContext();
+  if (!activity.isValid()) {
+    qWarning() << "unable to find the activity";
+    return;
+  }
+
+  if (!QJniObject::isClassAvailable(JAVA_WIFI_CLASS)) {
+    qWarning() << "WiFi Java class not found";
+    return;
+  }
+
+  if (enabled) {
+    QJniObject::callStaticMethod<void>(
+        JAVA_WIFI_CLASS, "requestNearbyDevicesPermission",
+        "(Landroid/content/Context;)V", activity.object<jobject>());
+  }
+
+  QJniObject::callStaticMethod<void>(
+      JAVA_WIFI_CLASS, "setHotspotEnabled", "(Landroid/content/Context;Z)V",
+      activity.object<jobject>(), static_cast<jboolean>(enabled));
+}
+
+bool isLocalHotspotEnabled() {
+  QJniObject activity = getAndroidAppContext();
+  if (!activity.isValid()) {
+    qWarning() << "unable to find the activity";
+    return false;
+  }
+
+  if (!QJniObject::isClassAvailable(JAVA_WIFI_CLASS)) {
+    qWarning() << "WiFi Java class not found";
+    return false;
+  }
+
+  return QJniObject::callStaticMethod<jboolean>(
+      JAVA_WIFI_CLASS, "isLocalHotspotEnabled", "(Landroid/content/Context;)Z",
+      activity.object<jobject>());
+}
+
+void setLocalHotspotEnabled(bool enabled) {
+  QJniObject activity = getAndroidAppContext();
+  if (!activity.isValid()) {
+    qWarning() << "unable to find the activity";
+    return;
+  }
+
+  if (!QJniObject::isClassAvailable(JAVA_WIFI_CLASS)) {
+    qWarning() << "WiFi Java class not found";
+    return;
+  }
+
+  if (enabled) {
+    QJniObject::callStaticMethod<void>(
+        JAVA_WIFI_CLASS, "requestNearbyDevicesPermission",
+        "(Landroid/content/Context;)V", activity.object<jobject>());
+  }
+
+  QJniObject::callStaticMethod<void>(
+      JAVA_WIFI_CLASS, "setLocalHotspotEnabled", "(Landroid/content/Context;Z)V",
+      activity.object<jobject>(), static_cast<jboolean>(enabled));
+}
+
+QString getLocalOnlyHotspotInfoJSON() {
+  if (!QJniObject::isClassAvailable(JAVA_WIFI_CLASS)) {
+    qWarning() << "WiFi Java class not found";
+    return "{}";
+  }
+
+  QJniObject jsonStr = QJniObject::callStaticObjectMethod(
+      JAVA_WIFI_CLASS, "getLocalOnlyHotspotInfoJSON",
+      "()Ljava/lang/String;");
+
+  return jsonStr.toString();
+}
+
+void saveHotspotConfiguration(const QString &ssid, const QString &psk) {
+  QJniObject activity = getAndroidAppContext();
+  if (!activity.isValid()) {
+    qWarning() << "unable to find the activity";
+    return;
+  }
+
+  if (!QJniObject::isClassAvailable(JAVA_WIFI_CLASS)) {
+    qWarning() << "WiFi Java class not found";
+    return;
+  }
+
+  QJniObject jSsid = QJniObject::fromString(ssid);
+  QJniObject jPsk = QJniObject::fromString(psk);
+
+  QJniObject::callStaticMethod<void>(
+      JAVA_WIFI_CLASS, "saveHotspotConfiguration",
+      "(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)V",
+      activity.object<jobject>(), jSsid.object<jstring>(),
+      jPsk.object<jstring>());
 }
 
 WiFiInfo getCurrentWiFiConnection() {

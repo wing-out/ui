@@ -34,6 +34,8 @@ public final class WiFi {
     private static final Map<Integer, Network> networks =
             new ConcurrentHashMap<>();
 
+    private static WifiManager.LocalOnlyHotspotReservation localOnlyHotspotReservation = null;
+
     // For tracking current WiFi AP via NetworkCallback (FLAG_INCLUDE_LOCATION_INFO)
     private static final Object currentWiFiLock = new Object();
     private static WifiInfo currentWiFiInfo = null;
@@ -56,6 +58,24 @@ public final class WiFi {
             Log.i(TAG, "WiFi perms: FINE=" + hasFine + " NEARBY_WIFI_DEVICES=" + hasNearby);
         } catch (Throwable t) {
             Log.w(TAG, "Cannot check permissions", t);
+        }
+    }
+
+    public static void requestNearbyDevicesPermission(Context context) {
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                if (context.checkSelfPermission(android.Manifest.permission.NEARBY_WIFI_DEVICES)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    if (context instanceof android.app.Activity) {
+                        Log.i(TAG, "Requesting NEARBY_WIFI_DEVICES permission");
+                        ((android.app.Activity) context).requestPermissions(
+                                new String[]{android.Manifest.permission.NEARBY_WIFI_DEVICES},
+                                1001);
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to request NEARBY_WIFI_DEVICES permission", t);
         }
     }
 
@@ -390,6 +410,207 @@ public final class WiFi {
 
         } catch (Exception e) {
             Log.e(TAG, "getCurrentConnectionJson failed", e);
+            return "{}";
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    public static String getHotspotConfigurationJSON(Context context) {
+        try {
+            WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            if (wifiManager == null) return "{}";
+
+            String ssid = null;
+            String psk = null;
+
+            if (android.os.Build.VERSION.SDK_INT >= 30) { // Build.VERSION_CODES.R
+                try {
+                    // Use reflection to avoid compile-time dependency on newer SDK if not available
+                    java.lang.reflect.Method getSoftApConfigurationMethod = wifiManager.getClass().getMethod("getSoftApConfiguration");
+                    Object config = getSoftApConfigurationMethod.invoke(wifiManager);
+                    if (config != null) {
+                        ssid = (String) config.getClass().getMethod("getSsid").invoke(config);
+                        psk = (String) config.getClass().getMethod("getPassphrase").invoke(config);
+                    }
+                } catch (Throwable t) {
+                    Log.w(TAG, "Failed to get hotspot config via getSoftApConfiguration: " + t.getMessage());
+                }
+            }
+
+            if (ssid == null || psk == null) {
+                // Deprecated way for older Android or if above failed
+                try {
+                    java.lang.reflect.Method method = wifiManager.getClass().getDeclaredMethod("getWifiApConfiguration");
+                    method.setAccessible(true);
+                    Object config = method.invoke(wifiManager);
+                    if (config != null) {
+                        java.lang.reflect.Field ssidField = config.getClass().getDeclaredField("SSID");
+                        java.lang.reflect.Field pskField = config.getClass().getDeclaredField("preSharedKey");
+                        if (ssid == null) ssid = (String) ssidField.get(config);
+                        if (psk == null) psk = (String) pskField.get(config);
+                    }
+                } catch (Throwable t) {
+                    Log.w(TAG, "Failed to get hotspot config via getWifiApConfiguration: " + t.getMessage());
+                }
+            }
+
+            // Fallback to Settings.Secure/System (some OEMs use these)
+            if (ssid == null) {
+                try {
+                    ssid = android.provider.Settings.Secure.getString(context.getContentResolver(), "wifi_ap_ssid");
+                } catch (Throwable ignored) {}
+            }
+            if (psk == null) {
+                try {
+                    psk = android.provider.Settings.Secure.getString(context.getContentResolver(), "wifi_ap_passwd");
+                } catch (Throwable ignored) {}
+            }
+            if (ssid == null) {
+                try {
+                    ssid = android.provider.Settings.System.getString(context.getContentResolver(), "wifi_ap_ssid");
+                } catch (Throwable ignored) {}
+            }
+            if (psk == null) {
+                try {
+                    psk = android.provider.Settings.System.getString(context.getContentResolver(), "wifi_ap_passwd");
+                } catch (Throwable ignored) {}
+            }
+
+            // Fallback to SharedPreferences (Workaround #2)
+            android.content.SharedPreferences prefs = context.getSharedPreferences("hotspot_prefs", Context.MODE_PRIVATE);
+            if (ssid == null || ssid.isEmpty()) {
+                ssid = prefs.getString("ssid", null);
+            }
+            if (psk == null || psk.isEmpty()) {
+                psk = prefs.getString("psk", null);
+            }
+
+            // Clean up SSID (strip quotes)
+            if (ssid != null && ssid.length() >= 2 && ssid.startsWith("\"") && ssid.endsWith("\"")) {
+                ssid = ssid.substring(1, ssid.length() - 1);
+            }
+
+            JSONObject o = new JSONObject();
+            o.put("ssid", ssid != null ? ssid : "");
+            o.put("psk", psk != null ? psk : "");
+            return o.toString();
+        } catch (Exception e) {
+            Log.e(TAG, "getHotspotConfigurationJSON failed", e);
+            return "{}";
+        }
+    }
+
+    public static void saveHotspotConfiguration(Context context, String ssid, String psk) {
+        try {
+            android.content.SharedPreferences prefs = context.getSharedPreferences("hotspot_prefs", Context.MODE_PRIVATE);
+            prefs.edit().putString("ssid", ssid).putString("psk", psk).apply();
+            Log.i(TAG, "Saved hotspot configuration to SharedPreferences");
+        } catch (Exception e) {
+            Log.e(TAG, "saveHotspotConfiguration failed", e);
+        }
+    }
+
+    public static void setHotspotEnabled(Context context, boolean enabled) {
+        try {
+            WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            if (wifiManager == null) return;
+
+            // Try to find the hidden setWifiApEnabled method
+            java.lang.reflect.Method method = null;
+            try {
+                method = wifiManager.getClass().getMethod("setWifiApEnabled", android.net.wifi.WifiConfiguration.class, boolean.class);
+            } catch (NoSuchMethodException e) {
+                try {
+                    method = wifiManager.getClass().getDeclaredMethod("setWifiApEnabled", android.net.wifi.WifiConfiguration.class, boolean.class);
+                    method.setAccessible(true);
+                } catch (NoSuchMethodException e2) {
+                    Log.w(TAG, "setWifiApEnabled method not found even via reflection");
+                }
+            }
+
+            if (method != null) {
+                method.invoke(wifiManager, null, enabled);
+            } else {
+                // Fallback: try to open the hotspot settings page if we can't do it programmatically
+                Log.i(TAG, "Opening hotspot settings as fallback");
+                android.content.Intent intent = new android.content.Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS);
+                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "setHotspotEnabled failed", e);
+        }
+    }
+
+    public static boolean isLocalHotspotEnabled(Context context) {
+        return localOnlyHotspotReservation != null;
+    }
+
+    public static void setLocalHotspotEnabled(Context context, boolean enabled) {
+        try {
+            WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            if (wifiManager == null) return;
+
+            if (android.os.Build.VERSION.SDK_INT >= 26) { // Oreo+
+                if (enabled) {
+                    if (localOnlyHotspotReservation != null) return;
+                    wifiManager.startLocalOnlyHotspot(new WifiManager.LocalOnlyHotspotCallback() {
+                        @Override
+                        public void onStarted(WifiManager.LocalOnlyHotspotReservation reservation) {
+                            super.onStarted(reservation);
+                            localOnlyHotspotReservation = reservation;
+                            Log.i(TAG, "Local-only hotspot started");
+                        }
+
+                        @Override
+                        public void onStopped() {
+                            super.onStopped();
+                            localOnlyHotspotReservation = null;
+                            Log.i(TAG, "Local-only hotspot stopped");
+                        }
+
+                        @Override
+                        public void onFailed(int reason) {
+                            super.onFailed(reason);
+                            localOnlyHotspotReservation = null;
+                            Log.e(TAG, "Local-only hotspot failed: " + reason);
+                        }
+                    }, null);
+                } else {
+                    if (localOnlyHotspotReservation != null) {
+                        localOnlyHotspotReservation.close();
+                        localOnlyHotspotReservation = null;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "setLocalHotspotEnabled failed", e);
+        }
+    }
+
+    public static boolean isHotspotEnabled(Context context) {
+        try {
+            WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            if (wifiManager == null) return false;
+            java.lang.reflect.Method method = wifiManager.getClass().getDeclaredMethod("getWifiApState");
+            method.setAccessible(true);
+            int state = (Integer) method.invoke(wifiManager);
+            return state == 13 || state == 12; // 13 is ENABLED, 12 is ENABLING
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static String getLocalOnlyHotspotInfoJSON() {
+        try {
+            if (localOnlyHotspotReservation == null) return "{}";
+            android.net.wifi.SoftApConfiguration config = localOnlyHotspotReservation.getSoftApConfiguration();
+            JSONObject o = new JSONObject();
+            o.put("ssid", config.getSsid());
+            o.put("psk", config.getPassphrase());
+            return o.toString();
+        } catch (Exception e) {
+            Log.e(TAG, "getLocalOnlyHotspotInfoJSON failed", e);
             return "{}";
         }
     }

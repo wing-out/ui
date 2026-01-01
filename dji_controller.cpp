@@ -1,6 +1,8 @@
 #include "dji_controller.h"
 #include "dji/device_flow.h"
 #include <QDebug>
+#include <QNetworkInterface>
+#include <QAbstractSocket>
 
 DJIController::DJIController(QObject *parent) : RemoteCameraController(parent) {
     m_manager = new dji::DeviceManager(nullptr, this);
@@ -13,7 +15,10 @@ DJIController::DJIController(QObject *parent) : RemoteCameraController(parent) {
         if (dev == m_device) emit isPairedChanged();
     });
     connect(m_manager, &dji::DeviceManager::isWiFiConnectedChanged, this, [this](dji::Device *dev) {
-        if (dev == m_device) emit isWiFiConnectedChanged();
+        if (dev == m_device) {
+            emit isWiFiConnectedChanged();
+            emit localWlan1IpChanged();
+        }
     });
     connect(m_manager, &dji::DeviceManager::isStreamingChanged, this, [this](dji::Device *dev) {
         if (dev == m_device) emit isStreamingChanged();
@@ -87,6 +92,18 @@ void DJIController::setWifiPSK(const QString &psk) {
         m_wifiPSK = psk;
         emit wifiPSKChanged();
     }
+}
+
+QString DJIController::localWlan1Ip() const {
+    QNetworkInterface wlan1 = QNetworkInterface::interfaceFromName("wlan1");
+    if (wlan1.isValid()) {
+        for (const QNetworkAddressEntry &entry : wlan1.addressEntries()) {
+            if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) {
+                return entry.ip().toString();
+            }
+        }
+    }
+    return QString();
 }
 
 void DJIController::startStreaming(const QString &rtmpUrl, int resolution, int fps, int bitrateKbps) {

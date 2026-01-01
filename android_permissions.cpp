@@ -51,4 +51,18 @@ inline void androidEnsureBluetoothPermission()
     });
 }
 
+#include <QJniObject>
+
+inline void androidEnsureNearbyDevicesPermission()
+{
+    QJniObject activity = QJniObject::callStaticObjectMethod(
+        "org/qtproject/qt/android/QtNative", "activity",
+        "()Landroid/app/Activity;");
+    if (activity.isValid()) {
+        QJniObject::callStaticMethod<void>(
+            "center/dx/wingout/WiFi", "requestNearbyDevicesPermission",
+            "(Landroid/content/Context;)V", activity.object<jobject>());
+    }
+}
+
 #endif
