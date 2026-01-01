@@ -16,6 +16,12 @@ public class MainActivity extends QtActivity {
   		this.acquireWakeLock();
   	}
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        WiFi.onPermissionResult(this, requestCode, permissions, grantResults);
+    }
+
     public void acquireWakeLock() {
         getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (!wakeLock.isHeld()) {

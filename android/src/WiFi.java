@@ -37,6 +37,8 @@ public final class WiFi {
             new ConcurrentHashMap<>();
 
     private static WifiManager.LocalOnlyHotspotReservation localOnlyHotspotReservation = null;
+    private static boolean isLocalHotspotStarting = false;
+    private static boolean pendingStartLocalHotspot = false;
     private static String lastSoftApIp = "";
     private static boolean softApCallbackRegistered = false;
 
@@ -556,7 +558,7 @@ public final class WiFi {
     }
 
     public static boolean isLocalHotspotEnabled(Context context) {
-        return localOnlyHotspotReservation != null;
+        return localOnlyHotspotReservation != null || isLocalHotspotStarting;
     }
 
     public static void setLocalHotspotEnabled(Context context, boolean enabled) {
@@ -568,20 +570,43 @@ public final class WiFi {
                 if (enabled) {
                     if (localOnlyHotspotReservation != null) return;
 
+                    boolean hasNearby = true;
                     if (android.os.Build.VERSION.SDK_INT >= 33) {
-                        if (context.checkSelfPermission(android.Manifest.permission.NEARBY_WIFI_DEVICES)
-                                != PackageManager.PERMISSION_GRANTED) {
-                            Log.w(TAG, "setLocalHotspotEnabled: NEARBY_WIFI_DEVICES permission not granted, requesting...");
-                            requestNearbyDevicesPermission(context);
-                            return;
+                        hasNearby = context.checkSelfPermission(android.Manifest.permission.NEARBY_WIFI_DEVICES)
+                                == PackageManager.PERMISSION_GRANTED;
+                    }
+                    boolean hasLocation = context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                            == PackageManager.PERMISSION_GRANTED;
+
+                    if (!hasNearby || !hasLocation) {
+                        Log.w(TAG, "setLocalHotspotEnabled: permissions missing (nearby=" + hasNearby + ", location=" + hasLocation + "), requesting...");
+                        pendingStartLocalHotspot = true;
+                        isLocalHotspotStarting = true;
+
+                        if (context instanceof android.app.Activity) {
+                            String[] perms;
+                            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                                perms = new String[]{
+                                        android.Manifest.permission.NEARBY_WIFI_DEVICES,
+                                        android.Manifest.permission.ACCESS_FINE_LOCATION
+                                };
+                            } else {
+                                perms = new String[]{
+                                        android.Manifest.permission.ACCESS_FINE_LOCATION
+                                };
+                            }
+                            ((android.app.Activity) context).requestPermissions(perms, 1001);
                         }
+                        return;
                     }
 
+                    isLocalHotspotStarting = true;
                     wifiManager.startLocalOnlyHotspot(new WifiManager.LocalOnlyHotspotCallback() {
                         @Override
                         public void onStarted(WifiManager.LocalOnlyHotspotReservation reservation) {
                             super.onStarted(reservation);
                             localOnlyHotspotReservation = reservation;
+                            isLocalHotspotStarting = false;
                             Log.i(TAG, "Local-only hotspot started");
                         }
 
@@ -589,6 +614,7 @@ public final class WiFi {
                         public void onStopped() {
                             super.onStopped();
                             localOnlyHotspotReservation = null;
+                            isLocalHotspotStarting = false;
                             lastSoftApIp = "";
                             Log.i(TAG, "Local-only hotspot stopped");
                         }
@@ -597,10 +623,13 @@ public final class WiFi {
                         public void onFailed(int reason) {
                             super.onFailed(reason);
                             localOnlyHotspotReservation = null;
+                            isLocalHotspotStarting = false;
                             Log.e(TAG, "Local-only hotspot failed: " + reason);
                         }
-                    }, null);
+                    }, new android.os.Handler(android.os.Looper.getMainLooper()));
                 } else {
+                    isLocalHotspotStarting = false;
+                    pendingStartLocalHotspot = false;
                     if (localOnlyHotspotReservation != null) {
                         localOnlyHotspotReservation.close();
                         localOnlyHotspotReservation = null;
@@ -608,7 +637,30 @@ public final class WiFi {
                 }
             }
         } catch (Exception e) {
+            isLocalHotspotStarting = false;
             Log.e(TAG, "setLocalHotspotEnabled failed", e);
+        }
+    }
+
+    public static void onPermissionResult(Context context, int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == 1001) {
+            boolean allGranted = true;
+            for (int res : grantResults) {
+                if (res != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+            if (allGranted) {
+                if (pendingStartLocalHotspot) {
+                    pendingStartLocalHotspot = false;
+                    setLocalHotspotEnabled(context, true);
+                }
+            } else {
+                pendingStartLocalHotspot = false;
+                isLocalHotspotStarting = false;
+                Log.w(TAG, "Permissions denied for local hotspot");
+            }
         }
     }
 

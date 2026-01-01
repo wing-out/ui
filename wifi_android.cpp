@@ -144,12 +144,6 @@ void setLocalHotspotEnabled(bool enabled) {
     return;
   }
 
-  if (enabled) {
-    QJniObject::callStaticMethod<void>(
-        JAVA_WIFI_CLASS, "requestNearbyDevicesPermission",
-        "(Landroid/content/Context;)V", activity.object<jobject>());
-  }
-
   QJniObject::callStaticMethod<void>(
       JAVA_WIFI_CLASS, "setLocalHotspotEnabled", "(Landroid/content/Context;Z)V",
       activity.object<jobject>(), static_cast<jboolean>(enabled));

@@ -86,7 +86,15 @@ Item {
         Timer {
             id: scrollToBottomTimer
             interval: 100; running: true; repeat: false
-            onTriggered: messagesList.positionViewAtEnd();
+            onTriggered: {
+                if (userInteracting) {
+                    return;
+                }
+                messagesList.positionViewAtEnd();
+                Qt.callLater(function () {
+                    messagesList.positionViewAtEnd();
+                });
+            }
         }
 
         Component.onCompleted: {
