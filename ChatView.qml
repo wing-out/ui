@@ -87,7 +87,7 @@ Item {
             id: scrollToBottomTimer
             interval: 100; running: true; repeat: false
             onTriggered: {
-                if (userInteracting) {
+                if (messagesList.userInteracting) {
                     return;
                 }
                 messagesList.positionViewAtEnd();
@@ -101,13 +101,13 @@ Item {
             messagesList.scrollToBottom();
         }
         onCountChanged: {
-            if (userInteracting) {
+            if (messagesList.userInteracting) {
                 return;
             }
             messagesList.scrollToBottom();
         }
         onHeightChanged: {
-            if (userInteracting) {
+            if (messagesList.userInteracting) {
                 return;
             }
             messagesList.scrollToBottom();

@@ -4,10 +4,11 @@ project(wingout VERSION 0.1 LANGUAGES CXX)
 
 
 #set(SANITIZER_FLAGS "-fsanitize=address -fsanitize-recover=address")
-set(DEBUG_FLAGS "-fno-omit-frame-pointer -ggdb3")
+set(DEBUG_FLAGS "-fno-omit-frame-pointer -ggdb3 -gsplit-dwarf")
 set(QT_QML_GENERATE_QMLLS_INI ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_UNITY_BUILD ON)
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
     set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
@@ -296,6 +297,14 @@ target_link_libraries(wingout
     Qt6::TextToSpeech
     Qt6::Network
     Qt6::Multimedia
+)
+
+target_precompile_headers(wingout PRIVATE
+    <QtCore/QtCore>
+    <QtGui/QtGui>
+    <QtQuick/QtQuick>
+    <QtQml/QtQml>
+    <QtNetwork/QtNetwork>
 )
 
 include(GNUInstallDirs)

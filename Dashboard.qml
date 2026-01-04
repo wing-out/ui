@@ -100,12 +100,12 @@ Page {
 
     function onGetLatenciesSuccess(latencies) {
         var audioLatencies = latencies.latencies.audio;
-        var audioLatency = audioLatencies.preRecodingU + audioLatencies.recodingU + audioLatencies.recodedPreSendU + audioLatencies.sendingU;
+        var audioLatency = audioLatencies.preTranscodingU + audioLatencies.transcodingU + audioLatencies.transcodedPreSendU + audioLatencies.sendingU;
         var videoLatencies = latencies.latencies.video;
-        var videoLatency = videoLatencies.preRecodingU + videoLatencies.recodingU + videoLatencies.recodedPreSendU + videoLatencies.sendingU;
+        var videoLatency = videoLatencies.preTranscodingU + videoLatencies.transcodingU + videoLatencies.transcodedPreSendU + videoLatencies.sendingU;
         var totalLatency = Math.max(audioLatency, videoLatency) / 1000000;
         sendingLatencyText.sendingLatency = totalLatency;
-        //console.log("total latency:", totalLatency,"ms ; latencies: audio:", audioLatencies, audioLatency, "; video:", videoLatencies, videoLatency);
+        //console.log("total latency:", totalLatency, "ms; audio: preTranscoding:", audioLatencies.preTranscodingU, "transcoding:", audioLatencies.transcodingU, "transcodedPreSend:", audioLatencies.transcodedPreSendU, "sending:", audioLatencies.sendingU, "total:", audioLatency, "; video: preTranscoding:", videoLatencies.preTranscodingU, "transcoding:", videoLatencies.transcodingU, "transcodedPreSend:", videoLatencies.transcodedPreSendU, "sending:", videoLatencies.sendingU, "total:", videoLatency, "; original:", JSON.stringify(latencies));
     }
 
     function onGetLatenciesError(error) {
