@@ -100,15 +100,22 @@ Page {
 
     function onGetLatenciesSuccess(latencies) {
         var audioLatencies = latencies.latencies.audio;
-        var audioLatency = audioLatencies.preTranscodingU + audioLatencies.transcodingU + audioLatencies.transcodedPreSendU + audioLatencies.sendingU;
+        var audioPreSending = audioLatencies.preTranscodingU + audioLatencies.transcodingU + audioLatencies.transcodedPreSendU;
+        var audioSending = audioLatencies.sendingU;
         var videoLatencies = latencies.latencies.video;
-        var videoLatency = videoLatencies.preTranscodingU + videoLatencies.transcodingU + videoLatencies.transcodedPreSendU + videoLatencies.sendingU;
-        var totalLatency = Math.max(audioLatency, videoLatency) / 1000000;
-        sendingLatencyText.sendingLatency = totalLatency;
-        //console.log("total latency:", totalLatency, "ms; audio: preTranscoding:", audioLatencies.preTranscodingU, "transcoding:", audioLatencies.transcodingU, "transcodedPreSend:", audioLatencies.transcodedPreSendU, "sending:", audioLatencies.sendingU, "total:", audioLatency, "; video: preTranscoding:", videoLatencies.preTranscodingU, "transcoding:", videoLatencies.transcodingU, "transcodedPreSend:", videoLatencies.transcodedPreSendU, "sending:", videoLatencies.sendingU, "total:", videoLatency, "; original:", JSON.stringify(latencies));
+        var videoPreSending = videoLatencies.preTranscodingU + videoLatencies.transcodingU + videoLatencies.transcodedPreSendU;
+        var videoSending = videoLatencies.sendingU;
+
+        var preSendingLatency = Math.max(audioPreSending, videoPreSending) / 1000000;
+        var sendingLatency = Math.max(audioSending, videoSending) / 1000000;
+
+        sendingLatencyText.preSendingLatency = preSendingLatency;
+        sendingLatencyText.sendingLatency = sendingLatency;
+        //console.log("latencies: audio: preSending:", audioPreSending, "sending:", audioSending, "; video: preSending:", videoPreSending, "sending:", videoSending, "; original:", JSON.stringify(latencies));
     }
 
     function onGetLatenciesError(error) {
+        sendingLatencyText.preSendingLatency = -1;
         sendingLatencyText.sendingLatency = -1;
         processFFStreamGRPCError(ffstreamClientGetLatencier, error);
     }
@@ -570,9 +577,12 @@ Page {
         return '#00FF00';
     }
 
-    function pingColorFromMS(durMS, thresholdWarn, thresholdBad) {
+    function pingColorFromMS(durMS, thresholdGood, thresholdWarn, thresholdBad) {
         if (durMS < 0) {
             return '#FF0000';
+        }
+        if (durMS < thresholdGood) {
+            return '#00FF00';
         }
         if (durMS < thresholdWarn) {
             return colorMix('#00FF00', '#FFFF00', durMS / thresholdWarn);
@@ -815,13 +825,14 @@ Page {
             Text {
                 id: sendingLatencyText
                 height: parent.height
-                width: 100
+                width: 140
                 font.pixelSize: 20
                 font.bold: true
                 horizontalAlignment: Text.AlignRight
+                property int preSendingLatency: 0
                 property int sendingLatency: 0
-                text: (sendingLatency < 0 ? "N/A" : dashboard.formatDuration(sendingLatency)) + "📱"
-                color: dashboard.pingColorFromMS(sendingLatency, 680, 1500)
+                text: (preSendingLatency < 0 || sendingLatency < 0 ? "N/A" : Math.round(preSendingLatency) + "+" + Math.round(sendingLatency) + "ms") + "📱"
+                color: dashboard.pingColorFromMS(preSendingLatency + sendingLatency, 100, 400, 1500)
             }
 
             Text {
@@ -833,7 +844,7 @@ Page {
                 horizontalAlignment: Text.AlignHCenter
                 property int rttMS: -1
                 text: rttMS < 0 ? "no data" : "⇒" + dashboard.formatDuration(rttMS) + "⇒"
-                color: dashboard.pingColorFromMS(rttMS, 100, 1000)
+                color: dashboard.pingColorFromMS(rttMS, 20, 100, 1000)
 
                 Component.onCompleted: function () {
                     console.log("pingStatus: x,y,w,h: ", x, y, width, height);
