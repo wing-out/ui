@@ -11,6 +11,7 @@ Page {
 
     property bool flowStarted: false
     property bool streamingButtonCooldown: false
+    property int hotspotInfoRetryCount: 0
 
     Timer {
         id: streamingCooldownTimer
@@ -25,11 +26,42 @@ Page {
         repeat: false
         onTriggered: {
             platform.refreshWiFiState()
-            var info = platform.getLocalOnlyHotspotInfo()
+            var isLocal = platform.isLocalHotspotEnabled
+            var isNormal = platform.isHotspotEnabled
+            var info = isLocal ? platform.getLocalOnlyHotspotInfo() : (isNormal ? platform.getHotspotConfiguration() : null)
+
             if (info && info.ssid) {
                 wifiSsidField.text = info.ssid
                 wifiPskField.text = info.psk
-                console.log("[DJI-BLE] QML: Auto-filled from local hotspot (auto):", info.ssid)
+                console.log("[DJI-BLE] QML: Auto-filled from hotspot (auto):", info.ssid)
+                hotspotInfoRetryCount = 0
+            } else if (isLocal || isNormal) {
+                if (hotspotInfoRetryCount < 5) {
+                    hotspotInfoRetryCount++
+                    console.log("[DJI-BLE] QML: Hotspot info not ready, retrying (" + hotspotInfoRetryCount + "/5)...")
+                    hotspotInfoTimer.start()
+                } else {
+                    DJIController.error("Failed to auto-fill hotspot info after retries")
+                    hotspotInfoRetryCount = 0
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: platform
+        function onIsLocalHotspotEnabledChanged() {
+            if (platform.isLocalHotspotEnabled) {
+                console.log("[DJI-BLE] QML: Local hotspot enabled, starting auto-fill timer...")
+                hotspotInfoRetryCount = 0
+                hotspotInfoTimer.start()
+            }
+        }
+        function onIsHotspotEnabledChanged() {
+            if (platform.isHotspotEnabled) {
+                console.log("[DJI-BLE] QML: Hotspot enabled, starting auto-fill timer...")
+                hotspotInfoRetryCount = 0
+                hotspotInfoTimer.start()
             }
         }
     }
@@ -43,8 +75,14 @@ Page {
                 startFlowTimer.start()
             }
         }
-        function onLog(msg) { console.log("[DJI-BLE] QML:", msg) }
-        function onError(msg) { console.error("[DJI-BLE] QML Error:", msg) }
+        function onLog(msg) {
+            console.log("[DJI-BLE] QML:", msg)
+            logArea.append("[LOG] " + msg)
+        }
+        function onError(msg) {
+            console.error("[DJI-BLE] QML Error:", msg)
+            logArea.append("[ERROR] " + msg)
+        }
     }
 
     Timer {
@@ -80,7 +118,8 @@ Page {
         console.log("[DJI-BLE] QML: Starting auto-discovery...")
         DJIController.startDeviceDiscovery()
 
-        var hotspot = platform.getHotspotConfiguration()
+        platform.refreshWiFiState()
+        var hotspot = platform.isLocalHotspotEnabled ? platform.getLocalOnlyHotspotInfo() : platform.getHotspotConfiguration()
         if (hotspot && hotspot.ssid) {
             console.log("[DJI-BLE] QML: Auto-filled hotspot info for SSID:", hotspot.ssid)
             wifiSsidField.text = hotspot.ssid
@@ -123,7 +162,6 @@ Page {
                         enabled: !localHotspotSwitch.checked
                         onToggled: {
                             platform.setHotspotEnabled(checked)
-                            hotspotInfoTimer.start()
                         }
                     }
                     Label {
@@ -135,7 +173,6 @@ Page {
                         enabled: !hotspotSwitch.checked
                         onToggled: {
                             platform.setLocalHotspotEnabled(checked)
-                            if (checked) hotspotInfoTimer.start()
                         }
                     }
                 }
@@ -151,6 +188,20 @@ Page {
                     text: ""
                     echoMode: TextInput.Password
                     Layout.fillWidth: true
+                }
+                Button {
+                    text: "Fill from Hotspot"
+                    Layout.fillWidth: true
+                    onClicked: {
+                        platform.refreshWiFiState()
+                        var info = localHotspotSwitch.checked ? platform.getLocalOnlyHotspotInfo() : platform.getHotspotConfiguration()
+                        if (info && info.ssid) {
+                            wifiSsidField.text = info.ssid
+                            wifiPskField.text = info.psk
+                        } else {
+                            DJIController.error("Failed to get hotspot info")
+                        }
+                    }
                 }
             }
         }
@@ -194,7 +245,7 @@ Page {
                         id: bitrateSelector
                         from: 500
                         to: 20000
-                        value: 10000
+                        value: 5000
                         stepSize: 500
                         editable: true
                         Layout.fillWidth: true

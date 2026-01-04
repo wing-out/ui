@@ -14,6 +14,6 @@
     "cmake.useCMakePresets": "never",
     "java.project.referencedLibraries": [
         "${env:HOME}/Android/Sdk/platforms/android-35/android.jar",
-        "${env:ANDROID_SDK_ROOT}/platforms/android-35/android.jar",
-    ],
+        "${env:ANDROID_SDK_ROOT}/platforms/android-35/android.jar"
+    ]
 }
