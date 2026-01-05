@@ -120,7 +120,15 @@ Item {
             callback()
         }
     }
-
+    Timer {
+        id: injectDiagnosticsSubtitlesTicker
+        interval: 1000
+        repeat: true
+        property var callback: null
+        onTriggered: {
+            callback()
+        }
+    }
     property alias retryTimerDXProducerClientSubscribeToChatMessages: retryTimerDXProducerClientSubscribeToChatMessages
     property alias retryTimerDXProducerClientSubscribeToScreenshot: retryTimerDXProducerClientSubscribeToScreenshot
     property alias pingTicker: pingTicker

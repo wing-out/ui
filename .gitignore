@@ -85,6 +85,7 @@ CMakeLists.txt.user*
 /*/build/
 /android/.gradle
 /.cache
+/.ccache
 /*/.cache
 /keystores
 /.github/instructions/current_summary.md

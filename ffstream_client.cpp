@@ -114,4 +114,15 @@ void Client::getBitRates(
   this->GetBitRates(arg, finishCallback, errorCallback, options);
 }
 
+void Client::injectSubtitles(
+    const QString &text, quint64 durationNS, const QJSValue &finishCallback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  this->_reconnectIfNeeded();
+  ffstream_grpc::InjectSubtitlesRequest arg{};
+  arg.setText(text);
+  arg.setDurationNs(durationNS);
+  this->InjectSubtitles(arg, finishCallback, errorCallback, options);
+}
+
 } // namespace FFStream

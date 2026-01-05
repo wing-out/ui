@@ -53,6 +53,8 @@ Page {
         updateChannelQualityInfo();
         timers.channelQualityInfoTicker.callback = updateChannelQualityInfo;
         timers.channelQualityInfoTicker.start();
+        timers.injectDiagnosticsSubtitlesTicker.callback = injectDiagnosticsSubtitles;
+        timers.injectDiagnosticsSubtitlesTicker.start();
     }
 
     function ping() {
@@ -401,6 +403,50 @@ Page {
         }
     }
 
+    function injectDiagnosticsSubtitles() {
+        var data = {
+            "latency": {
+                "preSending": sendingLatencyText.preSendingLatency,
+                "sending": sendingLatencyText.sendingLatency
+            },
+            "fps": {
+                "input": inputFPSText.inputFPS,
+                "output": outputFPSText.outputFPS
+            },
+            "bitrate": {
+                "video": encodingBitrateText.videoBitrate
+            },
+            "playerLag": {
+                "min": playerLagText.playerLagMin,
+                "max": playerLagText.playerLagMax
+            },
+            "ping": {
+                "rtt": pingStatus.rttMS
+            },
+            "wifi": {
+                "ssid": wifiStatus.ssid,
+                "bssid": wifiStatus.bssid,
+                "rssi": wifiStatus.rssi
+            },
+            "channels": [
+                channel1Quality.quality,
+                channel2Quality.quality,
+                channel3Quality.quality
+            ],
+            "viewers": {
+                "youtube": youtubeCounter.value,
+                "twitch": twitchCounter.value,
+                "kick": kickCounter.value
+            },
+            "signal": signalStatus.signalStrength,
+            "streamTime": statusStreamTime.seconds
+        };
+        var json = JSON.stringify(data);
+        ffstreamClientSubtitleInjecter.injectSubtitles(json, 1000000000, function () {}, function (error) {
+            processFFStreamGRPCError(ffstreamClientSubtitleInjecter, error);
+        }, grpcCallOptions);
+    }
+
     Platform {
         id: platform
         Component.onCompleted: {
@@ -487,6 +533,10 @@ Page {
     }
     FFStream.Client {
         id: ffstreamClientGetBitRateser
+        channel: ffstreamTarget.channel
+    }
+    FFStream.Client {
+        id: ffstreamClientSubtitleInjecter
         channel: ffstreamTarget.channel
     }
 
@@ -926,7 +976,7 @@ Page {
                         return;
                     }
                     var isPreviewEnabled = imageScreenshot.source === imageScreenshot.sourcePreview;
-                    var lowBitRateSource = "/tmp/low_bitrate.flv";
+                    var lowBitRateSource = "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3?reason=low-bitrate";
                     if (videoBitrate < 2000000) {
                         imageScreenshot.sourcePreview = lowBitRateSource;
                     } else {

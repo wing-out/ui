@@ -127,22 +127,28 @@ Page {
         }
     }
 
-    ColumnLayout {
+    ScrollView {
+        id: scrollView
         anchors.fill: parent
-        anchors.margins: 20
-        spacing: 20
 
-        ComboBox {
-            id: deviceSelector
-            Layout.fillWidth: true
-            model: DJIController.devicesList
-            textRole: "name"
-            onCurrentIndexChanged: {
-                if (currentIndex >= 0) {
-                    DJIController.device = model[currentIndex]
+        ColumnLayout {
+            id: mainLayout
+            width: scrollView.availableWidth - 40
+            x: 20
+            y: 20
+            spacing: 20
+
+            ComboBox {
+                id: deviceSelector
+                Layout.fillWidth: true
+                model: DJIController.devicesList
+                textRole: "name"
+                onCurrentIndexChanged: {
+                    if (currentIndex >= 0) {
+                        DJIController.device = model[currentIndex]
+                    }
                 }
             }
-        }
 
         GroupBox {
             title: "WiFi Settings"
@@ -274,15 +280,19 @@ Page {
             enabled: !streamingButtonCooldown && (DJIController.isStreaming || (DJIController.device !== null && wifiSsidField.text !== "" && wifiPskField.text !== "" && rtmpUrlField.text !== ""))
         }
 
-        ScrollView {
+        TextArea {
+            id: logArea
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            TextArea {
-                id: logArea
-                readOnly: true
-                font.family: "Monospace"
-                text: "Waiting for device..."
-            }
+            readOnly: true
+            font.family: "Monospace"
+            text: "Waiting for device..."
+            wrapMode: TextEdit.Wrap
+        }
+
+        Item {
+            Layout.preferredHeight: 20
+            Layout.fillWidth: true
         }
     }
+}
 }
