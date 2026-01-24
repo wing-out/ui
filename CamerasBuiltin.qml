@@ -1,3 +1,4 @@
+/* This file implements the CamerasBuiltin component for managing local camera settings. */
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

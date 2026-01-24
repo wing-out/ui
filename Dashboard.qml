@@ -1,12 +1,11 @@
+/* This file implements the main dashboard with chat, monitor data, and various stream status indicators. */
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Shapes
-import QtGrpc
 import Platform
 
-import streamd as StreamD
-import ffstream_grpc as FFStream
+import wingout_diagnostics as Diagnostics
 
 Page {
     id: dashboard
@@ -20,6 +19,8 @@ Page {
     property var pingTimestamps: ({})
     property var pingInProgress: false
     readonly property bool isLandscape: width > height
+    property var lastDiagnostics: ({})
+    property int diagnosticsUpdateCount: 0
 
     Component.onCompleted: {
         subscribeToChatMessages();
@@ -50,6 +51,8 @@ Page {
         updateWiFiInfo();
         timers.updateWiFiInfoTicker.callback = updateWiFiInfo;
         timers.updateWiFiInfoTicker.start();
+        timers.updateResourcesTicker.callback = platform.updateResources;
+        timers.updateResourcesTicker.start();
         updateChannelQualityInfo();
         timers.channelQualityInfoTicker.callback = updateChannelQualityInfo;
         timers.channelQualityInfoTicker.start();
@@ -93,14 +96,15 @@ Page {
         pingCurrentID = (pingCurrentID + 1) % 65536;
         var payload = String.fromCharCode(byte0) + String.fromCharCode(byte1);
         pingTimestamps[payload] = new Date();
-        dxProducerClientPinger.ping(payload, "", 0, onPingSuccess, onPingFail, grpcCallOptions);
+        dxProducerClient.ping(payload, "", 0, onPingSuccess, onPingFail, grpcCallOptions);
     }
 
     function updateFFStreamLatencies() {
-        ffstreamClientGetLatencier.getLatencies(onGetLatenciesSuccess, onGetLatenciesError, grpcCallOptions);
+        ffstreamClient.getLatencies(onGetLatenciesSuccess, onGetLatenciesError, grpcCallOptions);
     }
 
     function onGetLatenciesSuccess(latencies) {
+        console.log("Dashboard.qml: Received latencies: " + JSON.stringify(latencies));
         var audioLatencies = latencies.latencies.audio;
         var audioPreSending = audioLatencies.preTranscodingU + audioLatencies.transcodingU + audioLatencies.transcodedPreSendU;
         var audioSending = audioLatencies.sendingU;
@@ -119,11 +123,11 @@ Page {
     function onGetLatenciesError(error) {
         sendingLatencyText.preSendingLatency = -1;
         sendingLatencyText.sendingLatency = -1;
-        processFFStreamGRPCError(ffstreamClientGetLatencier, error);
+        processFFStreamGRPCError(ffstreamClient, error);
     }
 
     function updateFFStreamInputQuality() {
-        ffstreamClientGetInputQualitier.getInputQuality(onGetInputQualitySuccess, onGetInputQualityError, grpcCallOptions);
+        ffstreamClient.getInputQuality(onGetInputQualitySuccess, onGetInputQualityError, grpcCallOptions);
     }
 
     function onGetInputQualitySuccess(inputQuality) {
@@ -133,11 +137,11 @@ Page {
 
     function onGetInputQualityError(error) {
         inputFPSText.inputFPS = -1;
-        processFFStreamGRPCError(ffstreamClientGetInputQualitier, error);
+        processFFStreamGRPCError(ffstreamClient, error);
     }
 
     function updateFFStreamOutputQuality() {
-        ffstreamClientGetOutputQualitier.getOutputQuality(onGetOutputQualitySuccess, onGetOutputQualityError, grpcCallOptions);
+        ffstreamClient.getOutputQuality(onGetOutputQualitySuccess, onGetOutputQualityError, grpcCallOptions);
     }
 
     function onGetOutputQualitySuccess(outputQuality) {
@@ -147,14 +151,15 @@ Page {
 
     function onGetOutputQualityError(error) {
         outputFPSText.outputFPS = -1;
-        processFFStreamGRPCError(ffstreamClientGetOutputQualitier, error);
+        processFFStreamGRPCError(ffstreamClient, error);
     }
 
     function updateFFStreamBitRates() {
-        ffstreamClientGetBitRateser.getBitRates(onGetBitRatesSuccess, onGetBitRatesError, grpcCallOptions);
+        ffstreamClient.getBitRates(onGetBitRatesSuccess, onGetBitRatesError, grpcCallOptions);
     }
 
     function onGetBitRatesSuccess(bitRates) {
+        console.log("Dashboard.qml: Received bitRates: " + JSON.stringify(bitRates));
         //console.log("bitRates:", bitRates.bitRates.outputBitRate);
         encodingBitrateText.videoBitrate = bitRates.bitRates.outputBitRate.video;
         //console.log("video bitrate:", bitRates.bitRates.outputBitRate.video);
@@ -162,7 +167,7 @@ Page {
 
     function onGetBitRatesError(error) {
         encodingBitrateText.videoBitrate = -1;
-        processFFStreamGRPCError(ffstreamClientGetBitRateser, error);
+        processFFStreamGRPCError(ffstreamClient, error);
     }
 
     function updatePlayerLag() {
@@ -180,10 +185,11 @@ Page {
     }
 
     function fetchPlayerLag() {
-        dxProducerClientPlayerLagGetter.getPlayerLag(onGetPlayerLagSuccess, onGetPlayerLagError, grpcCallOptions);
+        dxProducerClient.getPlayerLag(onGetPlayerLagSuccess, onGetPlayerLagError, grpcCallOptions);
     }
 
     function onGetPlayerLagSuccess(lagReply) {
+        console.log("Dashboard.qml: Received player lag reply");
         var now = new Date().getTime();
         var currentUnixNano = Math.floor(now * 1000000);
         var replyUnixNano = lagReply.replyUnixNano > lagReply.requestUnixNano ? lagReply.replyUnixNano : lagReply.requestUnixNano;
@@ -200,7 +206,7 @@ Page {
     function onGetPlayerLagError(error) {
         playerLagText.playerLagMin = -1;
         playerLagText.playerLagMax = -1;
-        processStreamDGRPCError(dxProducerClientPinger, error);
+        processStreamDGRPCError(dxProducerClient, error);
     }
 
     function subscribeToChatMessages() {
@@ -213,15 +219,17 @@ Page {
             since = new Date(Math.floor(latestChatMessageTimestampUNIXNano / 1000000));
         }
         console.log("since: ", since);
-        dxProducerClientChatListener.subscribeToChatMessages(since, 200, onChatNewMessage, onChatMessagesFinished, onChatMessagesErrored);
+
+        dxProducerClient.subscribeToChatMessages(since, 200, onChatNewMessage, onChatMessagesFinished, onChatMessagesErrored, streamingGrpcCallOptions);
     }
 
     function onPingSuccess(reply): void {
+        console.log("Dashboard.qml: Received ping reply");
         pingInProgress = false;
         var receivedTimestamp = new Date();
         var sentTimestamp = pingTimestamps[reply.payload];
         if (sentTimestamp === undefined || sentTimestamp === null) {
-            console.warn("timestamp not found for payload:", reply.payload[0], reply.payload[1]);
+            console.warn("timestamp not found for payload:", reply.payload);
             return;
         }
         delete pingTimestamps[reply.payload];
@@ -233,10 +241,11 @@ Page {
         pingInProgress = false;
         pingStatus.rttMS = -1;
         console.log("ping failed");
-        processStreamDGRPCError(dxProducerClientPinger, error);
+        processStreamDGRPCError(dxProducerClient, error);
     }
 
     function onChatNewMessage(chatMessage): void {
+        console.log("Dashboard.qml: Received new chat message");
         if (latestChatMessageTimestampUNIXNano != null && latestChatMessageTimestampUNIXNano == chatMessage.content.createdAtUNIXNano) {
             var alreadyDisplayed = false;
             latestTimestampChatMessageIDs.foreach(function (item) {
@@ -283,21 +292,13 @@ Page {
     }
     function onChatMessagesFinished(status): void {
         console.log("Finished", status);
-        timers.retryTimerDXProducerClientSubscribeToChatMessages.start();
+        timers.retryTimerSubscribeToChatMessages.start();
     }
 
     function onChatMessagesErrored(error): void {
         console.log("Errored", error);
-        processStreamDGRPCError(dxProducerClientChatListener, error);
-        timers.retryTimerDXProducerClientSubscribeToChatMessages.start();
-    }
-
-    function processStreamDGRPCError(dxProducer, error): void {
-        dxProducer.processGRPCError(error);
-    }
-
-    function processFFStreamGRPCError(ffstream, error): void {
-        ffstream.processGRPCError(error);
+        processStreamDGRPCError(dxProducerClient, error);
+        timers.retryTimerSubscribeToChatMessages.start();
     }
 
     property var updateStreamStatusYouTubeInProgress: false
@@ -307,15 +308,18 @@ Page {
     function updateStreamStatus() {
         if (!updateStreamStatusYouTubeInProgress) {
             updateStreamStatusYouTubeInProgress = true;
-            dxProducerClientStreamStatusYouTube.getStreamStatus("youtube", false, onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, grpcCallOptions);
+
+            dxProducerClient.getStreamStatus("youtube", false, onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, grpcCallOptions);
         }
         if (!updateStreamStatusTwitchInProgress) {
             updateStreamStatusTwitchInProgress = true;
-            dxProducerClientStreamStatusTwitch.getStreamStatus("twitch", false, onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, grpcCallOptions);
+
+            dxProducerClient.getStreamStatus("twitch", false, onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, grpcCallOptions);
         }
         if (!updateStreamStatusKickInProgress) {
             updateStreamStatusKickInProgress = true;
-            dxProducerClientStreamStatusKick.getStreamStatus("kick", false, onUpdateStreamStatusKick, onUpdateStreamStatusKickError, grpcCallOptions);
+
+            dxProducerClient.getStreamStatus("kick", false, onUpdateStreamStatusKick, onUpdateStreamStatusKickError, grpcCallOptions);
         }
     }
 
@@ -337,7 +341,7 @@ Page {
     }
     function onUpdateStreamStatusYouTubeError(error) {
         updateStreamStatusYouTubeInProgress = false;
-        processStreamDGRPCError(dxProducerClientStreamStatusYouTube, error);
+        processStreamDGRPCError(dxProducerClient, error);
     }
 
     function onUpdateStreamStatusTwitch(streamStatus) {
@@ -351,7 +355,7 @@ Page {
     }
     function onUpdateStreamStatusTwitchError(error) {
         updateStreamStatusTwitchInProgress = false;
-        processStreamDGRPCError(dxProducerClientStreamStatusTwitch, error);
+        processStreamDGRPCError(dxProducerClient, error);
     }
 
     function onUpdateStreamStatusKick(streamStatus) {
@@ -365,7 +369,7 @@ Page {
     }
     function onUpdateStreamStatusKickError(error) {
         updateStreamStatusKickInProgress = false;
-        processStreamDGRPCError(dxProducerClientStreamStatusTwitch, error);
+        processStreamDGRPCError(dxProducerClient, error);
     }
 
     function updateWiFiInfo() {
@@ -404,46 +408,57 @@ Page {
     }
 
     function injectDiagnosticsSubtitles() {
-        var data = {
-            "latency": {
-                "preSending": sendingLatencyText.preSendingLatency,
-                "sending": sendingLatencyText.sendingLatency
-            },
-            "fps": {
-                "input": inputFPSText.inputFPS,
-                "output": outputFPSText.outputFPS
-            },
-            "bitrate": {
-                "video": encodingBitrateText.videoBitrate
-            },
-            "playerLag": {
-                "min": playerLagText.playerLagMin,
-                "max": playerLagText.playerLagMax
-            },
-            "ping": {
-                "rtt": pingStatus.rttMS
-            },
-            "wifi": {
-                "ssid": wifiStatus.ssid,
-                "bssid": wifiStatus.bssid,
-                "rssi": wifiStatus.rssi
-            },
-            "channels": [
-                channel1Quality.quality,
-                channel2Quality.quality,
-                channel3Quality.quality
-            ],
-            "viewers": {
-                "youtube": youtubeCounter.value,
-                "twitch": twitchCounter.value,
-                "kick": kickCounter.value
-            },
+        var currentDiagnostics = {
+            "latencyPreSending": Math.round(sendingLatencyText.preSendingLatency),
+            "latencySending": Math.round(sendingLatencyText.sendingLatency),
+            "fpsInput": inputFPSText.inputFPS,
+            "fpsOutput": outputFPSText.outputFPS,
+            "bitrateVideo": encodingBitrateText.videoBitrate,
+            "playerLagMin": Math.round(playerLagText.playerLagMin),
+            "playerLagMax": Math.round(playerLagText.playerLagMax),
+            "pingRtt": pingStatus.rttMS,
+            "wifiSsid": wifiStatus.ssid,
+            "wifiBssid": wifiStatus.bssid,
+            "wifiRssi": wifiStatus.rssi,
+            "channels": [channel1Quality.quality, channel2Quality.quality, channel3Quality.quality],
+            "viewersYoutube": youtubeCounter.value,
+            "viewersTwitch": twitchCounter.value,
+            "viewersKick": kickCounter.value,
             "signal": signalStatus.signalStrength,
-            "streamTime": statusStreamTime.seconds
+            "streamTime": Math.round(statusStreamTime.seconds),
+            "cpuUtilization": platform.cpuUtilization,
+            "memoryUtilization": platform.memoryUtilization,
+            "temperatures": platform.temperatures
         };
-        var json = JSON.stringify(data);
-        ffstreamClientSubtitleInjecter.injectSubtitles(json, 1000000000, function () {}, function (error) {
-            processFFStreamGRPCError(ffstreamClientSubtitleInjecter, error);
+
+        var msg = Diagnostics.Diagnostics();
+        var hasChanges = false;
+        var isFullState = (diagnosticsUpdateCount % 10) === 0;
+
+        for (var key in currentDiagnostics) {
+            if (key === "channels" || key === "temperatures") {
+                if (isFullState || JSON.stringify(currentDiagnostics[key]) !== JSON.stringify(lastDiagnostics[key])) {
+                    msg[key] = currentDiagnostics[key];
+                    hasChanges = true;
+                }
+                continue;
+            }
+            if (isFullState || currentDiagnostics[key] !== lastDiagnostics[key]) {
+                msg[key] = currentDiagnostics[key];
+                hasChanges = true;
+            }
+        }
+
+        if (!hasChanges) {
+            diagnosticsUpdateCount++;
+            return;
+        }
+
+        diagnosticsUpdateCount++;
+        lastDiagnostics = currentDiagnostics;
+
+        ffstreamClient.injectDiagnostics(msg, 1000000000, function () {}, function (error) {
+            processFFStreamGRPCError(ffstreamClient, error);
         }, grpcCallOptions);
     }
 
@@ -467,77 +482,11 @@ Page {
     Timers {
         id: timers
         Component.onCompleted: {
-            timers.retryTimerDXProducerClientSubscribeToChatMessages.callback = function () {
+            timers.retryTimerSubscribeToChatMessages.callback = function () {
                 console.log("re-subscribing to chat messages");
                 subscribeToChatMessages();
             };
         }
-    }
-    GrpcCallOptions {
-        id: grpcCallOptions
-        deadlineTimeout: 10000
-    }
-    GrpcHttp2Channel {
-        id: dxProducerTarget
-        hostUri: "https://192.168.0.134:3594"
-        options: GrpcChannelOptions {
-            deadlineTimeout: 365 * 24 * 3600 * 1000
-        }
-    }
-    StreamD.Client {
-        id: dxProducerClientPinger
-        channel: dxProducerTarget.channel
-    }
-    StreamD.Client {
-        id: dxProducerClientChatListener
-        channel: dxProducerTarget.channel
-    }
-    StreamD.Client {
-        id: dxProducerClientVideoRequester
-        channel: dxProducerTarget.channel
-    }
-    StreamD.Client {
-        id: dxProducerClientStreamStatusYouTube
-        channel: dxProducerTarget.channel
-    }
-    StreamD.Client {
-        id: dxProducerClientStreamStatusTwitch
-        channel: dxProducerTarget.channel
-    }
-    StreamD.Client {
-        id: dxProducerClientStreamStatusKick
-        channel: dxProducerTarget.channel
-    }
-    StreamD.Client {
-        id: dxProducerClientPlayerLagGetter
-        channel: dxProducerTarget.channel
-    }
-    GrpcHttp2Channel {
-        id: ffstreamTarget
-        hostUri: "https://127.0.0.1:3593"
-        options: GrpcChannelOptions {
-            deadlineTimeout: 365 * 24 * 3600 * 1000
-        }
-    }
-    FFStream.Client {
-        id: ffstreamClientGetLatencier
-        channel: ffstreamTarget.channel
-    }
-    FFStream.Client {
-        id: ffstreamClientGetInputQualitier
-        channel: ffstreamTarget.channel
-    }
-    FFStream.Client {
-        id: ffstreamClientGetOutputQualitier
-        channel: ffstreamTarget.channel
-    }
-    FFStream.Client {
-        id: ffstreamClientGetBitRateser
-        channel: ffstreamTarget.channel
-    }
-    FFStream.Client {
-        id: ffstreamClientSubtitleInjecter
-        channel: ffstreamTarget.channel
     }
 
     Row {
@@ -694,23 +643,75 @@ Page {
         return '#00FF00';
     }
 
-    function formatDuration(durationMS) {
-        if (durationMS < 200) {
-            return durationMS + " ms";
+    function cpuUtilizationColor(util) {
+        if (util < 0.2)
+            return '#00FF00';
+        if (util < 0.5)
+            return colorMix('#00FF00', '#FFFF00', (util - 0.2) / 0.3);
+        if (util < 0.8)
+            return colorMix('#FFFF00', '#FF0000', (util - 0.6) / 0.2);
+        return '#FF0000';
+    }
+
+    function memUtilizationColor(util) {
+        if (util < 0.2)
+            return '#00FF00';
+        if (util < 0.6)
+            return colorMix('#00FF00', '#FFFF00', (util - 0.2) / 0.4);
+        if (util < 0.8)
+            return colorMix('#FFFF00', '#FF0000', (util - 0.6) / 0.2);
+        return '#FF0000';
+    }
+
+    function temperatureColor(temp, type) {
+        var low = 40;
+        var warn = 70;
+        var high = 90;
+
+        if (!type) {
+            type = "";
         }
+
+        if (type.indexOf("batt") !== -1 || type.indexOf("bms") !== -1) {
+            low = 35;
+            warn = 42;
+            high = 48;
+        } else if (type.indexOf("cpu") !== -1 || type.indexOf("gpu") !== -1 || type.indexOf("g3d") !== -1 || type.indexOf("tpu") !== -1 || type.indexOf("soc") !== -1) {
+            low = 50;
+            warn = 85;
+            high = 100;
+        } else if (type.indexOf("skin") !== -1 || type.indexOf("ext_") !== -1 || type.indexOf("usb") !== -1 || type.indexOf("charger") !== -1) {
+            low = 35;
+            warn = 40;
+            high = 45;
+        }
+
+        if (temp < low)
+            return '#00FF00';
+        if (temp < warn)
+            return colorMix('#00FF00', '#FFFF00', (temp - low) / (warn - low));
+        if (temp < high)
+            return colorMix('#FFFF00', '#FF0000', (temp - warn) / (high - warn));
+        return '#FF0000';
+    }
+
+    function formatDuration(durationMS) {
+        /*if (durationMS < 200) {
+            return durationMS + " ms";
+        }*/
         var deciSeconds = Math.floor(durationMS / 100);
         var minutes = Math.floor(deciSeconds / 600);
         var seconds = Math.floor(deciSeconds / 10) % 60;
         if (minutes < 1) {
             deciSeconds -= seconds * 10;
-            return seconds + "." + Math.floor(deciSeconds) + " s";
+            return seconds + "." + Math.floor(deciSeconds);
         }
         if (minutes < 60) {
-            return minutes + " m " + seconds + " s";
+            return minutes + ":" + seconds;
         }
         var hours = Math.floor(minutes / 60);
         minutes = minutes % 60;
-        return hours + " h " + minutes + " m " + seconds + " s";
+        return hours + ":" + minutes + ":" + seconds;
     }
 
     function rssiColor(rssi) {
@@ -767,7 +768,7 @@ Page {
         return '#00FF00';
     }
 
-    VideoPlayerRTMP{
+    VideoPlayerRTMP {
         id: imageScreenshot
         anchors.top: statusBarTop.bottom
         width: parent.width
@@ -818,7 +819,7 @@ Page {
             checked: false
             property real defaultOpacity: 0.6
             opacity: hovered ? 1.0 : defaultOpacity
-            onToggled: function() {
+            onToggled: function () {
                 console.log("toggling video source to ", checked ? "raw" : "prod");
                 imageScreenshot.source = videoSourceToggle.checked ? imageScreenshot.sourceRawCamera : imageScreenshot.sourcePreview;
             }
@@ -842,46 +843,209 @@ Page {
             height: parent.height / 2
             spacing: 0
 
-            Text {
+            Rectangle {
                 id: channel1Quality
+                width: 20
+                height: 20
+                radius: 10
+                color: "transparent"
+                border.width: 1
+                anchors.verticalCenter: parent.verticalCenter
+                property int quality: -32768
+                border.color: dashboard.channelQualityColor(quality)
+                visible: quality > -32768
+                Text {
+                    anchors.centerIn: parent
+                    text: "S"
+                    font.pixelSize: 12
+                    font.bold: true
+                    color: parent.border.color
+                }
+            }
+            Rectangle {
+                id: channel2Quality
+                width: 20
+                height: 20
+                radius: 10
+                color: "transparent"
+                border.width: 1
+                anchors.verticalCenter: parent.verticalCenter
+                property int quality: -32768
+                border.color: dashboard.channelQualityColor(quality)
+                visible: quality > -32768
+                Text {
+                    anchors.centerIn: parent
+                    text: "P"
+                    font.pixelSize: 12
+                    font.bold: true
+                    color: parent.border.color
+                }
+            }
+            Rectangle {
+                id: channel3Quality
+                width: 20
+                height: 20
+                radius: 10
+                color: "transparent"
+                border.width: 1
+                anchors.verticalCenter: parent.verticalCenter
+                property int quality: -32768
+                border.color: dashboard.channelQualityColor(quality)
+                visible: quality > -32768
+                Text {
+                    anchors.centerIn: parent
+                    text: "W"
+                    font.pixelSize: 12
+                    font.bold: true
+                    color: parent.border.color
+                }
+            }
+            Text {
                 height: parent.height
                 font.pixelSize: 20
                 font.bold: true
-                property int quality: -32768
-                text: quality > -32768 ? "◉" : ""
-                color: dashboard.channelQualityColor(quality)
+                text: "|"
             }
-            Text {
-                id: channel2Quality
-                width: channel1Quality.width
-                height: parent.height
-                font.pixelSize: channel1Quality.font.pixelSize
-                font.bold: true
-                property int quality: -32768
-                text: quality > -32768 ? "◉" : ""
-                color: dashboard.channelQualityColor(quality)
-            }
-            Text {
-                id: channel3Quality
-                width: channel1Quality.width
-                height: parent.height
-                font.pixelSize: channel1Quality.font.pixelSize
-                font.bold: true
-                property int quality: -32768
-                text: quality > -32768 ? "◉" : ""
-                color: dashboard.channelQualityColor(quality)
+            Column {
+                width: 34
+                anchors.verticalCenter: parent.verticalCenter
+                Row {
+                    spacing: 2
+                    Rectangle {
+                        width: 10
+                        height: 10
+                        radius: 5
+                        color: "transparent"
+                        border.color: dashboard.cpuUtilizationColor(platform.cpuUtilization)
+                        border.width: 1
+                        Text {
+                            anchors.centerIn: parent
+                            text: "C"
+                            font.pixelSize: 8
+                            font.bold: true
+                            color: parent.border.color
+                        }
+                    }
+                    Rectangle {
+                        width: 10
+                        height: 10
+                        radius: 5
+                        color: "transparent"
+                        border.color: dashboard.memUtilizationColor(platform.memoryUtilization)
+                        border.width: 1
+                        Text {
+                            anchors.centerIn: parent
+                            text: "M"
+                            font.pixelSize: 8
+                            font.bold: true
+                            color: parent.border.color
+                        }
+                    }
+                }
+                Row {
+                    spacing: 2
+                    Repeater {
+                        model: {
+                            var cpu = {
+                                temp: -1337,
+                                type: "cpu",
+                                weight: -1e9,
+                                icon: "C"
+                            };
+                            var batt = {
+                                temp: -1337,
+                                type: "batt",
+                                weight: -1e9,
+                                icon: "B"
+                            };
+                            var other = {
+                                temp: -1337,
+                                type: "other",
+                                weight: -1e9,
+                                icon: "O"
+                            };
+
+                            function getWeight(temp, type) {
+                                var low = 40, high = 90;
+                                if (!type)
+                                    type = "";
+                                var t = type.toLowerCase();
+                                if (t.indexOf("batt") !== -1 || t.indexOf("bms") !== -1) {
+                                    low = 35;
+                                    high = 48;
+                                } else if (t.indexOf("cpu") !== -1 || t.indexOf("gpu") !== -1 || t.indexOf("g3d") !== -1 || t.indexOf("tpu") !== -1 || t.indexOf("soc") !== -1) {
+                                    low = 50;
+                                    high = 100;
+                                } else if (t.indexOf("skin") !== -1 || t.indexOf("ext_") !== -1 || t.indexOf("usb") !== -1 || t.indexOf("charger") !== -1) {
+                                    low = 45;
+                                    high = 70;
+                                }
+                                return (temp - low) / (high - low);
+                            }
+
+                            for (var i = 0; i < platform.temperatures.length; i++) {
+                                var t = platform.temperatures[i];
+                                var typeStr = (t.type || "").toLowerCase();
+                                var weight = getWeight(t.temp, typeStr);
+
+                                if (typeStr.indexOf("cpu") !== -1 || typeStr.indexOf("gpu") !== -1 || typeStr.indexOf("g3d") !== -1 || typeStr.indexOf("tpu") !== -1 || typeStr.indexOf("soc") !== -1) {
+                                    if (weight > cpu.weight) {
+                                        cpu.temp = t.temp;
+                                        cpu.type = t.type;
+                                        cpu.weight = weight;
+                                    }
+                                } else if (typeStr.indexOf("batt") !== -1 || typeStr.indexOf("bms") !== -1) {
+                                    if (weight > batt.weight) {
+                                        batt.temp = t.temp;
+                                        batt.type = t.type;
+                                        batt.weight = weight;
+                                    }
+                                } else {
+                                    if (weight > other.weight) {
+                                        other.temp = t.temp;
+                                        other.type = t.type;
+                                        other.weight = weight;
+                                    }
+                                }
+                            }
+                            var res = [];
+                            if (cpu.temp > -1337)
+                                res.push(cpu);
+                            if (batt.temp > -1337)
+                                res.push(batt);
+                            if (other.temp > -1337)
+                                res.push(other);
+                            return res;
+                        }
+                        Rectangle {
+                            width: 10
+                            height: 10
+                            radius: 5
+                            color: "transparent"
+                            border.color: dashboard.temperatureColor(modelData.temp, modelData.type)
+                            border.width: 1
+                            Text {
+                                anchors.centerIn: parent
+                                text: modelData.icon
+                                font.pixelSize: 8
+                                font.bold: true
+                                color: parent.border.color
+                            }
+                        }
+                    }
+                }
             }
 
             Text {
                 id: sendingLatencyText
                 height: parent.height
-                width: 140
+                width: 130
                 font.pixelSize: 20
                 font.bold: true
                 horizontalAlignment: Text.AlignRight
                 property int preSendingLatency: 0
                 property int sendingLatency: 0
-                text: (preSendingLatency < 0 || sendingLatency < 0 ? "N/A" : Math.round(preSendingLatency) + "+" + Math.round(sendingLatency) + "ms") + "📱"
+                text: (preSendingLatency < 0 || sendingLatency < 0 ? "N/A" : dashboard.formatDuration(preSendingLatency) + "+" + dashboard.formatDuration(sendingLatency)) + "📱"
                 color: dashboard.pingColorFromMS(preSendingLatency + sendingLatency, 100, 400, 1500)
             }
 
@@ -980,7 +1144,7 @@ Page {
                     if (videoBitrate < 2000000) {
                         imageScreenshot.sourcePreview = lowBitRateSource;
                     } else {
-                        imageScreenshot.sourcePreview = "rtmp://192.168.0.134:1935/preview/horizontal"
+                        imageScreenshot.sourcePreview = "rtmp://192.168.0.134:1935/preview/horizontal";
                     }
                     if (isPreviewEnabled) {
                         imageScreenshot.source = imageScreenshot.sourcePreview;
@@ -1010,6 +1174,7 @@ Page {
 
     ChatView {
         id: chatView
+        model: globalChatMessagesModel
         y: statusBarBottom.y + statusBarBottom.height
         width: parent.width
         height: parent.height - y

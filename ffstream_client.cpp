@@ -5,15 +5,19 @@
 #include <QGrpcStatus>
 #include <QImage>
 #include <QJSValue>
-#include <QObject>
 #include <QProtobufMessage>
+#include <QProtobufSerializer>
+#include <QSslConfiguration>
+#include <QSslSocket>
 #include <QString>
 #include <QThread>
 #include <qlogging.h>
 
 #include "cpp_extensions.h"
+#include "diagnostics.qpb.h"
 #include "ffstream.qpb.h"
 #include "ffstream_client.grpc.qpb.h"
+#include "qmlffstream_client.grpc.qpb.h"
 #include "ffstream_client.h"
 
 namespace FFStream {
@@ -24,9 +28,7 @@ Client::Client(QObject *parent) : ffstream_grpc::FFStream::QmlClient{parent} {
 }
 
 ffstream_grpc::FFStream::Client *Client::client() {
-  QmlClient::Client *client;
-  client = this;
-  return client;
+  return this;
 }
 
 void Client::_onChannelChanged() {
@@ -71,7 +73,6 @@ void Client::processGRPCError(const QVariant &error) {
 }
 
 void Client::_reconnectIfNeeded() {
-  auto channel = this->channel();
   if (this->channel() != nullptr) {
     return;
   }
@@ -115,12 +116,30 @@ void Client::getBitRates(
 }
 
 void Client::injectSubtitles(
-    const QString &text, quint64 durationNS, const QJSValue &finishCallback,
+    const QByteArray &data, quint64 durationNS, const QJSValue &finishCallback,
     const QJSValue &errorCallback,
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   this->_reconnectIfNeeded();
   ffstream_grpc::InjectSubtitlesRequest arg{};
-  arg.setText(text);
+  QByteArray prefixedData;
+  prefixedData.append((char)0x00); // Type 0: Plain text
+  prefixedData.append(data);
+  arg.setData(prefixedData);
+  arg.setDurationNs(durationNS);
+  this->InjectSubtitles(arg, finishCallback, errorCallback, options);
+}
+
+void Client::injectDiagnostics(
+    const wingout_diagnostics::Diagnostics &diagnostics, quint64 durationNS,
+    const QJSValue &finishCallback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  this->_reconnectIfNeeded();
+  ffstream_grpc::InjectSubtitlesRequest arg{};
+  QByteArray prefixedData;
+  prefixedData.append((char)0x01); // Type 1: Protobuf Diagnostics
+  QProtobufSerializer serializer;
+  prefixedData.append(diagnostics.serialize(&serializer));
+  arg.setData(prefixedData);
   arg.setDurationNs(durationNS);
   this->InjectSubtitles(arg, finishCallback, errorCallback, options);
 }

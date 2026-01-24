@@ -1,8 +1,9 @@
+/* This file implements Timers used for retries and periodic tasks. */
 import QtQuick
 
 Item {
     Timer {
-        id: retryTimerDXProducerClientSubscribeToChatMessages
+        id: retryTimerSubscribeToChatMessages
         interval: 1000 // 1 second
         repeat: false
         property var callback: null
@@ -12,7 +13,7 @@ Item {
     }
 
     Timer {
-        id: retryTimerDXProducerClientSubscribeToScreenshot
+        id: retryTimerSubscribeToScreenshot
         interval: 1000
         repeat: false
         property var callback: null
@@ -121,6 +122,15 @@ Item {
         }
     }
     Timer {
+        id: updateResourcesTicker
+        interval: 1000
+        repeat: true
+        property var callback: null
+        onTriggered: {
+            callback()
+        }
+    }
+    Timer {
         id: injectDiagnosticsSubtitlesTicker
         interval: 1000
         repeat: true
@@ -129,8 +139,8 @@ Item {
             callback()
         }
     }
-    property alias retryTimerDXProducerClientSubscribeToChatMessages: retryTimerDXProducerClientSubscribeToChatMessages
-    property alias retryTimerDXProducerClientSubscribeToScreenshot: retryTimerDXProducerClientSubscribeToScreenshot
+    property alias retryTimerSubscribeToChatMessages: retryTimerSubscribeToChatMessages
+    property alias retryTimerSubscribeToScreenshot: retryTimerSubscribeToScreenshot
     property alias pingTicker: pingTicker
     property alias streamStatusTicker: streamStatusTicker
     property alias updateFFStreamLatenciesTicker: updateFFStreamLatenciesTicker
@@ -141,4 +151,5 @@ Item {
     property alias updateFFStreamBitRatesTicker: updateFFStreamBitRatesTicker
     property alias updateWiFiInfoTicker: updateWiFiInfoTicker
     property alias channelQualityInfoTicker: channelQualityInfoTicker
+    property alias updateResourcesTicker: updateResourcesTicker
 }

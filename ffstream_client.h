@@ -12,6 +12,7 @@
 #include <QUrl>
 #include <qvariant.h>
 
+#include "diagnostics.qpb.h"
 #include "ffstream.qpb.h"
 #include "ffstream_client.grpc.qpb.h"
 #include "qmlffstream_client.grpc.qpb.h"
@@ -38,9 +39,14 @@ public:
   getBitRates(const QJSValue &finishCallback, const QJSValue &errorCallback,
               const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
   Q_INVOKABLE void
-  injectSubtitles(const QString &text, quint64 durationNS,
+  injectSubtitles(const QByteArray &data, quint64 durationNS,
                   const QJSValue &finishCallback, const QJSValue &errorCallback,
                   const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
+  Q_INVOKABLE void
+  injectDiagnostics(const wingout_diagnostics::Diagnostics &diagnostics,
+                    quint64 durationNS, const QJSValue &finishCallback,
+                    const QJSValue &errorCallback,
+                    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
 signals:
 private:
   void _onChannelChanged();

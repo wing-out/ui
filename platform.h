@@ -21,12 +21,22 @@ class Platform : public QObject {
   Q_PROPERTY(bool isLocalHotspotEnabled READ isLocalHotspotEnabled WRITE setLocalHotspotEnabled
                  NOTIFY isLocalHotspotEnabledChanged)
   Q_PROPERTY(QString hotspotIPAddress READ getHotspotIPAddress NOTIFY hotspotIPAddressChanged)
+  Q_PROPERTY(float cpuUtilization READ getCpuUtilization NOTIFY cpuUtilizationChanged)
+  Q_PROPERTY(float memoryUtilization READ getMemoryUtilization NOTIFY memoryUtilizationChanged)
+  Q_PROPERTY(QVariantList temperatures READ getTemperatures NOTIFY temperaturesChanged)
 public:
   explicit Platform(QObject *parent = nullptr)
-      : QObject(parent), m_currentWiFiConnection(new QWiFiInfo(this)), signalStrength(-1), m_isHotspotEnabled(false), m_isLocalHotspotEnabled(false) {}
+      : QObject(parent), m_currentWiFiConnection(new QWiFiInfo(this)), signalStrength(-1), m_isHotspotEnabled(false), m_isLocalHotspotEnabled(false),
+        m_cpuUtilization(0), m_memoryUtilization(0) {}
 
 // Power management:
   Q_INVOKABLE void setEnableRunningInBackground(bool value);
+
+// Resources:
+  Q_INVOKABLE float getCpuUtilization() { return m_cpuUtilization; }
+  Q_INVOKABLE float getMemoryUtilization() { return m_memoryUtilization; }
+  Q_INVOKABLE QVariantList getTemperatures() { return m_temperatures; }
+  Q_INVOKABLE void updateResources();
 
 // Vibrate:
   Q_INVOKABLE void vibrate(uint64_t duration_ms, bool is_notification);
@@ -71,12 +81,20 @@ signals:
   void isHotspotEnabledChanged(bool enabled);
   void isLocalHotspotEnabledChanged(bool enabled);
   void hotspotIPAddressChanged();
+  void cpuUtilizationChanged();
+  void memoryUtilizationChanged();
+  void temperaturesChanged();
 
 private:
   int signalStrength;
   bool m_isHotspotEnabled;
   bool m_isLocalHotspotEnabled;
+  float m_cpuUtilization;
+  float m_memoryUtilization;
+  QVariantList m_temperatures;
   QWiFiInfo *m_currentWiFiConnection = nullptr;
   QList<QChannelQualityInfo*> m_channelsQualityInfo;
   QList<QWiFiInfo*> m_scanResults;
+  uint64_t m_lastCpuTotal = 0;
+  uint64_t m_lastCpuIdle = 0;
 };

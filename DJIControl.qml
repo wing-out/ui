@@ -251,7 +251,7 @@ Page {
                         id: bitrateSelector
                         from: 500
                         to: 20000
-                        value: 5000
+                        value: 3000
                         stepSize: 500
                         editable: true
                         Layout.fillWidth: true

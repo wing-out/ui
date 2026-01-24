@@ -92,4 +92,6 @@ CMakeLists.txt.user*
 *Plugin.cpp
 *Plugin_in.cpp
 *.apk
+*.log
 /import/gnu-freefont
+/.github

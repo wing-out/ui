@@ -243,4 +243,92 @@ void Client::subscribeToImage(
   QObject::connect(stream, &QGrpcServerStream::finished, this, finishedFunc);
 }
 
+void Client::getConfig(
+    const QJSValue &callback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::GetConfigRequest arg{};
+  this->GetConfig(arg, callback, errorCallback, options);
+}
+
+void Client::setConfig(
+    const QString &configYaml, const QJSValue &callback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::SetConfigRequest arg{};
+  arg.setConfig(configYaml);
+  this->SetConfig(arg, callback, errorCallback, options);
+}
+
+void Client::startStream(
+    const QString &platID, const QString &profileName,
+    const QJSValue &callback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::StartStreamByProfileNameRequest arg{};
+  arg.setPlatID(platID);
+  arg.setProfileName(profileName);
+  this->StartStreamByProfileName(arg, callback, errorCallback, options);
+}
+
+void Client::endStream(
+    const QString &platID, const QJSValue &callback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::EndStreamRequest arg{};
+  arg.setPlatID(platID);
+  this->EndStream(arg, callback, errorCallback, options);
+}
+
+void Client::listStreamForwards(
+    const QJSValue &callback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::ListStreamForwardsRequest arg{};
+  this->ListStreamForwards(arg, callback, errorCallback, options);
+}
+
+void Client::listStreamServers(
+    const QJSValue &callback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::ListStreamServersRequest arg{};
+  this->ListStreamServers(arg, callback, errorCallback, options);
+}
+
+void Client::listStreamPlayers(
+    const QJSValue &callback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::ListStreamPlayersRequest arg{};
+  this->ListStreamPlayers(arg, callback, errorCallback, options);
+}
+
+void Client::listProfiles(
+    const QJSValue &callback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::ListProfilesRequest arg{};
+  this->ListProfiles(arg, callback, errorCallback, options);
+}
+
+void Client::listStreamSources(
+    const QJSValue &callback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::ListStreamSourcesRequest arg{};
+  this->ListStreamSources(arg, callback, errorCallback, options);
+}
+
 } // namespace DXProducer

@@ -1,0 +1,22 @@
+syntax = "proto3";
+package wingout_diagnostics;
+
+message Diagnostics {
+  optional int32 latency_pre_sending = 1;
+  optional int32 latency_sending = 2;
+  optional int32 fps_input = 3;
+  optional int32 fps_output = 4;
+  optional int64 bitrate_video = 5;
+  optional int32 player_lag_min = 6;
+  optional int32 player_lag_max = 7;
+  optional int32 ping_rtt = 8;
+  optional string wifi_ssid = 9;
+  optional string wifi_bssid = 10;
+  optional int32 wifi_rssi = 11;
+  repeated int32 channels = 12;
+  optional int32 viewers_youtube = 13;
+  optional int32 viewers_twitch = 14;
+  optional int32 viewers_kick = 15;
+  optional int32 signal = 16;
+  optional int32 stream_time = 17;
+}

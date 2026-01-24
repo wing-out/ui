@@ -3,13 +3,14 @@
 
 #include <QAbstractGrpcChannel>
 #include <QDateTime>
-#include <QGrpcChannelOptions>
+#include <QtGrpc/qgrpcchanneloptions.h>
 #include <QJSValue>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QObject>
 #include <QQmlEngine>
 #include <QUrl>
+#include <QtGrpcQuick/qqmlgrpccalloptions.h>
 #include <qvariant.h>
 #include <stdint.h>
 
@@ -40,6 +41,36 @@ public:
   Q_INVOKABLE void getStreamStatus(
       const QString platID, const bool noCache, const QJSValue &callback,
       const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void getConfig(
+      const QJSValue &callback, const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void setConfig(
+      const QString &configYaml, const QJSValue &callback,
+      const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void startStream(
+      const QString &platID, const QString &profileName,
+      const QJSValue &callback, const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void endStream(
+      const QString &platID, const QJSValue &callback,
+      const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void listStreamForwards(
+      const QJSValue &callback, const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void listStreamServers(
+      const QJSValue &callback, const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void listStreamPlayers(
+      const QJSValue &callback, const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void listProfiles(
+      const QJSValue &callback, const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void listStreamSources(
+      const QJSValue &callback, const QJSValue &errorCallback,
       const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
   Q_INVOKABLE void
   getVariable(const QString &key, const QJSValue &callback,

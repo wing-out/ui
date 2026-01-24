@@ -1,3 +1,4 @@
+/* This file implements the ChatView component for displaying and managing chat messages. */
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -8,9 +9,23 @@ import Platform
 Item {
     id: chatView
 
-    property alias model: chatMessagesModel
+    property ListModel model: chatMessagesModel
     property alias list: messagesList
     property alias atYEnd: messagesList.atYEnd
+
+    ListModel {
+        id: chatMessagesModel
+        ListElement {
+            timestamp: "53"
+            platformName: "twitch"
+            eventType: 1
+            username: "some-twitch-user"
+            usernameReadable: "Some Twitch User"
+            message: "message 1"
+            messageFormatType: 0
+            isTest: true
+        }
+    }
 
     Platform {
         id: platform
@@ -48,9 +63,9 @@ Item {
             id: ttsEnabled
             enabled: tts.state !== TextToSpeech.Error
             text: "TTS"
-            onCheckedChanged: function() {
+            onCheckedChanged: function () {
                 if (!ttsEnabled.checked) {
-                    tts.stop()
+                    tts.stop();
                 }
             }
         }
@@ -85,7 +100,9 @@ Item {
 
         Timer {
             id: scrollToBottomTimer
-            interval: 100; running: true; repeat: false
+            interval: 100
+            running: true
+            repeat: false
             onTriggered: {
                 if (messagesList.userInteracting) {
                     return;
@@ -123,7 +140,7 @@ Item {
                 if (!messagesList.userInteracting) {
                     messagesList.scrollToBottom();
                 }
-                switch(msg.username.toLowerCase()) {
+                switch (msg.username.toLowerCase()) {
                 case "savedggbot":
                     return;
                 case "botrix":
@@ -132,15 +149,15 @@ Item {
                     return;
                 }
                 if (vibrationEnabled.checked) {
-                    platform.vibrate(500, true)
+                    platform.vibrate(500, true);
                 }
-                var text = msg.message
-                text = text.replace(/<[^>]*>/g, "")
-                text = text.replace(/https?:\/\/[^\s]+/g, "<HTTP-link>")
+                var text = msg.message;
+                text = text.replace(/<[^>]*>/g, "");
+                text = text.replace(/https?:\/\/[^\s]+/g, "<HTTP-link>");
                 if (ttsEnabled.checked && tts.state !== TextToSpeech.Error) {
                     if (ttsTellUsernames.checked) {
                         var username = msg.usernameReadable ? msg.usernameReadable : msg.username;
-                        text = "from "+username+": "+text
+                        text = "from " + username + ": " + text;
                     }
                     tts.enqueue(text);
                 } else {
@@ -199,45 +216,23 @@ Item {
             }
         }
 
-        model: ListModel {
-            id: chatMessagesModel
-            ListElement {
-                timestamp: "53"
-                platformName: "twitch"
-                eventType: 1
-                username: "some-twitch-user"
-                usernameReadable: "Some Twitch User"
-                message: "message 1"
-                messageFormatType: 0
-                isTest: true
-            }
-            ListElement {
-                timestamp: "59"
-                eventType: 2
-                platformName: "youtube"
-                username: "some-youtube-user"
-                usernameReadable: "Some YouTube User"
-                message: "message 2"
-                messageFormatType: 0
-                isTest: true
-            }
-        }
+        model: chatView.model
         delegate: Row {
             id: row
             required property string timestamp
             required property string platformName
-            required property int    eventType
+            required property int eventType
             required property string username
             required property string usernameReadable
             required property string message
-            required property int    messageFormatType
-            required property bool   isTest
+            required property int messageFormatType
+            required property bool isTest
             spacing: ListView.view.spacing
             visible: !isTest || chatView.parent == null
             Text {
                 color: "#ffffff"
                 textFormat: Text.RichText
-                text: "\u200E" + "<font color='" + row.platformNameToColor(row.platformName) + "'>" + row.timestamp + "</font> "+row.formatEventType(row.eventType)+" <font color='" + row.usernameToColor(row.username) + "'>" + row.formatUsername() + "</font> " + row.formatMessage(row.message, row.messageFormatType)
+                text: "\u200E" + "<font color='" + row.platformNameToColor(row.platformName) + "'>" + row.timestamp + "</font> " + row.formatEventType(row.eventType) + " <font color='" + row.usernameToColor(row.username) + "'>" + row.formatUsername() + "</font> " + row.formatMessage(row.message, row.messageFormatType)
                 wrapMode: Text.WordWrap
                 font.family: fontFreeSans.name
                 font.letterSpacing: 1
@@ -322,49 +317,44 @@ Item {
             }
 
             function formatEventType(eventType) {
-                switch(eventType) {
+                switch (eventType) {
                 case 0:
-                    return "<font color='#ffffff'>undefined</font>"
+                    return "<font color='#ffffff'>undefined</font>";
                 case 1:
-                    return ""
+                    return "";
                 case 2:
-                    return "<font color='#ff00ff'>cheer</font>"
+                    return "<font color='#ff00ff'>cheer</font>";
                 case 4:
-                    return "<font color='#ffff00'>ad_break</font>"
+                    return "<font color='#ffff00'>ad_break</font>";
                 case 6:
-                    return "<font color='#ff00ff'>follow</font>"
+                    return "<font color='#ff00ff'>follow</font>";
                 case 256:
-                    return "<font color='#00ff00'>stream_online</font>"
+                    return "<font color='#00ff00'>stream_online</font>";
                 case 257:
-                    return "<font color='#ff0000'>stream_offline</font>"
+                    return "<font color='#ff0000'>stream_offline</font>";
                 case 258:
-                    return "<font color='#ff0000'>stream_info_update</font>"
+                    return "<font color='#ff0000'>stream_info_update</font>";
                 case 512:
-                    return "<font color='#ff00ff'>sub_new</font>"
+                    return "<font color='#ff00ff'>sub_new</font>";
                 case 513:
-                    return "<font color='#ff00ff'>sub_renew</font>"
+                    return "<font color='#ff00ff'>sub_renew</font>";
                 case 514:
-                    return "<font color='#ff00ff'>gifted_sub</font>"
+                    return "<font color='#ff00ff'>gifted_sub</font>";
                 case 768:
-                    return "<font color='#ff00ff'>raid</font>"
+                    return "<font color='#ff00ff'>raid</font>";
                 case 769:
-                    return "<font color='#ff00ff'>shoutout</font>"
+                    return "<font color='#ff00ff'>shoutout</font>";
                 case 1024:
-                    return "<font color='#ffff00'>ban</font>"
+                    return "<font color='#ffff00'>ban</font>";
                 case 1025:
-                    return "<font color='#ffff00'>hold</font>"
+                    return "<font color='#ffff00'>hold</font>";
                 case 65535:
-                    return "<font color='#ffffff'>other</font>"
+                    return "<font color='#ffffff'>other</font>";
                 }
-                return "<font color='#ffffff'>unknown_"+eventType+"</font>"
+                return "<font color='#ffffff'>unknown_" + eventType + "</font>";
             }
             function escapeHtml(text) {
-                return text
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#39;");
+                return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
             }
 
             function formatMessage(message, messageFormatType) {

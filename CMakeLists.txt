@@ -81,11 +81,16 @@ qt_add_qml_module(wingout
     QML_FILES
     Cameras.qml
     CamerasBuiltin.qml
+    Chat.qml
     ChatView.qml
     Dashboard.qml
     DJIControl.qml
     LockState.qml
     Main.qml
+    Monitor.qml
+    Players.qml
+    Profiles.qml
+    Restreams.qml
     Settings.qml
     SwipeLockOverlay.qml
     Timers.qml
@@ -173,9 +178,20 @@ qt_add_protobuf(FFStream
     QML
 )
 
+qt_add_protobuf(WingOutDiagnostics
+    PROTO_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/protobuf/diagnostics.proto
+    QML
+)
+
 target_sources(FFStream
     PRIVATE
     ffstream_client.h ffstream_client.cpp
+)
+
+target_link_libraries(FFStream
+    PRIVATE
+    WingOutDiagnostics
 )
 
 qt_add_grpc(FFStream CLIENT

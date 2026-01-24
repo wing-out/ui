@@ -232,6 +232,9 @@ QString getHotspotConfigurationJSON() {
   return "{}";
 }
 
+void saveHotspotConfiguration(const QString &ssid, const QString &psk) {
+}
+
 bool isHotspotEnabled() {
   return false;
 }
