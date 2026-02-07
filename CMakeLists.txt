@@ -79,8 +79,12 @@ set(FONT_PATH ${CMAKE_CURRENT_BINARY_DIR}/FreeSans.ttf)
 
 add_custom_command(
     OUTPUT ${FONT_PATH}
-    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/import/gnu-freefont/sfd ${FONT} && mv ${CMAKE_CURRENT_SOURCE_DIR}/import/gnu-freefont/sfd/${FONT} ${FONT_PATH}
-    COMMENT "Generating FreeSans font"
+    # Use helper script which attempts to reuse existing builds, copy a system
+    # font when available, or fall back to generating the font. This is more
+    # robust than invoking make directly (fontforge generation may fail on
+    # some environments).
+    COMMAND ${CMAKE_COMMAND} -E env "FONT_PATH=${FONT_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/copy_or_generate_font.sh" ${FONT_PATH}
+    COMMENT "Generating or copying FreeSans font"
 )
 
 add_custom_target(fonts ALL DEPENDS ${FONT_PATH})

@@ -95,3 +95,5 @@ CMakeLists.txt.user*
 *.log
 /import/gnu-freefont
 /.github
+/artifacts
+/myscripts

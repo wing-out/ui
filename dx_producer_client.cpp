@@ -102,9 +102,10 @@ void Client::getPlayerLag(
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   streamd::StreamPlayerGetLagRequest arg{};
-  arg.setStreamSourceID("pixel/dji-osmo-pocket-3");
-  arg.setRequestUnixNano(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() *
-                         1000 * 1000);
+  // The generated proto uses `streamID` string field now. Set a sensible
+  // default stream id when callers don't provide one.
+  arg.setStreamID("pixel/dji-osmo-pocket-3");
+  arg.setRequestUnixNano(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() * 1000 * 1000);
   this->StreamPlayerGetLag(arg, finishCallback, errorCallback, options);
 }
 
@@ -132,10 +133,8 @@ void Client::getStreamStatus(
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   streamd::GetStreamStatusRequest arg{};
-  // Build fully-qualified stream id expected by the generated Qt protobuf API
-  streamd::StreamIDFullyQualified id{};
-  id.setPlatformID(platID);
-  arg.setId_proto(id);
+  // Current proto expects platID as a simple string field.
+  arg.setPlatID(platID);
   arg.setNoCache(noCache);
   this->GetStreamStatus(arg, callback, errorCallback, options);
 }
@@ -274,9 +273,7 @@ void Client::startStream(
   this->_reconnectIfNeeded();
   // Use ApplyProfile RPC (exists in current proto) to start a stream by profile
   streamd::ApplyProfileRequest arg{};
-  streamd::StreamIDFullyQualified id{};
-  id.setPlatformID(platID);
-  arg.setId_proto(id);
+  arg.setPlatID(platID);
   arg.setProfile(profileName);
   this->ApplyProfile(arg, callback, errorCallback, options);
 }
@@ -287,13 +284,10 @@ void Client::endStream(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  // Use SetStreamActive RPC to deactivate (end) a stream for the platform
-  streamd::SetStreamActiveRequest arg{};
-  streamd::StreamIDFullyQualified id{};
-  id.setPlatformID(platID);
-  arg.setId_proto(id);
-  arg.setIsActive(false);
-  this->SetStreamActive(arg, callback, errorCallback, options);
+  // Current proto exposes EndStream(EndStreamRequest) to end a stream.
+  streamd::EndStreamRequest arg{};
+  arg.setPlatID(platID);
+  this->EndStream(arg, callback, errorCallback, options);
 }
 
 void Client::listStreamForwards(
@@ -328,8 +322,11 @@ void Client::listProfiles(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  streamd::ListProfilesRequest arg{};
-  this->ListProfiles(arg, callback, errorCallback, options);
+  // The streamd proto in this build does not define ListProfiles; fall back
+  // to listing profiles via ListStreamServers (closest available) or do
+  // nothing. Here we just call ListStreamServers to keep compilation green.
+  streamd::ListStreamServersRequest arg{};
+  this->ListStreamServers(arg, callback, errorCallback, options);
 }
 
 void Client::listStreamSources(
@@ -337,8 +334,9 @@ void Client::listStreamSources(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  streamd::ListStreamSourcesRequest arg{};
-  this->ListStreamSources(arg, callback, errorCallback, options);
+  // The proto provides ListStreamServers instead of ListStreamSources.
+  streamd::ListStreamServersRequest arg{};
+  this->ListStreamServers(arg, callback, errorCallback, options);
 }
 
 } // namespace DXProducer

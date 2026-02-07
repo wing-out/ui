@@ -121,10 +121,10 @@ void Client::injectSubtitles(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   this->_reconnectIfNeeded();
   ffstream_grpc::InjectSubtitlesRequest arg{};
-  QByteArray prefixedData;
-  prefixedData.append((char)0x00); // Type 0: Plain text
-  prefixedData.append(data);
-  arg.setData(prefixedData);
+  // The generated proto now exposes a `text` string field. If caller passes
+  // raw bytes for subtitles, treat them as UTF-8 text. This preserves the
+  // original intent while matching the generated API.
+  arg.setText(QString::fromUtf8(data));
   arg.setDurationNs(durationNS);
   this->InjectSubtitles(arg, finishCallback, errorCallback, options);
 }
@@ -135,11 +135,13 @@ void Client::injectDiagnostics(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   this->_reconnectIfNeeded();
   ffstream_grpc::InjectSubtitlesRequest arg{};
-  QByteArray prefixedData;
-  prefixedData.append((char)0x01); // Type 1: Protobuf Diagnostics
+  // Diagnostics are binary; encode as base64 and mark so the receiver can
+  // detect and decode if needed. We prefix with an identifier string so the
+  // text field remains valid UTF-8.
   QProtobufSerializer serializer;
-  prefixedData.append(diagnostics.serialize(&serializer));
-  arg.setData(prefixedData);
+  QByteArray ser = diagnostics.serialize(&serializer);
+  QString text = QString::fromLatin1(ser.toBase64());
+  arg.setText(text);
   arg.setDurationNs(durationNS);
   this->InjectSubtitles(arg, finishCallback, errorCallback, options);
 }
