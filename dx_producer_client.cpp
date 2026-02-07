@@ -102,7 +102,7 @@ void Client::getPlayerLag(
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   streamd::StreamPlayerGetLagRequest arg{};
-  arg.setStreamID("pixel/dji-osmo-pocket-3");
+  arg.setStreamSourceID("pixel/dji-osmo-pocket-3");
   arg.setRequestUnixNano(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() *
                          1000 * 1000);
   this->StreamPlayerGetLag(arg, finishCallback, errorCallback, options);
@@ -132,7 +132,10 @@ void Client::getStreamStatus(
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   streamd::GetStreamStatusRequest arg{};
-  arg.setPlatID(platID);
+  // Build fully-qualified stream id expected by the generated Qt protobuf API
+  streamd::StreamIDFullyQualified id{};
+  id.setPlatformID(platID);
+  arg.setId_proto(id);
   arg.setNoCache(noCache);
   this->GetStreamStatus(arg, callback, errorCallback, options);
 }
@@ -269,10 +272,13 @@ void Client::startStream(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  streamd::StartStreamByProfileNameRequest arg{};
-  arg.setPlatID(platID);
-  arg.setProfileName(profileName);
-  this->StartStreamByProfileName(arg, callback, errorCallback, options);
+  // Use ApplyProfile RPC (exists in current proto) to start a stream by profile
+  streamd::ApplyProfileRequest arg{};
+  streamd::StreamIDFullyQualified id{};
+  id.setPlatformID(platID);
+  arg.setId_proto(id);
+  arg.setProfile(profileName);
+  this->ApplyProfile(arg, callback, errorCallback, options);
 }
 
 void Client::endStream(
@@ -281,9 +287,13 @@ void Client::endStream(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  streamd::EndStreamRequest arg{};
-  arg.setPlatID(platID);
-  this->EndStream(arg, callback, errorCallback, options);
+  // Use SetStreamActive RPC to deactivate (end) a stream for the platform
+  streamd::SetStreamActiveRequest arg{};
+  streamd::StreamIDFullyQualified id{};
+  id.setPlatformID(platID);
+  arg.setId_proto(id);
+  arg.setIsActive(false);
+  this->SetStreamActive(arg, callback, errorCallback, options);
 }
 
 void Client::listStreamForwards(
