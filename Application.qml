@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Controls.Material
-import Qt.labs.settings 1.0
+import QtCore
 
 ApplicationWindow {
     id: application
@@ -13,6 +13,12 @@ ApplicationWindow {
     Material.theme: Material.Dark
     Material.accent: Material.Purple
     title: qsTr("Wing Out")
+
+    Component.onCompleted: {
+        Qt.application.organizationName = "WingOut"
+        Qt.application.organizationDomain = "wingout.app"
+        Qt.application.applicationName = "WingOut"
+    }
 
     Settings {
         id: appSettings

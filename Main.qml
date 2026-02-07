@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
-import Qt.labs.settings 1.0
+import QtCore
 
 import streamd 1.0 as StreamD
 import ffstream_grpc 1.0 as FFStream
@@ -53,14 +53,8 @@ Pane {
         id: globalChatMessagesModel
     }
 
-    QtObject {
-        id: grpcCallOptions
-        property int deadlineTimeout: 10000
-    }
-    QtObject {
-        id: streamingGrpcCallOptions
-        property double deadlineTimeout: 365 * 24 * 3600 * 1000
-    }
+    property var grpcCallOptions: ({ deadlineTimeout: 10000 })
+    property var streamingGrpcCallOptions: ({ deadlineTimeout: 365 * 24 * 3600 * 1000 })
 
     QtObject {
         id: ffstreamTarget

@@ -147,16 +147,43 @@ Page {
     }
 
     // dialogs
-    Dialog { id: newProfileDialog; title: "New profile"; standardButtons: Dialog.Ok | Dialog.Cancel; anchors.centerIn: parent
-        contentItem: ColumnLayout { spacing: 8; TextField { placeholderText: "Profile name" } }
+    Dialog {
+        id: newProfileDialog
+        title: "New profile"
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        x: (parent.width - width) / 2
+        y: (parent.height - height) / 2
+        modal: true
+        contentItem: ColumnLayout {
+            spacing: 8
+            TextField { placeholderText: "Profile name" }
+        }
     }
 
-    Dialog { id: cloneProfileDialog; title: "Clone profile"; standardButtons: Dialog.Ok | Dialog.Cancel; anchors.centerIn: parent
-        contentItem: ColumnLayout { spacing: 8; TextField { placeholderText: "New profile name" } }
+    Dialog {
+        id: cloneProfileDialog
+        title: "Clone profile"
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        x: (parent.width - width) / 2
+        y: (parent.height - height) / 2
+        modal: true
+        contentItem: ColumnLayout {
+            spacing: 8
+            TextField { placeholderText: "New profile name" }
+        }
     }
 
-    Dialog { id: deleteProfileDialog; title: "Delete profile"; standardButtons: Dialog.Ok | Dialog.Cancel; anchors.centerIn: parent
-        contentItem: ColumnLayout { spacing: 8; Label { text: "Are you sure you want to delete this profile?" } }
+    Dialog {
+        id: deleteProfileDialog
+        title: "Delete profile"
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        x: (parent.width - width) / 2
+        y: (parent.height - height) / 2
+        modal: true
+        contentItem: ColumnLayout {
+            spacing: 8
+            Label { text: "Are you sure you want to delete this profile?" }
+        }
     }
 
     function refreshProfiles() {
