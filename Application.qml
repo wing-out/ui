@@ -4,6 +4,7 @@ import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtCore
+import WingOut 1.0
 
 ApplicationWindow {
     id: application
@@ -32,17 +33,17 @@ ApplicationWindow {
         visible: !appSettings.dxProducerHost
     }
 
+    Component {
+        id: mainComponent
+        Main {
+            dxProducerHost: appSettings.dxProducerHost
+        }
+    }
+
     Loader {
         id: mainLoader
         anchors.fill: parent
         active: !!appSettings.dxProducerHost
-        source: "Main.qml"
-
-        Binding {
-            target: mainLoader.item
-            property: "dxProducerHost"
-            value: appSettings.dxProducerHost
-            when: mainLoader.status === Loader.Ready
-        }
+        sourceComponent: mainComponent
     }
 }

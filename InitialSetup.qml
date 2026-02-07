@@ -31,7 +31,7 @@ Window {
         TextField {
             id: setupHostField
             placeholderText: "http://host:port"
-            text: appSettings.dxProducerHost
+            text: setupWindow.appSettings.dxProducerHost
             Layout.fillWidth: true
             focus: true
         }
@@ -62,7 +62,7 @@ Window {
                     if (!val.startsWith("http://") && !val.startsWith("https://")) {
                         val = "http://" + val;
                     }
-                    appSettings.dxProducerHost = val;
+                    setupWindow.appSettings.dxProducerHost = val;
                     setupWindow.finished();
                     setupWindow.close();
                 }
