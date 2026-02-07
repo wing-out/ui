@@ -1,11 +1,28 @@
 cmake_minimum_required(VERSION 3.16)
 
+# Prefer the NEW behavior for CMP0135 (DOWNLOAD_EXTRACT_TIMESTAMP) so
+# extracted files get current timestamps and fetched content changes
+# trigger rebuilds.
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
 project(wingout VERSION 0.1 LANGUAGES CXX)
 
 
 #set(SANITIZER_FLAGS "-fsanitize=address -fsanitize-recover=address")
 set(DEBUG_FLAGS "-fno-omit-frame-pointer -ggdb3 -gsplit-dwarf")
-set(QT_QML_GENERATE_QMLLS_INI ON)
+# Generate qmlls.ini for IDE/QML language server support on desktop only.
+# Scanning all QML files for qmlls can produce import-resolution warnings when
+# desktop-only QML (QtQuick.Studio, QStream, etc.) are present but not
+# available on Android. Disable qmlls generation for Android builds to avoid
+# spurious warnings and exclude desktop-only QML from the Android package
+# below.
+if(NOT ANDROID)
+    set(QT_QML_GENERATE_QMLLS_INI ON)
+else()
+    set(QT_QML_GENERATE_QMLLS_INI OFF)
+endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_UNITY_BUILD ON)
@@ -75,10 +92,10 @@ qt_add_executable(wingout
 )
 add_dependencies(wingout fonts)
 
-qt_add_qml_module(wingout
-    URI WingOut
-    VERSION 1.0
-    QML_FILES
+## Explicitly list QML files for the WingOut module. This makes it easy to
+## remove desktop-only QML from the Android build (see WINGOUT_DESKTOP_QML
+## below).
+set(WINGOUT_QML_FILES
     Cameras.qml
     CamerasBuiltin.qml
     Chat.qml
@@ -95,6 +112,34 @@ qt_add_qml_module(wingout
     SwipeLockOverlay.qml
     Timers.qml
     VideoPlayerRTMP.qml
+)
+
+## Desktop-only QML (QtQuick.Studio, QStream, etc.) that should not be
+## included when building for Android. Keep this list focused — add more
+## entries here if the QML compiler warns about other desktop-only imports.
+set(WINGOUT_DESKTOP_QML
+    import/streamctl/pkg/experimental/qstreampanel/qml/QStream/EventListSimulator.qml
+    import/streamctl/pkg/experimental/qstreampanel/qml/QStream/EventListModel.qml
+    import/streamctl/pkg/experimental/qstreampanel/qml/QStream/DirectoryFontLoader.qml
+    import/streamctl/pkg/experimental/qstreampanel/qml/QStream/Constants.qml
+    import/streamctl/pkg/experimental/qstreampanel/qml/QStreamContent/Controls.ui.qml
+    import/streamctl/pkg/experimental/qstreampanel/qml/QStreamContent/App.qml
+    import/streamctl/pkg/experimental/qstreampanel/qml/QStreamContent/Monitor.ui.qml
+    import/streamctl/pkg/experimental/qstreampanel/qml/QStreamContent/ListViewStyled.qml
+    import/streamctl/pkg/experimental/qstreampanel/qml/QStreamContent/Borders.qml
+)
+
+if(ANDROID)
+    foreach(_f IN LISTS WINGOUT_DESKTOP_QML)
+        list(REMOVE_ITEM WINGOUT_QML_FILES ${_f})
+    endforeach()
+endif()
+
+qt_add_qml_module(wingout
+    URI WingOut
+    VERSION 1.0
+    QML_FILES
+    ${WINGOUT_QML_FILES}
     RESOURCES
     ${FONT_PATH}
     audio/chat_message_add.wav
@@ -288,6 +333,7 @@ if(ANDROID)
     FetchContent_Declare(
         android_openssl
         URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
     FetchContent_MakeAvailable(android_openssl)
     include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
