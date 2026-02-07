@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 /* This file implements the Settings page for app configuration. */
 import QtQuick
 import QtQuick.Controls
@@ -16,13 +17,13 @@ Page {
     function refresh() {
         console.log("Settings.qml: Requesting config...");
 
-        dxProducerClient.getConfig(function (response) {
+        main.dxProducerClient.getConfig(function (response) {
             console.log("Settings.qml: Received config response");
             settingsPage.configText = response.config || "";
         }, function (error) {
             console.log("Settings.qml: Error getting config");
-            processStreamDGRPCError(dxProducerClient, error);
-        }, grpcCallOptions);
+            main.processStreamDGRPCError(main.dxProducerClient, error);
+        }, main.grpcCallOptions);
     }
 
     Component.onCompleted: refresh()
@@ -67,13 +68,13 @@ Page {
                         onClicked: {
                             console.log("Settings.qml: Saving config...");
 
-                            dxProducerClient.setConfig(settingsPage.configText, function (response) {
+                            main.dxProducerClient.setConfig(settingsPage.configText, function (response) {
                                 console.log("Settings.qml: Config saved successfully");
                                 refresh();
                             }, function (error) {
                                 console.log("Settings.qml: Error saving config");
-                                processStreamDGRPCError(dxProducerClient, error);
-                            }, grpcCallOptions);
+                                main.processStreamDGRPCError(main.dxProducerClient, error);
+                            }, main.grpcCallOptions);
                         }
                     }
                     Item {
@@ -120,14 +121,14 @@ Page {
                     Layout.fillWidth: true
                     onClicked: {
                         // Keep {} for SubmitOAuthCode because it's NOT overridden in dx_producer_client.cpp
-                        dxProducerClient.SubmitOAuthCode({
+                        main.dxProducerClient.SubmitOAuthCode({
                             code: oauthCodeField.text
                         }, function () {
                             oauthCodeField.text = "";
                             console.log("OAuth code submitted");
                         }, function (error) {
-                            processStreamDGRPCError(dxProducerClient, error);
-                        }, grpcCallOptions);
+                            main.processStreamDGRPCError(main.dxProducerClient, error);
+                        }, main.grpcCallOptions);
                     }
                 }
 
@@ -151,11 +152,11 @@ Page {
                     text: "Reset Cache"
                     Layout.fillWidth: true
                     // Keep {} for ResetCache because it's NOT overridden
-                    onClicked: dxProducerClient.ResetCache({}, function () {
+                    onClicked: main.dxProducerClient.ResetCache({}, function () {
                         console.log("Cache reset");
                     }, function (e) {
-                        processStreamDGRPCError(dxProducerClient, e);
-                    }, grpcCallOptions)
+                        main.processStreamDGRPCError(main.dxProducerClient, e);
+                    }, main.grpcCallOptions)
                 }
 
                 Item {

@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 /* This file implements the Monitor page for viewing incoming streams. */
 import QtQuick
 import QtQuick.Controls
@@ -15,13 +16,13 @@ Page {
 
     function refresh() {
         console.log("Monitor.qml: Requesting stream sources...");
-        dxProducerClient.listStreamSources(function(response) {
+        main.dxProducerClient.listStreamSources(function(response) {
             console.log("Monitor.qml: Received response:", JSON.stringify(response));
             monitorPage.streams = response.streamSourcesData || response.streamSources || [];
-        }, function(error) { 
+        }, function(error) {
             console.log("Monitor.qml: Error listing stream sources");
-            processStreamDGRPCError(dxProducerClient, error); 
-        }, grpcCallOptions);
+            main.processStreamDGRPCError(main.dxProducerClient, error);
+        }, main.grpcCallOptions);
     }
 
     Component.onCompleted: refresh()

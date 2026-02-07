@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 /* This file implements the Profiles page for managing and starting/stopping stream profiles via gRPC. */
 import QtQuick
 import QtQuick.Controls
@@ -291,7 +292,7 @@ Page {
     function refreshProfiles() {
         console.log("Profiles.qml: Requesting list of profiles...");
         
-        dxProducerClient.listProfiles(function(reply) {
+        main.dxProducerClient.listProfiles(function(reply) {
             console.log("Profiles.qml: Received reply:", JSON.stringify(reply));
             var names = [];
             var profiles = reply.profilesData || reply.profiles;
@@ -303,22 +304,22 @@ Page {
                 }
             }
             profilesList.model = names;
-        }, function(error) { 
+        }, function(error) {
             console.log("Profiles.qml: Error listing profiles");
-            processStreamDGRPCError(dxProducerClient, error); 
-        }, grpcCallOptions);
+            main.processStreamDGRPCError(main.dxProducerClient, error);
+        }, main.grpcCallOptions);
     }
 
     function startClicked() {
         var platIDs = ["twitch", "youtube", "kick"]; 
         for (var i = 0; i < platIDs.length; i++) {
             
-            dxProducerClient.startStream(platIDs[i], profileNameField.text, function() {
+            main.dxProducerClient.startStream(platIDs[i], profileNameField.text, function() {
                 console.log("Profiles.qml: Started stream on success");
-            }, function(error) { 
+            }, function(error) {
                 console.log("Profiles.qml: Error starting stream");
-                processStreamDGRPCError(dxProducerClient, error); 
-            }, grpcCallOptions);
+                main.processStreamDGRPCError(main.dxProducerClient, error);
+            }, main.grpcCallOptions);
         }
     }
 
@@ -326,12 +327,12 @@ Page {
         var platIDs = ["twitch", "youtube", "kick"];
         for (var i = 0; i < platIDs.length; i++) {
             
-            dxProducerClient.endStream(platIDs[i], function() {
+            main.dxProducerClient.endStream(platIDs[i], function() {
                 console.log("Profiles.qml: Stopped stream success");
-            }, function(error) { 
+            }, function(error) {
                 console.log("Profiles.qml: Error stopping stream");
-                processStreamDGRPCError(dxProducerClient, error); 
-            }, grpcCallOptions);
+                main.processStreamDGRPCError(main.dxProducerClient, error);
+            }, main.grpcCallOptions);
         }
     }
 }

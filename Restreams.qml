@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 /* This file implements the Restreams page for managing stream forwards. */
 import QtQuick
 import QtQuick.Controls
@@ -75,7 +76,7 @@ Page {
     function refreshRestreams() {
         console.log("Restreams.qml: Requesting stream forwards...");
         
-        dxProducerClient.listStreamForwards(function(reply) {
+        main.dxProducerClient.listStreamForwards(function(reply) {
             console.log("Restreams.qml: Received reply:", JSON.stringify(reply));
             restreamsModel.clear();
             var forwards = reply.streamForwardsData || reply.streamForwards || [];
@@ -87,9 +88,9 @@ Page {
                     enabled: f.enabled
                 });
             }
-        }, function(error) { 
+        }, function(error) {
             console.log("Restreams.qml: Error listing stream forwards");
-            processStreamDGRPCError(dxProducerClient, error); 
-        }, grpcCallOptions);
+            main.processStreamDGRPCError(main.dxProducerClient, error);
+        }, main.grpcCallOptions);
     }
 }

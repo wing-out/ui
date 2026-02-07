@@ -1,4 +1,5 @@
 /* This file implements the ChatView component for displaying and managing chat messages. */
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -172,7 +173,7 @@ Item {
                     return;
                 }
                 if (vibrationEnabled.checked) {
-                    platform.vibrate(500, true);
+                    main.platform.vibrate(500, true);
                 }
                 var text = msg.message;
                 text = text.replace(/<[^>]*>/g, "");

@@ -1,10 +1,10 @@
+pragma ComponentBehavior: Bound
 /* This file implements the main dashboard with chat, monitor data, and various stream status indicators. */
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Shapes
 import QtCore as Core
-import wingout_diagnostics as Diagnostics
 
 Page {
     id: dashboard
@@ -39,38 +39,38 @@ Page {
         fetchPlatformCapabilities();
         pingTimestamps = {};
         ping();
-        timers.pingTicker.callback = ping;
-        timers.pingTicker.start();
-        timers.streamStatusTicker.callback = updateStreamStatus;
-        timers.streamStatusTicker.start();
+        main.timers.pingTicker.callback = ping;
+        main.timers.pingTicker.start();
+        main.timers.streamStatusTicker.callback = updateStreamStatus;
+        main.timers.streamStatusTicker.start();
         updateFFStreamLatencies();
-        timers.updateFFStreamLatenciesTicker.callback = updateFFStreamLatencies;
-        timers.updateFFStreamLatenciesTicker.start();
+        main.timers.updateFFStreamLatenciesTicker.callback = updateFFStreamLatencies;
+        main.timers.updateFFStreamLatenciesTicker.start();
         updatePlayerLag();
-        timers.updatePlayerLagTicker.callback = updatePlayerLag;
-        timers.updatePlayerLagTicker.start();
+        main.timers.updatePlayerLagTicker.callback = updatePlayerLag;
+        main.timers.updatePlayerLagTicker.start();
         fetchPlayerLag();
-        timers.fetchPlayerLagTicker.callback = fetchPlayerLag;
-        timers.fetchPlayerLagTicker.start();
+        main.timers.fetchPlayerLagTicker.callback = fetchPlayerLag;
+        main.timers.fetchPlayerLagTicker.start();
         updateFFStreamInputQuality();
-        timers.updateFFStreamInputQualityTicker.callback = updateFFStreamInputQuality;
-        timers.updateFFStreamInputQualityTicker.start();
+        main.timers.updateFFStreamInputQualityTicker.callback = updateFFStreamInputQuality;
+        main.timers.updateFFStreamInputQualityTicker.start();
         updateFFStreamOutputQuality();
-        timers.updateFFStreamOutputQualityTicker.callback = updateFFStreamOutputQuality;
-        timers.updateFFStreamOutputQualityTicker.start();
+        main.timers.updateFFStreamOutputQualityTicker.callback = updateFFStreamOutputQuality;
+        main.timers.updateFFStreamOutputQualityTicker.start();
         updateFFStreamBitRates();
-        timers.updateFFStreamBitRatesTicker.callback = updateFFStreamBitRates;
-        timers.updateFFStreamBitRatesTicker.start();
+        main.timers.updateFFStreamBitRatesTicker.callback = updateFFStreamBitRates;
+        main.timers.updateFFStreamBitRatesTicker.start();
         updateWiFiInfo();
-        timers.updateWiFiInfoTicker.callback = updateWiFiInfo;
-        timers.updateWiFiInfoTicker.start();
-        timers.updateResourcesTicker.callback = platform.updateResources;
-        timers.updateResourcesTicker.start();
+        main.timers.updateWiFiInfoTicker.callback = updateWiFiInfo;
+        main.timers.updateWiFiInfoTicker.start();
+        main.timers.updateResourcesTicker.callback = main.platform.updateResources;
+        main.timers.updateResourcesTicker.start();
         updateChannelQualityInfo();
-        timers.channelQualityInfoTicker.callback = updateChannelQualityInfo;
-        timers.channelQualityInfoTicker.start();
-        timers.injectDiagnosticsSubtitlesTicker.callback = injectDiagnosticsSubtitles;
-        timers.injectDiagnosticsSubtitlesTicker.start();
+        main.timers.channelQualityInfoTicker.callback = updateChannelQualityInfo;
+        main.timers.channelQualityInfoTicker.start();
+        main.timers.injectDiagnosticsSubtitlesTicker.callback = injectDiagnosticsSubtitles;
+        main.timers.injectDiagnosticsSubtitlesTicker.start();
     }
 
     function ping() {
@@ -109,11 +109,11 @@ Page {
         pingCurrentID = (pingCurrentID + 1) % 65536;
         var payload = String.fromCharCode(byte0) + String.fromCharCode(byte1);
         pingTimestamps[payload] = new Date();
-        dxProducerClient.ping(payload, "", 0, onPingSuccess, onPingFail, grpcCallOptions);
+        main.dxProducerClient.ping(payload, "", 0, onPingSuccess, onPingFail, main.grpcCallOptions);
     }
 
     function updateFFStreamLatencies() {
-        ffstreamClient.getLatencies(onGetLatenciesSuccess, onGetLatenciesError, grpcCallOptions);
+        main.ffstreamClient.getLatencies(onGetLatenciesSuccess, onGetLatenciesError, main.grpcCallOptions);
     }
 
     function onGetLatenciesSuccess(latencies) {
@@ -136,11 +136,11 @@ Page {
     function onGetLatenciesError(error) {
         sendingLatencyText.preSendingLatency = -1;
         sendingLatencyText.sendingLatency = -1;
-        processFFStreamGRPCError(ffstreamClient, error);
+        main.processFFStreamGRPCError(main.ffstreamClient, error);
     }
 
     function updateFFStreamInputQuality() {
-        ffstreamClient.getInputQuality(onGetInputQualitySuccess, onGetInputQualityError, grpcCallOptions);
+        main.ffstreamClient.getInputQuality(onGetInputQualitySuccess, onGetInputQualityError, main.grpcCallOptions);
     }
 
     function onGetInputQualitySuccess(inputQuality) {
@@ -150,11 +150,11 @@ Page {
 
     function onGetInputQualityError(error) {
         inputFPSText.inputFPS = -1;
-        processFFStreamGRPCError(ffstreamClient, error);
+        main.processFFStreamGRPCError(main.ffstreamClient, error);
     }
 
     function updateFFStreamOutputQuality() {
-        ffstreamClient.getOutputQuality(onGetOutputQualitySuccess, onGetOutputQualityError, grpcCallOptions);
+        main.ffstreamClient.getOutputQuality(onGetOutputQualitySuccess, onGetOutputQualityError, main.grpcCallOptions);
     }
 
     function onGetOutputQualitySuccess(outputQuality) {
@@ -164,11 +164,11 @@ Page {
 
     function onGetOutputQualityError(error) {
         outputFPSText.outputFPS = -1;
-        processFFStreamGRPCError(ffstreamClient, error);
+        main.processFFStreamGRPCError(main.ffstreamClient, error);
     }
 
     function updateFFStreamBitRates() {
-        ffstreamClient.getBitRates(onGetBitRatesSuccess, onGetBitRatesError, grpcCallOptions);
+        main.ffstreamClient.getBitRates(onGetBitRatesSuccess, onGetBitRatesError, main.grpcCallOptions);
     }
 
     function onGetBitRatesSuccess(bitRates) {
@@ -180,7 +180,7 @@ Page {
 
     function onGetBitRatesError(error) {
         encodingBitrateText.videoBitrate = -1;
-        processFFStreamGRPCError(ffstreamClient, error);
+        main.processFFStreamGRPCError(main.ffstreamClient, error);
     }
 
     function updatePlayerLag() {
@@ -198,7 +198,7 @@ Page {
     }
 
     function fetchPlayerLag() {
-        dxProducerClient.getPlayerLag(onGetPlayerLagSuccess, onGetPlayerLagError, grpcCallOptions);
+        main.dxProducerClient.getPlayerLag(onGetPlayerLagSuccess, onGetPlayerLagError, main.grpcCallOptions);
     }
 
     function onGetPlayerLagSuccess(lagReply) {
@@ -219,7 +219,7 @@ Page {
     function onGetPlayerLagError(error) {
         playerLagText.playerLagMin = -1;
         playerLagText.playerLagMax = -1;
-        processStreamDGRPCError(dxProducerClient, error);
+        main.processStreamDGRPCError(main.dxProducerClient, error);
     }
 
     function subscribeToChatMessages() {
@@ -233,7 +233,7 @@ Page {
         }
         console.log("since: ", since);
 
-        dxProducerClient.subscribeToChatMessages(since, 200, onChatNewMessage, onChatMessagesFinished, onChatMessagesErrored, streamingGrpcCallOptions);
+        main.dxProducerClient.subscribeToChatMessages(since, 200, onChatNewMessage, onChatMessagesFinished, onChatMessagesErrored, main.streamingGrpcCallOptions);
     }
 
     function onPingSuccess(reply): void {
@@ -254,7 +254,7 @@ Page {
         pingInProgress = false;
         pingStatus.rttMS = -1;
         console.log("ping failed");
-        processStreamDGRPCError(dxProducerClient, error);
+        main.processStreamDGRPCError(main.dxProducerClient, error);
     }
 
     function onChatNewMessage(chatMessage): void {
@@ -311,13 +311,13 @@ Page {
     }
     function onChatMessagesFinished(status): void {
         console.log("Finished", status);
-        timers.retryTimerSubscribeToChatMessages.start();
+        main.timers.retryTimerSubscribeToChatMessages.start();
     }
 
     function onChatMessagesErrored(error): void {
         console.log("Errored", error);
-        processStreamDGRPCError(dxProducerClient, error);
-        timers.retryTimerSubscribeToChatMessages.start();
+        main.processStreamDGRPCError(main.dxProducerClient, error);
+        main.timers.retryTimerSubscribeToChatMessages.start();
     }
 
     function fetchPlatformCapabilities() {
@@ -344,17 +344,17 @@ Page {
         if (!updateStreamStatusYouTubeInProgress) {
             updateStreamStatusYouTubeInProgress = true;
 
-            dxProducerClient.getStreamStatus("youtube", false, onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, grpcCallOptions);
+            main.dxProducerClient.getStreamStatus("youtube", false, onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, main.grpcCallOptions);
         }
         if (!updateStreamStatusTwitchInProgress) {
             updateStreamStatusTwitchInProgress = true;
 
-            dxProducerClient.getStreamStatus("twitch", false, onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, grpcCallOptions);
+            main.dxProducerClient.getStreamStatus("twitch", false, onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, main.grpcCallOptions);
         }
         if (!updateStreamStatusKickInProgress) {
             updateStreamStatusKickInProgress = true;
 
-            dxProducerClient.getStreamStatus("kick", false, onUpdateStreamStatusKick, onUpdateStreamStatusKickError, grpcCallOptions);
+            main.dxProducerClient.getStreamStatus("kick", false, onUpdateStreamStatusKick, onUpdateStreamStatusKickError, main.grpcCallOptions);
         }
     }
 
@@ -376,7 +376,7 @@ Page {
     }
     function onUpdateStreamStatusYouTubeError(error) {
         updateStreamStatusYouTubeInProgress = false;
-        processStreamDGRPCError(dxProducerClient, error);
+        main.processStreamDGRPCError(main.dxProducerClient, error);
     }
 
     function onUpdateStreamStatusTwitch(streamStatus) {
@@ -390,7 +390,7 @@ Page {
     }
     function onUpdateStreamStatusTwitchError(error) {
         updateStreamStatusTwitchInProgress = false;
-        processStreamDGRPCError(dxProducerClient, error);
+        main.processStreamDGRPCError(main.dxProducerClient, error);
     }
 
     function onUpdateStreamStatusKick(streamStatus) {
@@ -404,11 +404,11 @@ Page {
     }
     function onUpdateStreamStatusKickError(error) {
         updateStreamStatusKickInProgress = false;
-        processStreamDGRPCError(dxProducerClient, error);
+        main.processStreamDGRPCError(main.dxProducerClient, error);
     }
 
     function updateWiFiInfo() {
-        var wifiInfo = platform.getCurrentWiFiConnection();
+        var wifiInfo = main.platform.getCurrentWiFiConnection();
         //console.log("WiFi info:", wifiInfo.toJSON());
         if (wifiInfo !== null && (wifiInfo.ssid !== "" || wifiInfo.bssid !== "")) {
             //console.log("updating WiFi status:", wifiInfo.ssid, wifiInfo.bssid, wifiInfo.rssi);
@@ -423,7 +423,7 @@ Page {
     }
 
     function updateChannelQualityInfo() {
-        var channelsQualityInfo = platform.getChannelsQualityInfo();
+        var channelsQualityInfo = main.platform.getChannelsQualityInfo();
         //console.log("channels quality info:", channelsQualityInfo, "; len:", channelsQualityInfo.length);
         for (var i = 0; i < channelsQualityInfo.length; i++) {
             var qualityInfo = channelsQualityInfo[i];
@@ -461,12 +461,12 @@ Page {
             "viewersKick": kickCounter.value,
             "signal": signalStatus.signalStrength,
             "streamTime": Math.round(statusStreamTime.seconds),
-            "cpuUtilization": platform.cpuUtilization,
-            "memoryUtilization": platform.memoryUtilization,
-            "temperatures": platform.temperatures
+            "cpuUtilization": main.platform.cpuUtilization,
+            "memoryUtilization": main.platform.memoryUtilization,
+            "temperatures": main.platform.temperatures
         };
 
-        var msg = Diagnostics.Diagnostics();
+        var msg = {};
         var hasChanges = false;
         var isFullState = (diagnosticsUpdateCount % 10) === 0;
 
@@ -492,13 +492,13 @@ Page {
         diagnosticsUpdateCount++;
         lastDiagnostics = currentDiagnostics;
 
-        ffstreamClient.injectDiagnostics(msg, 1000000000, function () {}, function (error) {
-            processFFStreamGRPCError(ffstreamClient, error);
-        }, grpcCallOptions);
+main.ffstreamClient.injectDiagnostics(msg, 1000000000, function () {}, function (error) {
+            main.processFFStreamGRPCError(main.ffstreamClient, error);
+        }, main.grpcCallOptions);
     }
 
     Connections {
-        target: platform
+        target: main.platform
         function onSignalStrengthChanged(strength) {
             console.log("new value of the signal strength: " + strength);
             signalStatus.signalStrength = strength;
@@ -508,7 +508,7 @@ Page {
     Timers {
         id: timers
         Component.onCompleted: {
-            timers.retryTimerSubscribeToChatMessages.callback = function () {
+            main.timers.retryTimerSubscribeToChatMessages.callback = function () {
                 console.log("re-subscribing to chat messages");
                 subscribeToChatMessages();
             };
@@ -954,7 +954,7 @@ Page {
                         height: 10
                         radius: 5
                         color: "transparent"
-                        border.color: dashboard.cpuUtilizationColor(platform.cpuUtilization)
+                        border.color: dashboard.cpuUtilizationColor(main.platform.cpuUtilization)
                         border.width: 1
                         Text {
                             anchors.centerIn: parent
@@ -969,7 +969,7 @@ Page {
                         height: 10
                         radius: 5
                         color: "transparent"
-                        border.color: dashboard.memUtilizationColor(platform.memoryUtilization)
+                        border.color: dashboard.memUtilizationColor(main.platform.memoryUtilization)
                         border.width: 1
                         Text {
                             anchors.centerIn: parent
@@ -1021,8 +1021,8 @@ Page {
                                 return (temp - low) / (high - low);
                             }
 
-                            for (var i = 0; i < platform.temperatures.length; i++) {
-                                var t = platform.temperatures[i];
+                            for (var i = 0; i < main.platform.temperatures.length; i++) {
+                                var t = main.platform.temperatures[i];
                                 var typeStr = (t.type || "").toLowerCase();
                                 var weight = getWeight(t.temp, typeStr);
 

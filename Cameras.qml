@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtCore
 /* This file implements the Cameras page for monitoring camera feeds. */
 import QtQuick
@@ -15,21 +16,21 @@ Page {
 
     function refresh() {
         console.log("Cameras.qml: Requesting stream sources and servers...");
-        dxProducerClient.listStreamSources(function (response) {
+        main.dxProducerClient.listStreamSources(function (response) {
             console.log("Cameras.qml: Received stream sources response: " + JSON.stringify(response));
             camerasPage.streamSources = response.streamSourcesData || response.streamSources || [];
         }, function (error) {
             console.log("Cameras.qml: Error listing stream sources");
-            processStreamDGRPCError(dxProducerClient, error);
-        }, grpcCallOptions);
+            main.processStreamDGRPCError(main.dxProducerClient, error);
+        }, main.grpcCallOptions);
 
-        dxProducerClient.listStreamServers(function (response) {
+        main.dxProducerClient.listStreamServers(function (response) {
             console.log("Cameras.qml: Received stream servers response: " + JSON.stringify(response));
             camerasPage.streamServers = response.streamServersData || response.streamServers || [];
         }, function (error) {
             console.log("Cameras.qml: Error listing stream servers");
-            processStreamDGRPCError(dxProducerClient, error);
-        }, grpcCallOptions);
+            main.processStreamDGRPCError(main.dxProducerClient, error);
+        }, main.grpcCallOptions);
     }
 
     Component.onCompleted: refresh()

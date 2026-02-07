@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
@@ -25,10 +26,10 @@ Page {
         interval: 2000
         repeat: false
         onTriggered: {
-            platform.refreshWiFiState()
-            var isLocal = platform.isLocalHotspotEnabled
-            var isNormal = platform.isHotspotEnabled
-            var info = isLocal ? platform.getLocalOnlyHotspotInfo() : (isNormal ? platform.getHotspotConfiguration() : null)
+            main.platform.refreshWiFiState()
+            var isLocal = main.platform.isLocalHotspotEnabled
+            var isNormal = main.platform.isHotspotEnabled
+            var info = isLocal ? main.platform.getLocalOnlyHotspotInfo() : (isNormal ? main.platform.getHotspotConfiguration() : null)
 
             if (info && info.ssid) {
                 wifiSsidField.text = info.ssid
@@ -49,16 +50,16 @@ Page {
     }
 
     Connections {
-        target: platform
+        target: main.platform
         function onIsLocalHotspotEnabledChanged() {
-            if (platform.isLocalHotspotEnabled) {
+            if (main.platform.isLocalHotspotEnabled) {
                 console.log("[DJI-BLE] QML: Local hotspot enabled, starting auto-fill timer...")
                 hotspotInfoRetryCount = 0
                 hotspotInfoTimer.start()
             }
         }
         function onIsHotspotEnabledChanged() {
-            if (platform.isHotspotEnabled) {
+            if (main.platform.isHotspotEnabled) {
                 console.log("[DJI-BLE] QML: Hotspot enabled, starting auto-fill timer...")
                 hotspotInfoRetryCount = 0
                 hotspotInfoTimer.start()
@@ -118,8 +119,8 @@ Page {
         console.log("[DJI-BLE] QML: Starting auto-discovery...")
         DJIController.startDeviceDiscovery()
 
-        platform.refreshWiFiState()
-        var hotspot = platform.isLocalHotspotEnabled ? platform.getLocalOnlyHotspotInfo() : platform.getHotspotConfiguration()
+        main.platform.refreshWiFiState()
+        var hotspot = main.platform.isLocalHotspotEnabled ? main.platform.getLocalOnlyHotspotInfo() : main.platform.getHotspotConfiguration()
         if (hotspot && hotspot.ssid) {
             console.log("[DJI-BLE] QML: Auto-filled hotspot info for SSID:", hotspot.ssid)
             wifiSsidField.text = hotspot.ssid
@@ -164,10 +165,10 @@ Page {
                     }
                     Switch {
                         id: hotspotSwitch
-                        checked: platform.isHotspotEnabled
+                        checked: main.platform.isHotspotEnabled
                         enabled: !localHotspotSwitch.checked
                         onToggled: {
-                            platform.setHotspotEnabled(checked)
+                            main.platform.setHotspotEnabled(checked)
                         }
                     }
                     Label {
@@ -175,10 +176,10 @@ Page {
                     }
                     Switch {
                         id: localHotspotSwitch
-                        checked: platform.isLocalHotspotEnabled
+                        checked: main.platform.isLocalHotspotEnabled
                         enabled: !hotspotSwitch.checked
                         onToggled: {
-                            platform.setLocalHotspotEnabled(checked)
+                            main.platform.setLocalHotspotEnabled(checked)
                         }
                     }
                 }
@@ -199,8 +200,8 @@ Page {
                     text: "Fill from Hotspot"
                     Layout.fillWidth: true
                     onClicked: {
-                        platform.refreshWiFiState()
-                        var info = localHotspotSwitch.checked ? platform.getLocalOnlyHotspotInfo() : platform.getHotspotConfiguration()
+                        main.platform.refreshWiFiState()
+                        var info = localHotspotSwitch.checked ? main.platform.getLocalOnlyHotspotInfo() : main.platform.getHotspotConfiguration()
                         if (info && info.ssid) {
                             wifiSsidField.text = info.ssid
                             wifiPskField.text = info.psk
@@ -223,7 +224,7 @@ Page {
                     id: rtmpUrlField
                     placeholderText: "RTMP URL"
                     text: {
-                        var ip = platform.hotspotIPAddress
+                        var ip = main.platform.hotspotIPAddress
                         if (!ip) ip = DJIController.localWlan1Ip
                         return ip ? "rtmp://" + ip + ":1935/proxy/dji-osmo-pocket3" : ""
                     }
@@ -273,7 +274,7 @@ Page {
                     var fps = parseInt(fpsSelector.currentText)
                     DJIController.wifiSSID = wifiSsidField.text
                     DJIController.wifiPSK = wifiPskField.text
-                    platform.saveHotspotConfiguration(wifiSsidField.text, wifiPskField.text)
+                    main.platform.saveHotspotConfiguration(wifiSsidField.text, wifiPskField.text)
                     DJIController.startStreaming(rtmpUrlField.text, res, fps, bitrateSelector.value)
                 }
             }

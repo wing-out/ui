@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 /* This file implements the Players page for managing stream players. */
 import QtQuick
 import QtQuick.Controls
@@ -68,7 +69,7 @@ Page {
     function refreshPlayers() {
         console.log("Players.qml: Requesting list of stream players...");
         
-        dxProducerClient.listStreamPlayers(function(reply) {
+        main.dxProducerClient.listStreamPlayers(function(reply) {
             console.log("Players.qml: Received reply:", JSON.stringify(reply));
             playersModel.clear();
             var players = reply.playersData || reply.players || [];
@@ -79,9 +80,9 @@ Page {
                     uri: (p.streamPlaybackConfig && p.streamPlaybackConfig.overriddenURL) ? p.streamPlaybackConfig.overriddenURL : "default"
                 });
             }
-        }, function(error) { 
+        }, function(error) {
             console.log("Players.qml: Error listing stream players");
-            processStreamDGRPCError(dxProducerClient, error); 
-        }, grpcCallOptions);
+            main.processStreamDGRPCError(main.dxProducerClient, error);
+        }, main.grpcCallOptions);
     }
 }
