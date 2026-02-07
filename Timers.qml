@@ -152,4 +152,5 @@ Item {
     property alias updateWiFiInfoTicker: updateWiFiInfoTicker
     property alias channelQualityInfoTicker: channelQualityInfoTicker
     property alias updateResourcesTicker: updateResourcesTicker
+    property alias injectDiagnosticsSubtitlesTicker: injectDiagnosticsSubtitlesTicker
 }

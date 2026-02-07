@@ -4,7 +4,6 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtMultimedia
 import QtTextToSpeech
-import Platform
 
 Item {
     id: chatView
@@ -25,10 +24,6 @@ Item {
             messageFormatType: 0
             isTest: true
         }
-    }
-
-    Platform {
-        id: platform
     }
 
     SoundEffect {

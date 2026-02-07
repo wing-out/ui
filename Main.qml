@@ -1,113 +1,136 @@
-/* This file implements the main application window and global gRPC setup for WingOut. */
+/* This file implements the main UI content for WingOut. */
 import QtQuick
-import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
-import QtGrpc
-import Platform
+import Qt.labs.settings 1.0
 
-import streamd as StreamD
-import ffstream_grpc as FFStream
+import streamd 1.0 as StreamD
+import ffstream_grpc 1.0 as FFStream
 
-ApplicationWindow {
-    id: application
-    width: 1080
-    height: 1920
-    visible: true
-    Material.theme: Material.Dark
-    Material.accent: Material.Purple
-    title: qsTr("Wing Out")
+Pane {
+    id: mainRoot
+    anchors.fill: parent
+    padding: 0
+
+    property var applicationWindow: Window.window
+
+    Settings {
+        id: appSettings
+        property string dxProducerHost: ""
+    }
 
     property bool locked: false
     readonly property bool isLandscape: width > height
 
-    property var safeAreaInsets: platform.getSafeAreaInsets()
-    onWidthChanged: safeAreaInsets = platform.getSafeAreaInsets()
-    onHeightChanged: safeAreaInsets = platform.getSafeAreaInsets()
+    // Retrieve safe area insets from the platform when available.
+    property var safeAreaInsets: (typeof platform !== 'undefined' && typeof platform["getSafeAreaInsets"] === 'function') ? platform["getSafeAreaInsets"]() : { top: 0, bottom: 0, left: 0, right: 0 }
+    onWidthChanged: safeAreaInsets = (typeof platform !== 'undefined' && typeof platform["getSafeAreaInsets"] === 'function') ? platform["getSafeAreaInsets"]() : { top: 0, bottom: 0, left: 0, right: 0 }
+    onHeightChanged: safeAreaInsets = (typeof platform !== 'undefined' && typeof platform["getSafeAreaInsets"] === 'function') ? platform["getSafeAreaInsets"]() : { top: 0, bottom: 0, left: 0, right: 0 }
 
     readonly property real safeAreaTop: ((safeAreaInsets && safeAreaInsets.top) || 0) / Screen.devicePixelRatio
     readonly property real safeAreaBottom: ((safeAreaInsets && safeAreaInsets.bottom) || 0) / Screen.devicePixelRatio
     readonly property real safeAreaLeft: ((safeAreaInsets && safeAreaInsets.left) || 0) / Screen.devicePixelRatio
     readonly property real safeAreaRight: ((safeAreaInsets && safeAreaInsets.right) || 0) / Screen.devicePixelRatio
 
-    ListModel {
-        id: globalChatMessagesModel
-    }
-
     topPadding: safeAreaTop
     leftPadding: safeAreaLeft
     rightPadding: safeAreaRight
     bottomPadding: safeAreaBottom
 
-    GrpcCallOptions {
+    ListModel {
+        id: globalChatMessagesModel
+    }
+
+    QtObject {
         id: grpcCallOptions
-        deadlineTimeout: 10000
+        property int deadlineTimeout: 10000
     }
-    GrpcCallOptions {
+    QtObject {
         id: streamingGrpcCallOptions
-        deadlineTimeout: 365 * 24 * 3600 * 1000
+        property double deadlineTimeout: 365 * 24 * 3600 * 1000
     }
-    GrpcHttp2Channel {
-        id: dxProducerTarget
-        hostUri: "http://192.168.0.134:3594"
-        options: GrpcChannelOptions {
-            deadlineTimeout: 365 * 24 * 3600 * 1000
-        }
-    }
-    StreamD.Client {
-        id: dxProducerClient
-        channel: dxProducerTarget.channel
-        Component.onCompleted: {
-            console.log("dxProducerClient connected to", dxProducerTarget.hostUri);
-        }
-    }
-    GrpcHttp2Channel {
+
+    QtObject {
         id: ffstreamTarget
-        hostUri: "http://localhost:3593"
-        options: GrpcChannelOptions {
-            deadlineTimeout: 365 * 24 * 3600 * 1000
-        }
+        property string hostUri: "http://localhost:3593"
+        property var channel: undefined
+        property var options: ({ deadlineTimeout: 365 * 24 * 3600 * 1000 })
     }
     FFStream.Client {
         id: ffstreamClient
-        channel: ffstreamTarget.channel
+        Component.onCompleted: {
+            if (ffstreamTarget && typeof ffstreamTarget.channel !== 'undefined')
+                ffstreamClient.channel = ffstreamTarget.channel;
+        }
     }
 
-    function processStreamDGRPCError(dxProducer, error): void {
+    function processStreamDGRPCError(dxProducer, error) {
         console.log("StreamD gRPC error:", JSON.stringify(error));
         if (dxProducer.processGRPCError !== undefined) {
             dxProducer.processGRPCError(error);
         }
     }
 
-    function processFFStreamGRPCError(ffstream, error): void {
+    function processFFStreamGRPCError(ffstream, error) {
         console.log("FFStream gRPC error:", JSON.stringify(error));
         if (ffstream.processGRPCError !== undefined) {
             ffstream.processGRPCError(error);
         }
     }
 
-    Component.onCompleted: {
-        console.log("ApplicationWindow completed");
-    }
-
-    Platform {
+    QtObject {
         id: platform
-        Component.onCompleted: {
-            platform.setEnableRunningInBackground(true);
-            platform.startMonitoringSignalStrength();
-            platform.refreshWiFiState();
-        }
+        property real cpuUtilization: 0.0
+        property real memoryUtilization: 0.0
+        property var temperatures: []
+        property bool isHotspotEnabled: false
+        property bool isLocalHotspotEnabled: false
+        property string hotspotIPAddress: ""
+        function getSafeAreaInsets() { return { top: 0, bottom: 0, left: 0, right: 0 }; }
+        function setEnableRunningInBackground(v) { /* stub */ }
+        function startMonitoringSignalStrength() { /* stub */ }
+        function refreshWiFiState() { /* stub */ }
+        function startWiFiScan() { /* stub */ }
+        function updateResources() { /* stub */ }
+        function getCurrentWiFiConnection() { return { ssid: "", bssid: "", rssi: -32768 }; }
+        function getChannelsQualityInfo() { return []; }
+        function getLocalOnlyHotspotInfo() { return { ssid: "", psk: "" }; }
+        function getHotspotConfiguration() { return { ssid: "", psk: "" }; }
+        function saveHotspotConfiguration(ssid, psk) { /* stub */ }
+        function setHotspotEnabled(enabled) { isHotspotEnabled = enabled; }
+        function setLocalHotspotEnabled(enabled) { isLocalHotspotEnabled = enabled; }
+        function vibrate(ms, fallback) { /* stub */ }
+        signal signalStrengthChanged(int strength)
     }
 
     Connections {
-        target: Qt.application
-        function onStateChanged() {
-            if (Qt.application.state === Qt.ApplicationActive) {
-                console.log("Application active, refreshing WiFi state");
-                platform.refreshWiFiState();
-            }
+        target: mainRoot.applicationWindow
+        function onClosing(close) {
+            close.accepted = false;
+            mainRoot.locked = true;
+        }
+    }
+
+    Component.onCompleted: {
+        if (platform && typeof platform.refreshWiFiState === 'function')
+            platform.refreshWiFiState();
+    }
+
+    // Stubbed dxProducer channel.
+    QtObject {
+        id: dxProducerTarget
+        property string hostUri: appSettings.dxProducerHost
+        property var channel: undefined
+        property var options: ({ deadlineTimeout: 365 * 24 * 3600 * 1000 })
+    }
+
+    StreamD.Client {
+        id: dxProducerClient
+        Component.onCompleted: {
+            if (dxProducerTarget && typeof dxProducerTarget["channel"] !== 'undefined')
+                dxProducerClient["channel"] = dxProducerTarget["channel"];
+            console.log("dxProducerClient connected to", dxProducerTarget.hostUri);
         }
     }
 
@@ -116,34 +139,15 @@ ApplicationWindow {
         anchors.fill: parent
         currentIndex: 0
 
-        Dashboard {
-            id: dashboardPage
-        }
-        Cameras {
-            id: camerasPage
-        }
-        DJIControl {
-            id: djiControlPage
-            Component.onCompleted: console.log("DJIControl page completed")
-        }
-        Chat {
-            id: chatPage
-        }
-        Players {
-            id: playersPage
-        }
-        Restreams {
-            id: restreamsPage
-        }
-        Monitor {
-            id: monitorPage
-        }
-        Profiles {
-            id: profilesPage
-        }
-        Settings {
-            id: settingsPage
-        }
+        Dashboard { id: dashboardPage }
+        Cameras { id: camerasPage }
+        DJIControl { id: djiControlPage; Component.onCompleted: console.log("DJIControl page completed") }
+        Chat { id: chatPage }
+        Players { id: playersPage }
+        Restreams { id: restreamsPage }
+        Monitor { id: monitorPage }
+        Profiles { id: profilesPage }
+        Settings { id: settingsPage }
     }
 
     RoundButton {
@@ -165,59 +169,27 @@ ApplicationWindow {
         y: menuButton.y + menuButton.height
         x: menuButton.x - (width / 2) + (menuButton.width / 2)
 
-        MenuItem {
-            text: "Dashboard"
-            onTriggered: stack.currentIndex = 0
-        }
-        MenuItem {
-            text: "Cameras"
-            onTriggered: stack.currentIndex = 1
-        }
-        MenuItem {
-            text: "DJI"
-            onTriggered: stack.currentIndex = 2
-        }
-        MenuItem {
-            text: "Chat"
-            onTriggered: stack.currentIndex = 3
-        }
-        MenuItem {
-            text: "Players"
-            onTriggered: stack.currentIndex = 4
-        }
-        MenuItem {
-            text: "Restreams"
-            onTriggered: stack.currentIndex = 5
-        }
-        MenuItem {
-            text: "Monitor"
-            onTriggered: stack.currentIndex = 6
-        }
-        MenuItem {
-            text: "Profiles"
-            onTriggered: stack.currentIndex = 7
-        }
-        MenuItem {
-            text: "Settings"
-            onTriggered: stack.currentIndex = 8
-        }
-    }
-
-    onClosing: close => {
-        close.accepted = false;
-        application.locked = true;
+        MenuItem { text: "Dashboard"; onTriggered: stack.currentIndex = 0 }
+        MenuItem { text: "Cameras"; onTriggered: stack.currentIndex = 1 }
+        MenuItem { text: "DJI"; onTriggered: stack.currentIndex = 2 }
+        MenuItem { text: "Chat"; onTriggered: stack.currentIndex = 3 }
+        MenuItem { text: "Players"; onTriggered: stack.currentIndex = 4 }
+        MenuItem { text: "Restreams"; onTriggered: stack.currentIndex = 5 }
+        MenuItem { text: "Monitor"; onTriggered: stack.currentIndex = 6 }
+        MenuItem { text: "Profiles"; onTriggered: stack.currentIndex = 7 }
+        MenuItem { text: "Settings"; onTriggered: stack.currentIndex = 8 }
     }
 
     SwipeLockOverlay {
         id: lockOverlay
-        locked: application.locked
-        topPadding: application.safeAreaTop
-        onUnlockRequested: application.locked = false
+        locked: mainRoot.locked
+        topPadding: mainRoot.safeAreaTop
+        onUnlockRequested: mainRoot.locked = false
     }
 
     Button {
         id: lockButton
-        visible: !application.locked && stack.currentIndex === 0
+        visible: !mainRoot.locked && stack.currentIndex === 0
         text: "🔒"
         anchors.top: stack.top
         anchors.right: stack.right
@@ -225,6 +197,6 @@ ApplicationWindow {
         font.pixelSize: 40
         property real defaultOpacity: 0.7
         opacity: hovered ? 1.0 : defaultOpacity
-        onClicked: application.locked = true
+        onClicked: mainRoot.locked = true
     }
 }

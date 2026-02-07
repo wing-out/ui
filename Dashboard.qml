@@ -3,8 +3,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Shapes
-import Platform
-
 import wingout_diagnostics as Diagnostics
 
 Page {
@@ -460,15 +458,6 @@ Page {
         ffstreamClient.injectDiagnostics(msg, 1000000000, function () {}, function (error) {
             processFFStreamGRPCError(ffstreamClient, error);
         }, grpcCallOptions);
-    }
-
-    Platform {
-        id: platform
-        Component.onCompleted: {
-            platform.setEnableRunningInBackground(true);
-            platform.startMonitoringSignalStrength();
-            platform.startWiFiScan();
-        }
     }
 
     Connections {

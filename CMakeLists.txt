@@ -100,13 +100,14 @@ add_dependencies(wingout fonts)
 ## remove desktop-only QML from the Android build (see WINGOUT_DESKTOP_QML
 ## below).
 set(WINGOUT_QML_FILES
+    Application.qml
+    InitialSetup.qml
     Cameras.qml
     CamerasBuiltin.qml
     Chat.qml
     ChatView.qml
     Dashboard.qml
     DJIControl.qml
-    LockState.qml
     Main.qml
     Monitor.qml
     Players.qml
@@ -148,10 +149,6 @@ qt_add_qml_module(wingout
     ${FONT_PATH}
     audio/chat_message_add.wav
     android/AndroidManifest.xml android/build.gradle android/res/values/libs.xml android/res/xml/qtprovider_paths.xml
-)
-
-set_source_files_properties(LockState.qml
-    PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 
 qt_add_protobuf(DXProducer.ChatWebHook
