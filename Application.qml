@@ -31,5 +31,12 @@ ApplicationWindow {
         anchors.fill: parent
         active: !!appSettings.dxProducerHost
         source: "Main.qml"
+
+        Binding {
+            target: mainLoader.item
+            property: "dxProducerHost"
+            value: appSettings.dxProducerHost
+            when: mainLoader.status === Loader.Ready
+        }
     }
 }
