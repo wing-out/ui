@@ -240,8 +240,11 @@ void Client::getStreamStatus(
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   streamd::GetStreamStatusRequest arg{};
-  // Current proto expects platID as a simple string field.
-  arg.setPlatID(platID);
+  streamd::StreamIDFullyQualified id;
+  id.setPlatformID(platID);
+  id.setAccountID("default");
+  id.setStreamID("default");
+  arg.setId_proto(id);
   arg.setNoCache(noCache);
   this->GetStreamStatus(arg, callback, errorCallback, options);
 }
@@ -479,10 +482,14 @@ void Client::startStream(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  streamd::StartStreamByProfileNameRequest arg{};
-  arg.setPlatID(platID);
-  arg.setProfileName(profileName);
-  this->StartStreamByProfileName(arg, callback, errorCallback, options);
+  streamd::ApplyProfileRequest arg{};
+  streamd::StreamIDFullyQualified id;
+  id.setPlatformID(platID);
+  id.setAccountID("default");
+  id.setStreamID("default");
+  arg.setId_proto(id);
+  arg.setProfile(profileName);
+  this->ApplyProfile(arg, callback, errorCallback, options);
 }
 
 void Client::endStream(const QString &platID, const QJSValue &callback,
@@ -490,10 +497,14 @@ void Client::endStream(const QString &platID, const QJSValue &callback,
                        const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  // Current proto exposes EndStream(EndStreamRequest) to end a stream.
-  streamd::EndStreamRequest arg{};
-  arg.setPlatID(platID);
-  this->EndStream(arg, callback, errorCallback, options);
+  streamd::SetStreamActiveRequest arg{};
+  streamd::StreamIDFullyQualified id;
+  id.setPlatformID(platID);
+  id.setAccountID("default");
+  id.setStreamID("default");
+  arg.setId_proto(id);
+  arg.setIsActive(false);
+  this->SetStreamActive(arg, callback, errorCallback, options);
 }
 
 void Client::listStreamForwards(
