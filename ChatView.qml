@@ -7,8 +7,8 @@ import QtMultimedia
 import QtTextToSpeech
 
 Item {
-    property Main main
     id: chatView
+    required property var root
 
     property ListModel model: chatMessagesModel
     property alias list: messagesList
@@ -174,7 +174,7 @@ Item {
                     return;
                 }
                 if (vibrationEnabled.checked) {
-                    main.platform.vibrate(500, true);
+                    chatView.root.platform.vibrate(500, true);
                 }
                 var text = msg.message;
                 text = text.replace(/<[^>]*>/g, "");

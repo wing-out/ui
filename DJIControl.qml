@@ -35,12 +35,16 @@ Page {
             if (info && info.ssid) {
                 wifiSsidField.text = info.ssid
                 wifiPskField.text = info.psk
-                console.log("[DJI-BLE] QML: Auto-filled from hotspot (auto):", info.ssid)
+                if (DJIController.djiBleLoggingEnabled) {
+                    console.log("[DJI-BLE] QML: Auto-filled from hotspot (auto):", info.ssid)
+                }
                 hotspotInfoRetryCount = 0
             } else if (isLocal || isNormal) {
                 if (hotspotInfoRetryCount < 5) {
                     hotspotInfoRetryCount++
-                    console.log("[DJI-BLE] QML: Hotspot info not ready, retrying (" + hotspotInfoRetryCount + "/5)...")
+                    if (DJIController.djiBleLoggingEnabled) {
+                        console.log("[DJI-BLE] QML: Hotspot info not ready, retrying (" + hotspotInfoRetryCount + "/5)...")
+                    }
                     hotspotInfoTimer.start()
                 } else {
                     DJIController.error("Failed to auto-fill hotspot info after retries")
@@ -54,14 +58,18 @@ Page {
         target: djiControlPage.root.platform
         function onIsLocalHotspotEnabledChanged() {
             if (djiControlPage.root.platform.isLocalHotspotEnabled) {
-                console.log("[DJI-BLE] QML: Local hotspot enabled, starting auto-fill timer...")
+                if (DJIController.djiBleLoggingEnabled) {
+                    console.log("[DJI-BLE] QML: Local hotspot enabled, starting auto-fill timer...")
+                }
                 hotspotInfoRetryCount = 0
                 hotspotInfoTimer.start()
             }
         }
         function onIsHotspotEnabledChanged() {
             if (djiControlPage.root.platform.isHotspotEnabled) {
-                console.log("[DJI-BLE] QML: Hotspot enabled, starting auto-fill timer...")
+                if (DJIController.djiBleLoggingEnabled) {
+                    console.log("[DJI-BLE] QML: Hotspot enabled, starting auto-fill timer...")
+                }
                 hotspotInfoRetryCount = 0
                 hotspotInfoTimer.start()
             }
@@ -73,17 +81,23 @@ Page {
         function onIsPairedChanged() {
             if (DJIController.isPaired && !djiControlPage.flowStarted) {
                 djiControlPage.flowStarted = true
-                console.log("[DJI-BLE] QML: Device paired. Starting flow in 1s...")
+                if (DJIController.djiBleLoggingEnabled) {
+                    console.log("[DJI-BLE] QML: Device paired. Starting flow in 1s...")
+                }
                 startFlowTimer.start()
             }
         }
         function onLog(msg) {
-            console.log("[DJI-BLE] QML:", msg)
-            logArea.append("[LOG] " + msg)
+            if (DJIController.djiBleLoggingEnabled) {
+                console.log("[DJI-BLE] QML:", msg)
+                logArea.append("[LOG] " + msg)
+            }
         }
         function onError(msg) {
-            console.error("[DJI-BLE] QML Error:", msg)
-            logArea.append("[ERROR] " + msg)
+            if (DJIController.djiBleLoggingEnabled) {
+                console.error("[DJI-BLE] QML Error:", msg)
+                logArea.append("[ERROR] " + msg)
+            }
         }
     }
 
@@ -94,7 +108,9 @@ Page {
         onTriggered: {
             var res = resolutionSelector.currentIndex === 0 ? 1080 : (resolutionSelector.currentIndex === 1 ? 720 : 480)
             var fps = parseInt(fpsSelector.currentText)
-            console.log("[DJI-BLE] QML: Actually starting streaming to", rtmpUrlField.text)
+            if (DJIController.djiBleLoggingEnabled) {
+                console.log("[DJI-BLE] QML: Actually starting streaming to", rtmpUrlField.text)
+            }
             DJIController.startStreaming(rtmpUrlField.text, res, fps, bitrateSelector.value)
         }
     }
@@ -108,7 +124,9 @@ Page {
                 for (var i = 0; i < list.length; ++i) {
                     var dev = list[i]
                     // Auto-select if it's identified as a DJI device (even if type is Unknown)
-                    console.log("[DJI-BLE] QML: Auto-selecting device:", dev.name)
+                    if (DJIController.djiBleLoggingEnabled) {
+                        console.log("[DJI-BLE] QML: Auto-selecting device:", dev.name)
+                    }
                     DJIController.device = dev
                     break
                 }
@@ -117,13 +135,17 @@ Page {
     }
 
     Component.onCompleted: {
-        console.log("[DJI-BLE] QML: Starting auto-discovery...")
+        if (DJIController.djiBleLoggingEnabled) {
+            console.log("[DJI-BLE] QML: Starting auto-discovery...")
+        }
         DJIController.startDeviceDiscovery()
 
         djiControlPage.root.platform.refreshWiFiState()
         var hotspot = djiControlPage.root.platform.isLocalHotspotEnabled ? djiControlPage.root.platform.getLocalOnlyHotspotInfo() : djiControlPage.root.platform.getHotspotConfiguration()
         if (hotspot && hotspot.ssid) {
-            console.log("[DJI-BLE] QML: Auto-filled hotspot info for SSID:", hotspot.ssid)
+            if (DJIController.djiBleLoggingEnabled) {
+                console.log("[DJI-BLE] QML: Auto-filled hotspot info for SSID:", hotspot.ssid)
+            }
             wifiSsidField.text = hotspot.ssid
             wifiPskField.text = hotspot.psk
         }
@@ -296,4 +318,5 @@ Page {
             Layout.fillWidth: true
         }
     }
+}
 }

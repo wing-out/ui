@@ -4,9 +4,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
-import QtCore
-import QtGrpc
-
 import QtGrpc
 
 import streamd 1.0 as StreamD

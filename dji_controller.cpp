@@ -1,5 +1,6 @@
 #include "dji_controller.h"
 #include "dji/device_flow.h"
+#include "dji/logging.h"
 #include <QDebug>
 #include <QNetworkInterface>
 #include <QAbstractSocket>
@@ -104,6 +105,10 @@ QString DJIController::localWlan1Ip() const {
         }
     }
     return QString();
+}
+
+bool DJIController::djiBleLoggingEnabled() const {
+    return dji::djiBleLog().isEnabled(QtInfoMsg);
 }
 
 void DJIController::startStreaming(const QString &rtmpUrl, int resolution, int fps, int bitrateKbps) {

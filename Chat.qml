@@ -63,8 +63,8 @@ Page {
                     enabled: targetChannelField.text.length > 0
                     onClicked: {
                         var channel = targetChannelField.text;
-                        fireMultiPlatformRPC("Shoutout",
-                            function(platID, onOk, onErr) { dxProducerClient.shoutout(platID, channel, onOk, onErr, grpcCallOptions); },
+                        chatPage.root.fireMultiPlatformRPC("Shoutout",
+                            function(platID, onOk, onErr) { chatPage.root.dxProducerClient.shoutout(platID, channel, onOk, onErr, chatPage.root.grpcCallOptions); },
                             function(t) { chatPage.raidShoutoutStatus = t; },
                             function(c) { chatPage.raidShoutoutStatusColor = c; });
                     }
@@ -78,8 +78,8 @@ Page {
                     enabled: targetChannelField.text.length > 0
                     onClicked: {
                         var channel = targetChannelField.text;
-                        fireMultiPlatformRPC("Raid",
-                            function(platID, onOk, onErr) { dxProducerClient.raidTo(platID, channel, onOk, onErr, grpcCallOptions); },
+                        chatPage.root.fireMultiPlatformRPC("Raid",
+                            function(platID, onOk, onErr) { chatPage.root.dxProducerClient.raidTo(platID, channel, onOk, onErr, chatPage.root.grpcCallOptions); },
                             function(t) { chatPage.raidShoutoutStatus = t; },
                             function(c) { chatPage.raidShoutoutStatusColor = c; });
                     }
@@ -111,24 +111,25 @@ Page {
 
         ChatView {
             id: chatView
-            model: globalChatMessagesModel
+            root: chatPage.root
+            model: chatPage.root.globalChatMessagesModel
             platformCapabilities: chatPage.platformCapabilities
             Layout.fillWidth: true
             Layout.fillHeight: true
 
             onRequestBanUser: function(platID, userID, reason, deadlineUnixMs) {
                 console.log("Ban user:", platID, userID, reason, deadlineUnixMs);
-                dxProducerClient.banUser(platID, userID, reason, deadlineUnixMs,
+                chatPage.root.dxProducerClient.banUser(platID, userID, reason, deadlineUnixMs,
                     function() { console.log("ban ok:", platID, userID); },
                     function(err) { console.warn("ban failed:", err); },
-                    grpcCallOptions);
+                    chatPage.root.grpcCallOptions);
             }
             onRequestRemoveChatMessage: function(platID, messageID) {
                 console.log("Remove chat message:", platID, messageID);
-                dxProducerClient.removeChatMessage(platID, messageID,
+                chatPage.root.dxProducerClient.removeChatMessage(platID, messageID,
                     function() { console.log("delete ok:", platID, messageID); },
                     function(err) { console.warn("delete failed:", err); },
-                    grpcCallOptions);
+                    chatPage.root.grpcCallOptions);
             }
         }
     }

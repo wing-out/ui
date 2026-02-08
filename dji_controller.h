@@ -23,6 +23,7 @@ class DJIController : public RemoteCameraController {
     Q_PROPERTY(QString wifiSSID READ wifiSSID WRITE setWifiSSID NOTIFY wifiSSIDChanged)
     Q_PROPERTY(QString wifiPSK READ wifiPSK WRITE setWifiPSK NOTIFY wifiPSKChanged)
     Q_PROPERTY(QString localWlan1Ip READ localWlan1Ip NOTIFY localWlan1IpChanged)
+    Q_PROPERTY(bool djiBleLoggingEnabled READ djiBleLoggingEnabled NOTIFY djiBleLoggingEnabledChanged)
 
 public:
     explicit DJIController(QObject *parent = nullptr);
@@ -51,6 +52,8 @@ public:
 
     QString localWlan1Ip() const;
 
+    bool djiBleLoggingEnabled() const;
+
     Q_INVOKABLE void startStreaming(const QString &rtmpUrl, int resolution, int fps, int bitrateKbps);
     Q_INVOKABLE void stopStreaming();
 
@@ -62,6 +65,7 @@ signals:
     void wifiSSIDChanged();
     void wifiPSKChanged();
     void localWlan1IpChanged();
+    void djiBleLoggingEnabledChanged();
     void error(const QString &message);
     void log(const QString &message);
 

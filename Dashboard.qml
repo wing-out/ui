@@ -1304,6 +1304,7 @@ Page {
 
     ChatView {
         id: chatView
+        root: dashboard.root
         model: dashboard.root.globalChatMessagesModel
         soundEnabled: appSettings.soundEnabled
         platformCapabilities: dashboard.platformCapabilities

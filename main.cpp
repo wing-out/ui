@@ -35,10 +35,13 @@ int app(int argc, char *argv[]) {
   QGuiApplication::setOrganizationDomain("wingout.app");
   QGuiApplication::setApplicationName("WingOut");
   QGuiApplication app(argc, argv);
-  QString loggingRules = QString::fromLocal8Bit(qgetenv("QT_LOGGING_RULES"));
-  if (!loggingRules.isEmpty()) {
+  QString loggingRules = QStringLiteral("wingout.dji.ble=false");
+  QString envRules = QString::fromLocal8Bit(qgetenv("QT_LOGGING_RULES"));
+  if (!envRules.isEmpty()) {
     loggingRules.append('\n');
+    loggingRules.append(envRules);
   }
+  loggingRules.append('\n');
   loggingRules.append(QStringLiteral("qt.core.qfuture.continuations=false"));
   QLoggingCategory::setFilterRules(loggingRules);
   g_prevHandler = qInstallMessageHandler(filteredQtHandler);

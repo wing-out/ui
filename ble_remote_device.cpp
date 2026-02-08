@@ -7,6 +7,7 @@
 
 #include "ble_remote_device.h"
 #include "ble_service.h"
+#include "dji/logging.h"
 
 BLERemoteDevice::BLERemoteDevice(const QBluetoothDeviceInfo &d, QObject *parent)
     : QBluetoothDeviceInfo(d), QObject(parent) {
@@ -24,10 +25,10 @@ BLERemoteDevice::BLERemoteDevice(const QBluetoothDeviceInfo &d, QObject *parent)
 }
 
 void BLERemoteDevice::addService(const QBluetoothUuid &serviceUUID) {
-  qDebug() << "[DJI-BLE] addService: " << serviceUUID.toString();
+  qCDebug(dji::djiBleLog) << "[DJI-BLE] addService: " << serviceUUID.toString();
   QLowEnergyService *service = controller->createServiceObject(serviceUUID);
   if (!service) {
-    qWarning() << "[DJI-BLE] Cannot create service for uuid";
+    qCWarning(dji::djiBleLog) << "[DJI-BLE] Cannot create service for uuid";
     return;
   }
   auto serv = new BLEService(service);
@@ -35,10 +36,12 @@ void BLERemoteDevice::addService(const QBluetoothUuid &serviceUUID) {
   emit servicesUpdated();
 }
 
-void BLERemoteDevice::servicesScanDone() { qDebug() << "[DJI-BLE] " << "servicesScanDone"; }
+void BLERemoteDevice::servicesScanDone() {
+  qCDebug(dji::djiBleLog) << "[DJI-BLE] " << "servicesScanDone";
+}
 
 void BLERemoteDevice::scanServices() {
-  qDebug() << "[DJI-BLE] scanServices";
+  qCDebug(dji::djiBleLog) << "[DJI-BLE] scanServices";
   controller->connectToDevice();
 }
 
@@ -49,7 +52,8 @@ bool BLERemoteDevice::getConnected() const {
 void BLERemoteDevice::connectToDevice() {
   if (controller) {
     if (controller->state() != QLowEnergyController::UnconnectedState) {
-      qDebug() << "[DJI-BLE] Already connecting or connected, state:" << controller->state();
+      qCDebug(dji::djiBleLog) << "[DJI-BLE] Already connecting or connected, state:"
+                             << controller->state();
       return;
     }
     controller->connectToDevice();
@@ -57,7 +61,7 @@ void BLERemoteDevice::connectToDevice() {
 }
 
 void BLERemoteDevice::discoverServiceDetails(const QString &uuid) {
-  qDebug() << "[DJI-BLE] discoverServiceDetails: " << uuid;
+  qCDebug(dji::djiBleLog) << "[DJI-BLE] discoverServiceDetails: " << uuid;
   BLEService *service = nullptr;
   for (auto svc : std::as_const(services)) {
     if (svc->getUUID() == uuid) {
@@ -66,7 +70,7 @@ void BLERemoteDevice::discoverServiceDetails(const QString &uuid) {
     }
   }
   if (!service) {
-    qWarning() << "[DJI-BLE] there is no service " << uuid;
+    qCWarning(dji::djiBleLog) << "[DJI-BLE] there is no service " << uuid;
     return;
   }
 
@@ -75,19 +79,19 @@ void BLERemoteDevice::discoverServiceDetails(const QString &uuid) {
   emit characteristicsUpdated();
 
   if (service->getQLowEnergyService()->state() != QLowEnergyService::RemoteService) {
-    qWarning() << "[DJI-BLE] service->state() != QLowEnergyService::RemoteService";
+    qCWarning(dji::djiBleLog) << "[DJI-BLE] service->state() != QLowEnergyService::RemoteService";
     return;
   }
 
   connect(service->getQLowEnergyService(), &QLowEnergyService::stateChanged, this,
           &BLERemoteDevice::serviceDetailsDiscovered);
-  qDebug() << "[DJI-BLE] service->discoverDetails()";
+  qCDebug(dji::djiBleLog) << "[DJI-BLE] service->discoverDetails()";
   service->getQLowEnergyService()->discoverDetails();
 }
 
 void BLERemoteDevice::serviceDetailsDiscovered(
     QLowEnergyService::ServiceState newState) {
-  qDebug() << "[DJI-BLE] serviceDetailsDiscovered: " << newState;
+  qCDebug(dji::djiBleLog) << "[DJI-BLE] serviceDetailsDiscovered: " << newState;
   auto service = qobject_cast<QLowEnergyService *>(sender());
   if (!service)
     return;
@@ -102,11 +106,13 @@ void BLERemoteDevice::serviceDetailsDiscovered(
 }
 
 void BLERemoteDevice::errorReceived(QLowEnergyController::Error err) {
-  qWarning() << "[DJI-BLE] Controller Error: " << err << controller->errorString();
+  qCWarning(dji::djiBleLog) << "[DJI-BLE] Controller Error: " << err
+                            << controller->errorString();
 }
 
 void BLERemoteDevice::deviceConnected() {
-  qDebug() << "[DJI-BLE] deviceConnected to" << this->name() << this->address().toString();
+  qCDebug(dji::djiBleLog) << "[DJI-BLE] deviceConnected to" << this->name()
+                          << this->address().toString();
   
   // Try to set connection parameters for stability
   QLowEnergyConnectionParameters params;
@@ -116,17 +122,17 @@ void BLERemoteDevice::deviceConnected() {
   controller->requestConnectionUpdate(params);
 
   connect(controller, &QLowEnergyController::mtuChanged, this, [](int mtu) {
-      qDebug() << "[DJI-BLE] MTU changed to" << mtu;
+      qCDebug(dji::djiBleLog) << "[DJI-BLE] MTU changed to" << mtu;
   });
 
   QTimer::singleShot(2000, controller, [this]() {
-      qDebug() << "[DJI-BLE] starting discoverServices";
+      qCDebug(dji::djiBleLog) << "[DJI-BLE] starting discoverServices";
       controller->discoverServices();
   });
 }
 
-void BLERemoteDevice::deviceDisconnected() { 
-    qDebug() << "[DJI-BLE] deviceDisconnected" << this->address().toString();
+void BLERemoteDevice::deviceDisconnected() {
+  qCDebug(dji::djiBleLog) << "[DJI-BLE] deviceDisconnected" << this->address().toString();
 }
 
 QVariant BLERemoteDevice::getServices() {
