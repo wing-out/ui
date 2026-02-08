@@ -121,6 +121,7 @@ public:
   setTitle(const QString &platID, const QString &title,
            const QJSValue &callback, const QJSValue &errorCallback,
            const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void setServerUri(const QString &uri);
   Q_INVOKABLE void setIgnoreImages(const bool value);
   Q_INVOKABLE void processGRPCError(const QVariant &error);
 signals:

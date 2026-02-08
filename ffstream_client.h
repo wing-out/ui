@@ -24,6 +24,7 @@ class Client : public ffstream_grpc::FFStream::QmlClient {
 public:
   explicit Client(QObject *parent = nullptr);
   ffstream_grpc::FFStream::Client *client();
+  Q_INVOKABLE void setServerUri(const QString &uri);
   Q_INVOKABLE void processGRPCError(const QVariant &error);
   Q_INVOKABLE void
   getLatencies(const QJSValue &finishCallback, const QJSValue &errorCallback,

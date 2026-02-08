@@ -30,19 +30,34 @@ streamd::StreamD::Client *Client::client() {
   return client;
 }
 
+void Client::setServerUri(const QString &uri) {
+  this->serverURI = QUrl(uri);
+}
+
 void Client::_onChannelChanged() {
-  if (!this->serverURI.isEmpty()) {
+  bool hasValidUri = this->serverURI.isValid() && !this->serverURI.host().isEmpty();
+  if (hasValidUri) {
+    qDebug() << "dxProducerClient: channel changed (cached): " << this->serverURI;
     return;
   }
   auto http2Channel = dynamic_cast<QGrpcHttp2Channel *>(this->channel().get());
-  this->serverURI = http2Channel->hostUri();
+  if (!http2Channel) {
+    qDebug() << "dxProducerClient: channel changed but no http2 channel yet";
+    return;
+  }
+  QUrl channelUri = http2Channel->hostUri();
+  if (channelUri.isEmpty() || channelUri.host().isEmpty()) {
+    qDebug() << "dxProducerClient: channel changed but hostUri is empty, waiting for QML to set it";
+    return;
+  }
+  this->serverURI = channelUri;
   this->serverChannelOptions = http2Channel->channelOptions();
   QSslConfiguration sslConfig;
   sslConfig.setPeerVerifyMode(QSslSocket::PeerVerifyMode::VerifyNone);
   this->serverChannelOptions.setSslConfiguration(sslConfig);
   this->attachChannel(std::make_shared<QGrpcHttp2Channel>(
       this->serverURI, this->serverChannelOptions));
-  qDebug() << "channel changed: " << this->serverURI;
+  qDebug() << "dxProducerClient: channel changed: " << this->serverURI;
 }
 
 void Client::processGRPCError(const QVariant &error) {
@@ -135,13 +150,15 @@ void Client::subscribeToChatMessages(
     return;
   }
 
-  this->chatStream = this->client()
-                    ->SubscribeToChatMessages(
-                        arg, options ? options->options() : QGrpcCallOptions{})
-                    .release();
+  this->chatStream =
+      this->client()
+          ->SubscribeToChatMessages(arg, options ? options->options()
+                                                 : QGrpcCallOptions{})
+          .release();
 
   auto messageReceivedFunc = [=]() mutable {
-    if (!this->chatStream) return;
+    if (!this->chatStream)
+      return;
     auto message = this->chatStream->read<streamd::ChatMessage>();
     if (!message) {
       return;
@@ -152,7 +169,8 @@ void Client::subscribeToChatMessages(
   };
 
   auto finishedFunc = [=](const QGrpcStatus &status) mutable {
-    if (!this->chatStream) return;
+    if (!this->chatStream)
+      return;
     delete this->chatStream;
     this->chatStream = nullptr;
     if (status.code() == QtGrpc::StatusCode::Ok) {
@@ -167,7 +185,8 @@ void Client::subscribeToChatMessages(
   QObject::connect(this->chatStream, &QGrpcServerStream::messageReceived, this,
                    messageReceivedFunc);
 
-  QObject::connect(this->chatStream, &QGrpcServerStream::finished, this, finishedFunc);
+  QObject::connect(this->chatStream, &QGrpcServerStream::finished, this,
+                   finishedFunc);
 }
 
 void Client::getStreamStatus(
@@ -319,7 +338,7 @@ void Client::setTitle(
 
 void Client::setIgnoreImages(const bool value) {
   QMutexLocker locker(&this->locker);
-  //qInfo() << "setIgnoreImages" << value;
+  // qInfo() << "setIgnoreImages" << value;
   this->ignoreImages = value;
 }
 
@@ -349,13 +368,15 @@ void Client::subscribeToImage(
     return;
   }
 
-  this->imageStream = this->client()
-                    ->SubscribeToVariable(arg, options ? options->options()
-                                                       : QGrpcCallOptions{})
-                    .release();
+  this->imageStream =
+      this->client()
+          ->SubscribeToVariable(arg, options ? options->options()
+                                             : QGrpcCallOptions{})
+          .release();
 
   auto messageReceivedFunc = [=]() mutable {
-    if (!this->imageStream) return;
+    if (!this->imageStream)
+      return;
     auto message = this->imageStream->read<streamd::VariableChange>();
     if (ignoreImages || !message) {
       return;
@@ -370,7 +391,8 @@ void Client::subscribeToImage(
   };
 
   auto finishedFunc = [=](const QGrpcStatus &status) mutable {
-    if (!this->imageStream) return;
+    if (!this->imageStream)
+      return;
     delete this->imageStream;
     this->imageStream = nullptr;
     if (status.code() == QtGrpc::StatusCode::Ok) {
@@ -385,22 +407,21 @@ void Client::subscribeToImage(
   QObject::connect(this->imageStream, &QGrpcServerStream::messageReceived, this,
                    messageReceivedFunc);
 
-  QObject::connect(this->imageStream, &QGrpcServerStream::finished, this, finishedFunc);
+  QObject::connect(this->imageStream, &QGrpcServerStream::finished, this,
+                   finishedFunc);
 }
 
-void Client::getConfig(
-    const QJSValue &callback, const QJSValue &errorCallback,
-    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+void Client::getConfig(const QJSValue &callback, const QJSValue &errorCallback,
+                       const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   streamd::GetConfigRequest arg{};
   this->GetConfig(arg, callback, errorCallback, options);
 }
 
-void Client::setConfig(
-    const QString &configYaml, const QJSValue &callback,
-    const QJSValue &errorCallback,
-    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+void Client::setConfig(const QString &configYaml, const QJSValue &callback,
+                       const QJSValue &errorCallback,
+                       const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   streamd::SetConfigRequest arg{};
@@ -409,8 +430,8 @@ void Client::setConfig(
 }
 
 void Client::startStream(
-    const QString &platID, const QString &profileName,
-    const QJSValue &callback, const QJSValue &errorCallback,
+    const QString &platID, const QString &profileName, const QJSValue &callback,
+    const QJSValue &errorCallback,
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
@@ -420,10 +441,9 @@ void Client::startStream(
   this->StartStreamByProfileName(arg, callback, errorCallback, options);
 }
 
-void Client::endStream(
-    const QString &platID, const QJSValue &callback,
-    const QJSValue &errorCallback,
-    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+void Client::endStream(const QString &platID, const QJSValue &callback,
+                       const QJSValue &errorCallback,
+                       const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   // Current proto exposes EndStream(EndStreamRequest) to end a stream.

@@ -17,8 +17,8 @@
 #include "diagnostics.qpb.h"
 #include "ffstream.qpb.h"
 #include "ffstream_client.grpc.qpb.h"
-#include "qmlffstream_client.grpc.qpb.h"
 #include "ffstream_client.h"
+#include "qmlffstream_client.grpc.qpb.h"
 
 namespace FFStream {
 
@@ -27,23 +27,36 @@ Client::Client(QObject *parent) : ffstream_grpc::FFStream::QmlClient{parent} {
                    &Client::_onChannelChanged);
 }
 
-ffstream_grpc::FFStream::Client *Client::client() {
-  return this;
+ffstream_grpc::FFStream::Client *Client::client() { return this; }
+
+void Client::setServerUri(const QString &uri) {
+  this->serverURI = QUrl(uri);
 }
 
 void Client::_onChannelChanged() {
-  if (!this->serverURI.isEmpty()) {
+  bool hasValidUri = this->serverURI.isValid() && !this->serverURI.host().isEmpty();
+  if (hasValidUri) {
+    qDebug() << "ffstreamClient: channel changed (cached): " << this->serverURI;
     return;
   }
   auto http2Channel = dynamic_cast<QGrpcHttp2Channel *>(this->channel().get());
-  this->serverURI = http2Channel->hostUri();
+  if (!http2Channel) {
+    qDebug() << "ffstreamClient: channel changed but no http2 channel yet";
+    return;
+  }
+  QUrl channelUri = http2Channel->hostUri();
+  if (channelUri.isEmpty() || channelUri.host().isEmpty()) {
+    qDebug() << "ffstreamClient: channel changed but hostUri is empty, waiting for QML to set it";
+    return;
+  }
+  this->serverURI = channelUri;
   this->serverChannelOptions = http2Channel->channelOptions();
   QSslConfiguration sslConfig;
   sslConfig.setPeerVerifyMode(QSslSocket::PeerVerifyMode::VerifyNone);
   this->serverChannelOptions.setSslConfiguration(sslConfig);
   this->attachChannel(std::make_shared<QGrpcHttp2Channel>(
       this->serverURI, this->serverChannelOptions));
-  qDebug() << "channel changed: " << this->serverURI;
+  qDebug() << "ffstreamClient channel changed: " << this->serverURI;
 }
 
 void Client::processGRPCError(const QVariant &error) {
