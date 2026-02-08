@@ -108,7 +108,7 @@ QString DJIController::localWlan1Ip() const {
 }
 
 bool DJIController::djiBleLoggingEnabled() const {
-    return dji::djiBleLog().isEnabled(QtInfoMsg);
+    return djiBleLog().isEnabled(QtInfoMsg);
 }
 
 void DJIController::startStreaming(const QString &rtmpUrl, int resolution, int fps, int bitrateKbps) {

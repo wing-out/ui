@@ -97,4 +97,4 @@ CMakeLists.txt.user*
 /.github
 /artifacts
 /myscripts
-/qt-dir
+/qt_dir

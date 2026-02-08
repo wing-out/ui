@@ -147,7 +147,18 @@ void Client::ping(const QString &payloadToReturn,
                   const QJSValue &finishCallback, const QJSValue &errorCallback,
                   const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
+
+  qDebug() << "dx_producer_client::ping - called, channel:" << (this->channel() != nullptr);
+
+  // Try to reconnect first
   this->_reconnectIfNeeded();
+
+  if (this->channel() == nullptr) {
+    qDebug() << "dx_producer_client::ping - channel is null, returning early";
+    return;
+  }
+
+  qDebug() << "dx_producer_client::ping - sending ping request";
   streamd::PingRequest arg{};
   arg.setPayloadToReturn(payloadToReturn);
   arg.setPayloadToIgnore(payloadToIgnore);
