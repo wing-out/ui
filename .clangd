@@ -1,6 +1,10 @@
 CompileFlags:
-  CompilationDatabase: build-lsp
+  CompilationDatabase: build-desktop-debug/cmake-build
   Add:
     - -xc++
     - -I.
     - -I../libdji/include
+    - -isystem
+    - /usr/include/c++/14
+    - -isystem
+    - /usr/include/x86_64-linux-gnu/c++/14
