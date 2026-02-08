@@ -36,8 +36,16 @@ set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}"
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SANITIZER_FLAGS} ${DEBUG_FLAGS}")
 set(QT_NO_PRIVATE_MODULE_WARNING ON)
 if(ANDROID)
-    set(QT_ANDROID_BUILD_ALL_ABIS ON)
-    set(QT_ANDROID_ABIS arm64-v8a)
+    # Only build all ABIs when ANDROID_ABI is not explicitly set to a specific ABI.
+    # When the build script passes -DANDROID_ABI=arm64-v8a, we should respect that
+    # and not build for all ABIs (which takes much longer).
+    if(ANDROID_ABI STREQUAL "arm64-v8a" OR ANDROID_ABI STREQUAL "armeabi-v7a" OR ANDROID_ABI STREQUAL "x86" OR ANDROID_ABI STREQUAL "x86_64")
+        set(QT_ANDROID_BUILD_ALL_ABIS OFF)
+        set(QT_ANDROID_ABIS ${ANDROID_ABI})
+    else()
+        set(QT_ANDROID_BUILD_ALL_ABIS ON)
+        set(QT_ANDROID_ABIS arm64-v8a)
+    endif()
     set(CMAKE_ANDROID_SDK $ENV{ANDROID_SDK_ROOT})
     set(CMAKE_ANDROID_NDK $ENV{ANDROID_NDK_ROOT})
     set(CMAKE_ANDROID_STL_TYPE c++_shared)
@@ -108,6 +116,7 @@ set(WINGOUT_QML_FILES
     ChatView.qml
     Dashboard.qml
     DJIControl.qml
+    GrpcCallOptions.qml
     Main.qml
     Monitor.qml
     Players.qml

@@ -1,4 +1,5 @@
 /* This file implements the main UI content for WingOut. */
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material

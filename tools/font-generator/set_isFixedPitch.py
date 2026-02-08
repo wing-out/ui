@@ -1,5 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
+
 __license__ = """
 This file is part of GNU FreeFont.
 
@@ -29,66 +30,66 @@ from OpenType.fontdirectory import getDirectoryEntriesByTag
 from OpenType.requiredtables import postTable, headTable
 from OpenType.checksum import get_file32Bit_checkSumAdjustment
 
-argc = len( argv )
+argc = len(argv)
 
 if argc > 1:
-	filePath = argv[argc - 1]
-	if not filePath:
-		print( "Usage: python set_isfixedpitch <filename>", file=err )
-		exit( 1 )
+    filePath = argv[argc - 1]
+    if not filePath:
+        print("Usage: python set_isfixedpitch <filename>", file=err)
+        exit(1)
 
 try:
-	#FIXME this is very clumsy, reading the whole file in and writing it
-	# to set a single bit.  The structure is there to do it better,
-	if not "Mono" in filePath:
-		exit( 1 )
+    # FIXME this is very clumsy, reading the whole file in and writing it
+    # to set a single bit.  The structure is there to do it better,
+    if not "Mono" in filePath:
+        exit(1)
 
-	infile = open( filePath, 'r+b' )
-	buf = bytearray( infile.read() )
+    infile = open(filePath, "r+b")
+    buf = bytearray(infile.read())
 
-	entries_by_tag = getDirectoryEntriesByTag( buf )
+    entries_by_tag = getDirectoryEntriesByTag(buf)
 
-	entry = entries_by_tag[ 'post' ]
-	t = postTable( buf, entry.offset )
-	# ======================= TEST
-	#print( "post checksum-orig", hex( entry.checkSum ) )
-	cs = t.getChecksum()
-	#print( "post checksum-calc", hex( cs ) )
-	# =======================
-	t.isFixedPitch = True
+    entry = entries_by_tag["post"]
+    t = postTable(buf, entry.offset)
+    # ======================= TEST
+    # print( "post checksum-orig", hex( entry.checkSum ) )
+    cs = t.getChecksum()
+    # print( "post checksum-calc", hex( cs ) )
+    # =======================
+    t.isFixedPitch = True
 
-	t.writeInto( buf, entry.offset )
-	# =======================
+    t.writeInto(buf, entry.offset)
+    # =======================
 
-	entry.checkSum = t.getChecksum()
-	entry_off = entry.getOffset()	# offset to directory entry itself
-	entry.writeInto( buf, entry_off )	# write into dir. entry buffer
+    entry.checkSum = t.getChecksum()
+    entry_off = entry.getOffset()  # offset to directory entry itself
+    entry.writeInto(buf, entry_off)  # write into dir. entry buffer
 
-	infile.close()
+    infile.close()
 
-	print( "Setting 'post' flag 'isFixedPitch'", filePath )
+    print("Setting 'post' flag 'isFixedPitch'", filePath)
 
-	entry = entries_by_tag[ 'head' ]
-	ht = headTable( buf, entry.offset )
-	ht.checkSumAdjustment = 0
-	entry.checkSum = ht.getChecksum()
-	ht.writeInto( buf, entry.offset )
+    entry = entries_by_tag["head"]
+    ht = headTable(buf, entry.offset)
+    ht.checkSumAdjustment = 0
+    entry.checkSum = ht.getChecksum()
+    ht.writeInto(buf, entry.offset)
 
-	outfile = open( filePath, 'wb' )
-	outfile.write( str( buf ) )
-	outfile.flush()
+    outfile = open(filePath, "wb")
+    outfile.write(bytes(buf))
+    outfile.flush()
 
-	csa = get_file32Bit_checkSumAdjustment( filePath )
-	outfile = open( filePath, 'wb' )
-	ht.checkSumAdjustment = csa
-	ht.writeInto( buf, entry.offset )
-	outfile.write( str( buf ) )
-	outfile.flush()
+    csa = get_file32Bit_checkSumAdjustment(filePath)
+    outfile = open(filePath, "wb")
+    ht.checkSumAdjustment = csa
+    ht.writeInto(buf, entry.offset)
+    outfile.write(bytes(buf))
+    outfile.flush()
 
 except Exception as e:
-	print( "set_isfixedpitch, file ", filePath, file=err )
-	print( e, file=err )
-	print( "set_isfixedpitch, file ", filePath, file=out )
-	print( e, file=out )
-	exit( 1 )
-exit( 0 )
+    print("set_isfixedpitch, file ", filePath, file=err)
+    print(e, file=err)
+    print("set_isfixedpitch, file ", filePath, file=out)
+    print(e, file=out)
+    exit(1)
+exit(0)

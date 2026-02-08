@@ -1,4 +1,5 @@
 /* This file implements the root application window for WingOut. */
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
