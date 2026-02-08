@@ -124,7 +124,8 @@ public:
   Q_INVOKABLE void setServerUri(const QString &uri);
   Q_INVOKABLE void setIgnoreImages(const bool value);
   Q_INVOKABLE void processGRPCError(const QVariant &error);
-signals:
+  Q_INVOKABLE bool isChannelReady();
+ signals:
 private:
   void _onChannelChanged();
   void _reconnectIfNeeded();

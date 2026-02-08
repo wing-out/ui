@@ -85,9 +85,6 @@ Page {
     }
 
     function ping() {
-        if (!dashboard.root.checkStreamDClient()) {
-            return;
-        }
         var now = new Date();
         var sinceLastSuccess = -1;
         for (var i = pingCurrentID - 1; i != pingCurrentID; i--) {
@@ -123,7 +120,13 @@ Page {
         pingCurrentID = (pingCurrentID + 1) % 65536;
         var payload = String.fromCharCode(byte0) + String.fromCharCode(byte1);
         pingTimestamps[payload] = new Date();
-        dashboard.root.dxProducerClient.ping(payload, "", 0, onPingSuccess, onPingFail, dashboard.root.grpcCallOptions);
+
+        dashboard.root.withStreamClient(function(client) {
+            client.ping(payload, "", 0, onPingSuccess, onPingFail, dashboard.root.grpcCallOptions);
+        }, function(error) {
+            pingInProgress = false;
+            onPingFail(error);
+        }, "Dashboard.ping");
     }
 
     function updateFFStreamLatencies() {

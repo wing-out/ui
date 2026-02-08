@@ -100,6 +100,10 @@ void Client::processGRPCError(const QVariant &error) {
   }
 }
 
+bool Client::isChannelReady() {
+  return this->channel() != nullptr;
+}
+
 void Client::_reconnectIfNeeded() {
   bool hasValidUri =
       this->serverURI.isValid() && !this->serverURI.host().isEmpty();

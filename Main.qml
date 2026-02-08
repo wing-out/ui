@@ -158,6 +158,34 @@ Pane {
         return true;
     }
 
+    function withStreamClient(callback, onError, caller) {
+        if (!dxProducerClient) {
+            console.warn("Main.qml: StreamD client not initialized");
+            if (onError) {
+                onError("client not initialized");
+            }
+            return;
+        }
+        if (!dxProducerClient.isChannelReady()) {
+            if (onError) {
+                onError("channel not ready");
+            }
+            return;
+        }
+        callback(dxProducerClient);
+    }
+
+    function withFFStreamClient(callback, onError) {
+        if (!ffstreamClient) {
+            console.warn("Main.qml: FFStream client not initialized");
+            if (onError) {
+                onError("client not initialized");
+            }
+            return;
+        }
+        callback(ffstreamClient);
+    }
+
     Connections {
         target: main.applicationWindow
         function onClosing(close) {
