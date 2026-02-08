@@ -6,6 +6,7 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 
 Page {
+    required property var root
     id: playersPage
     Material.theme: Material.Dark
     Material.accent: Material.Purple
@@ -68,10 +69,10 @@ Page {
 
     function refreshPlayers() {
         console.log("Players.qml: Requesting list of stream players...");
-        if (!main.checkStreamDClient()) {
+        if (!playersPage.root.checkStreamDClient()) {
             return;
         }
-        main.dxProducerClient.listStreamPlayers(function(reply) {
+        playersPage.root.dxProducerClient.listStreamPlayers(function(reply) {
             console.log("Players.qml: Received reply:", JSON.stringify(reply));
             playersModel.clear();
             var players = reply.playersData || reply.players || [];
@@ -84,7 +85,7 @@ Page {
             }
         }, function(error) {
             console.log("Players.qml: Error listing stream players");
-            main.processStreamDGRPCError(main.dxProducerClient, error);
-        }, main.grpcCallOptions);
+            playersPage.root.processStreamDGRPCError(playersPage.root.dxProducerClient, error);
+        }, playersPage.root.grpcCallOptions);
     }
 }

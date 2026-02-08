@@ -6,6 +6,7 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 
 Page {
+    required property var root
     id: restreamsPage
     Material.theme: Material.Dark
     Material.accent: Material.Purple
@@ -75,10 +76,10 @@ Page {
 
     function refreshRestreams() {
         console.log("Restreams.qml: Requesting stream forwards...");
-        if (!main.checkStreamDClient()) {
+        if (!restreamsPage.root.checkStreamDClient()) {
             return;
         }
-        main.dxProducerClient.listStreamForwards(function(reply) {
+        restreamsPage.root.dxProducerClient.listStreamForwards(function(reply) {
             console.log("Restreams.qml: Received reply:", JSON.stringify(reply));
             restreamsModel.clear();
             var forwards = reply.streamForwardsData || reply.streamForwards || [];
@@ -92,7 +93,7 @@ Page {
             }
         }, function(error) {
             console.log("Restreams.qml: Error listing stream forwards");
-            main.processStreamDGRPCError(main.dxProducerClient, error);
-        }, main.grpcCallOptions);
+            restreamsPage.root.processStreamDGRPCError(restreamsPage.root.dxProducerClient, error);
+        }, restreamsPage.root.grpcCallOptions);
     }
 }

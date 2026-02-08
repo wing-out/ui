@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 /* This file implements the Chat page as a full-screen view with raid/shoutout actions. */
 import QtQuick
 import QtQuick.Controls
@@ -5,6 +6,7 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 
 Page {
+    required property var root
     id: chatPage
     Material.theme: Material.Dark
     Material.accent: Material.Purple
@@ -20,14 +22,14 @@ Page {
         var platforms = ["twitch", "youtube", "kick"];
         for (var i = 0; i < platforms.length; i++) {
             (function(platID) {
-                dxProducerClient.getBackendInfo(platID, function(reply) {
+                chatPage.root.dxProducerClient.getBackendInfo(platID, function(reply) {
                     var caps = chatPage.platformCapabilities;
                     caps[platID] = reply.capabilities;
                     chatPage.platformCapabilities = caps;
                     chatView.platformCapabilities = chatPage.platformCapabilities;
                 }, function(error) {
                     console.warn("getBackendInfo failed for", platID, error);
-                }, grpcCallOptions);
+                }, chatPage.root.grpcCallOptions);
             })(platforms[i]);
         }
     }

@@ -6,6 +6,7 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 
 Page {
+    required property var root
     id: settingsPage
     Material.theme: Material.Dark
     Material.accent: Material.Purple
@@ -16,16 +17,16 @@ Page {
 
     function refresh() {
         console.log("Settings.qml: Requesting config...");
-        if (!main.checkStreamDClient()) {
+        if (!settingsPage.root.checkStreamDClient()) {
             return;
         }
-        main.dxProducerClient.getConfig(function (response) {
+        settingsPage.root.dxProducerClient.getConfig(function (response) {
             console.log("Settings.qml: Received config response");
             settingsPage.configText = response.config || "";
         }, function (error) {
             console.log("Settings.qml: Error getting config");
-            main.processStreamDGRPCError(main.dxProducerClient, error);
-        }, main.grpcCallOptions);
+            settingsPage.root.processStreamDGRPCError(settingsPage.root.dxProducerClient, error);
+        }, settingsPage.root.grpcCallOptions);
     }
 
     Component.onCompleted: refresh()
@@ -69,16 +70,16 @@ Page {
                         highlighted: true
                         onClicked: {
                             console.log("Settings.qml: Saving config...");
-                            if (!main.checkStreamDClient()) {
+                            if (!settingsPage.root.checkStreamDClient()) {
                                 return;
                             }
-                            main.dxProducerClient.setConfig(settingsPage.configText, function (response) {
+                            settingsPage.root.dxProducerClient.setConfig(settingsPage.configText, function (response) {
                                 console.log("Settings.qml: Config saved successfully");
                                 refresh();
                             }, function (error) {
                                 console.log("Settings.qml: Error saving config");
-                                main.processStreamDGRPCError(main.dxProducerClient, error);
-                            }, main.grpcCallOptions);
+                                settingsPage.root.processStreamDGRPCError(settingsPage.root.dxProducerClient, error);
+                            }, settingsPage.root.grpcCallOptions);
                         }
                     }
                     Item {
@@ -124,18 +125,18 @@ Page {
                     text: "SUBMIT CODE"
                     Layout.fillWidth: true
                     onClicked: {
-                        if (!main.checkStreamDClient()) {
+                        if (!settingsPage.root.checkStreamDClient()) {
                             return;
                         }
                         // Keep {} for SubmitOAuthCode because it's NOT overridden in dx_producer_client.cpp
-                        main.dxProducerClient.SubmitOAuthCode({
+                        settingsPage.root.dxProducerClient.SubmitOAuthCode({
                             code: oauthCodeField.text
                         }, function () {
                             oauthCodeField.text = "";
                             console.log("OAuth code submitted");
                         }, function (error) {
-                            main.processStreamDGRPCError(main.dxProducerClient, error);
-                        }, main.grpcCallOptions);
+                            settingsPage.root.processStreamDGRPCError(settingsPage.root.dxProducerClient, error);
+                        }, settingsPage.root.grpcCallOptions);
                     }
                 }
 
@@ -160,14 +161,14 @@ Page {
                     Layout.fillWidth: true
                     // Keep {} for ResetCache because it's NOT overridden
                     onClicked: {
-                        if (!main.checkStreamDClient()) {
+                        if (!settingsPage.root.checkStreamDClient()) {
                             return;
                         }
-                        main.dxProducerClient.ResetCache({}, function () {
+                        settingsPage.root.dxProducerClient.ResetCache({}, function () {
                             console.log("Cache reset");
                         }, function (e) {
-                            main.processStreamDGRPCError(main.dxProducerClient, e);
-                        }, main.grpcCallOptions);
+                            settingsPage.root.processStreamDGRPCError(settingsPage.root.dxProducerClient, e);
+                        }, settingsPage.root.grpcCallOptions);
                     }
                 }
 

@@ -6,7 +6,8 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 
 Page {
-    id: root
+    id: profilesPage
+    required property var root
     Material.theme: Material.Dark
     Material.accent: Material.Purple
     title: qsTr("Profiles")
@@ -294,10 +295,10 @@ Page {
 
     function refreshProfiles() {
         console.log("Profiles.qml: Requesting list of profiles...");
-        if (!main.checkStreamDClient()) {
+        if (!profilesPage.root.checkStreamDClient()) {
             return;
         }
-        main.dxProducerClient.listProfiles(function(reply) {
+        profilesPage.root.dxProducerClient.listProfiles(function(reply) {
             console.log("Profiles.qml: Received reply:", JSON.stringify(reply));
             var names = [];
             var profiles = reply.profilesData || reply.profiles;
@@ -311,37 +312,37 @@ Page {
             profilesList.model = names;
         }, function(error) {
             console.log("Profiles.qml: Error listing profiles");
-            main.processStreamDGRPCError(main.dxProducerClient, error);
-        }, main.grpcCallOptions);
+            profilesPage.root.processStreamDGRPCError(profilesPage.root.dxProducerClient, error);
+        }, profilesPage.root.grpcCallOptions);
     }
 
     function startClicked() {
-        if (!main.checkStreamDClient()) {
+        if (!profilesPage.root.checkStreamDClient()) {
             return;
         }
         var platIDs = ["twitch", "youtube", "kick"];
         for (var i = 0; i < platIDs.length; i++) {
-            main.dxProducerClient.startStream(platIDs[i], profileNameField.text, function() {
+            profilesPage.root.dxProducerClient.startStream(platIDs[i], profileNameField.text, function() {
                 console.log("Profiles.qml: Started stream on success");
             }, function(error) {
                 console.log("Profiles.qml: Error starting stream");
-                main.processStreamDGRPCError(main.dxProducerClient, error);
-            }, main.grpcCallOptions);
+                profilesPage.root.processStreamDGRPCError(profilesPage.root.dxProducerClient, error);
+            }, profilesPage.root.grpcCallOptions);
         }
     }
 
     function stopClicked() {
-        if (!main.checkStreamDClient()) {
+        if (!profilesPage.root.checkStreamDClient()) {
             return;
         }
         var platIDs = ["twitch", "youtube", "kick"];
         for (var i = 0; i < platIDs.length; i++) {
-            main.dxProducerClient.endStream(platIDs[i], function() {
+            profilesPage.root.dxProducerClient.endStream(platIDs[i], function() {
                 console.log("Profiles.qml: Stopped stream success");
             }, function(error) {
                 console.log("Profiles.qml: Error stopping stream");
-                main.processStreamDGRPCError(main.dxProducerClient, error);
-            }, main.grpcCallOptions);
+                profilesPage.root.processStreamDGRPCError(profilesPage.root.dxProducerClient, error);
+            }, profilesPage.root.grpcCallOptions);
         }
     }
 }

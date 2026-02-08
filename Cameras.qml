@@ -8,33 +8,33 @@ import RemoteCameraController
 
 Page {
     id: camerasPage
+    required property var root
     Material.theme: Material.Dark
     Material.accent: Material.Purple
 
-    property Main main
     property var streamSources: []
     property var streamServers: []
 
     function refresh() {
         console.log("Cameras.qml: Requesting stream sources and servers...");
-        if (!main.checkStreamDClient()) {
+        if (!camerasPage.root.checkStreamDClient()) {
             return;
         }
-        main.dxProducerClient.listStreamSources(function (response) {
+        camerasPage.root.dxProducerClient.listStreamSources(function (response) {
             console.log("Cameras.qml: Received stream sources response: " + JSON.stringify(response));
             camerasPage.streamSources = response.streamSourcesData || response.streamSources || [];
         }, function (error) {
             console.log("Cameras.qml: Error listing stream sources");
-            main.processStreamDGRPCError(main.dxProducerClient, error);
-        }, main.grpcCallOptions);
+            camerasPage.root.processStreamDGRPCError(camerasPage.root.dxProducerClient, error);
+        }, camerasPage.root.grpcCallOptions);
 
-        main.dxProducerClient.listStreamServers(function (response) {
+        camerasPage.root.dxProducerClient.listStreamServers(function (response) {
             console.log("Cameras.qml: Received stream servers response: " + JSON.stringify(response));
             camerasPage.streamServers = response.streamServersData || response.streamServers || [];
         }, function (error) {
             console.log("Cameras.qml: Error listing stream servers");
-            main.processStreamDGRPCError(main.dxProducerClient, error);
-        }, main.grpcCallOptions);
+            camerasPage.root.processStreamDGRPCError(camerasPage.root.dxProducerClient, error);
+        }, camerasPage.root.grpcCallOptions);
     }
 
     Component.onCompleted: refresh()

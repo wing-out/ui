@@ -7,6 +7,7 @@ import QtMultimedia
 import QtTextToSpeech
 
 Item {
+    property Main main
     id: chatView
 
     property ListModel model: chatMessagesModel

@@ -6,6 +6,7 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 
 Page {
+    required property var root
     id: monitorPage
     Material.theme: Material.Dark
     Material.accent: Material.Purple
@@ -16,16 +17,16 @@ Page {
 
     function refresh() {
         console.log("Monitor.qml: Requesting stream sources...");
-        if (!main.checkStreamDClient()) {
+        if (!monitorPage.root.checkStreamDClient()) {
             return;
         }
-        main.dxProducerClient.listStreamSources(function(response) {
+        monitorPage.root.dxProducerClient.listStreamSources(function(response) {
             console.log("Monitor.qml: Received response:", JSON.stringify(response));
             monitorPage.streams = response.streamSourcesData || response.streamSources || [];
         }, function(error) {
             console.log("Monitor.qml: Error listing stream sources");
-            main.processStreamDGRPCError(main.dxProducerClient, error);
-        }, main.grpcCallOptions);
+            monitorPage.root.processStreamDGRPCError(monitorPage.root.dxProducerClient, error);
+        }, monitorPage.root.grpcCallOptions);
     }
 
     Component.onCompleted: refresh()

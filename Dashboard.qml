@@ -12,7 +12,7 @@ Page {
     Material.accent: Material.Purple
     title: qsTr("Dashboard")
 
-    required property Main main
+    required property var root
     property var latestChatMessageTimestampUNIXNano: null
     property var pingCurrentID: 0
     property var pingTimestamps: ({})
@@ -70,7 +70,7 @@ Page {
         timers.updateWiFiInfoTicker.callback = updateWiFiInfo;
         timers.updateWiFiInfoTicker.start();
         timers.updateResourcesTicker.callback = function () {
-            main.platform.updateResources();
+            dashboard.root.platform.updateResources();
         };
         timers.updateResourcesTicker.start();
         updateChannelQualityInfo();
@@ -85,7 +85,7 @@ Page {
     }
 
     function ping() {
-        if (!main.checkStreamDClient()) {
+        if (!dashboard.root.checkStreamDClient()) {
             return;
         }
         var now = new Date();
@@ -123,14 +123,14 @@ Page {
         pingCurrentID = (pingCurrentID + 1) % 65536;
         var payload = String.fromCharCode(byte0) + String.fromCharCode(byte1);
         pingTimestamps[payload] = new Date();
-        main.dxProducerClient.ping(payload, "", 0, onPingSuccess, onPingFail, main.grpcCallOptions);
+        dashboard.root.dxProducerClient.ping(payload, "", 0, onPingSuccess, onPingFail, dashboard.root.grpcCallOptions);
     }
 
     function updateFFStreamLatencies() {
-        if (!main.checkFFStreamClient()) {
+        if (!dashboard.root.checkFFStreamClient()) {
             return;
         }
-        main.ffstreamClient.getLatencies(onGetLatenciesSuccess, onGetLatenciesError, main.grpcCallOptions);
+        dashboard.root.ffstreamClient.getLatencies(onGetLatenciesSuccess, onGetLatenciesError, dashboard.root.grpcCallOptions);
     }
 
     function onGetLatenciesSuccess(latencies) {
@@ -153,14 +153,14 @@ Page {
     function onGetLatenciesError(error) {
         sendingLatencyText.preSendingLatency = -1;
         sendingLatencyText.sendingLatency = -1;
-        main.processFFStreamGRPCError(main.ffstreamClient, error);
+        dashboard.root.processFFStreamGRPCError(dashboard.root.ffstreamClient, error);
     }
 
     function updateFFStreamInputQuality() {
-        if (!main.checkFFStreamClient()) {
+        if (!dashboard.root.checkFFStreamClient()) {
             return;
         }
-        main.ffstreamClient.getInputQuality(onGetInputQualitySuccess, onGetInputQualityError, main.grpcCallOptions);
+        dashboard.root.ffstreamClient.getInputQuality(onGetInputQualitySuccess, onGetInputQualityError, dashboard.root.grpcCallOptions);
     }
 
     function onGetInputQualitySuccess(inputQuality) {
@@ -170,14 +170,14 @@ Page {
 
     function onGetInputQualityError(error) {
         inputFPSText.inputFPS = -1;
-        main.processFFStreamGRPCError(main.ffstreamClient, error);
+        dashboard.root.processFFStreamGRPCError(dashboard.root.ffstreamClient, error);
     }
 
     function updateFFStreamOutputQuality() {
-        if (!main.checkFFStreamClient()) {
+        if (!dashboard.root.checkFFStreamClient()) {
             return;
         }
-        main.ffstreamClient.getOutputQuality(onGetOutputQualitySuccess, onGetOutputQualityError, main.grpcCallOptions);
+        dashboard.root.ffstreamClient.getOutputQuality(onGetOutputQualitySuccess, onGetOutputQualityError, dashboard.root.grpcCallOptions);
     }
 
     function onGetOutputQualitySuccess(outputQuality) {
@@ -187,14 +187,14 @@ Page {
 
     function onGetOutputQualityError(error) {
         outputFPSText.outputFPS = -1;
-        main.processFFStreamGRPCError(main.ffstreamClient, error);
+        dashboard.root.processFFStreamGRPCError(dashboard.root.ffstreamClient, error);
     }
 
     function updateFFStreamBitRates() {
-        if (!main.checkFFStreamClient()) {
+        if (!dashboard.root.checkFFStreamClient()) {
             return;
         }
-        main.ffstreamClient.getBitRates(onGetBitRatesSuccess, onGetBitRatesError, main.grpcCallOptions);
+        dashboard.root.ffstreamClient.getBitRates(onGetBitRatesSuccess, onGetBitRatesError, dashboard.root.grpcCallOptions);
     }
 
     function onGetBitRatesSuccess(bitRates) {
@@ -206,7 +206,7 @@ Page {
 
     function onGetBitRatesError(error) {
         encodingBitrateText.videoBitrate = -1;
-        main.processFFStreamGRPCError(main.ffstreamClient, error);
+        dashboard.root.processFFStreamGRPCError(dashboard.root.ffstreamClient, error);
     }
 
     function updatePlayerLag() {
@@ -224,10 +224,10 @@ Page {
     }
 
     function fetchPlayerLag() {
-        if (!main.checkStreamDClient()) {
+        if (!dashboard.root.checkStreamDClient()) {
             return;
         }
-        main.dxProducerClient.getPlayerLag(onGetPlayerLagSuccess, onGetPlayerLagError, main.grpcCallOptions);
+        dashboard.root.dxProducerClient.getPlayerLag(onGetPlayerLagSuccess, onGetPlayerLagError, dashboard.root.grpcCallOptions);
     }
 
     function onGetPlayerLagSuccess(lagReply) {
@@ -248,11 +248,11 @@ Page {
     function onGetPlayerLagError(error) {
         playerLagText.playerLagMin = -1;
         playerLagText.playerLagMax = -1;
-        main.processStreamDGRPCError(main.dxProducerClient, error);
+        dashboard.root.processStreamDGRPCError(dashboard.root.dxProducerClient, error);
     }
 
     function subscribeToChatMessages() {
-        if (!main.checkStreamDClient()) {
+        if (!dashboard.root.checkStreamDClient()) {
             return;
         }
         var since = null;
@@ -265,7 +265,7 @@ Page {
         }
         console.log("since: ", since);
 
-        main.dxProducerClient.subscribeToChatMessages(since, 200, onChatNewMessage, onChatMessagesFinished, onChatMessagesErrored, main.streamingGrpcCallOptions);
+        dashboard.root.dxProducerClient.subscribeToChatMessages(since, 200, onChatNewMessage, onChatMessagesFinished, onChatMessagesErrored, dashboard.root.streamingGrpcCallOptions);
     }
 
     function onPingSuccess(reply): void {
@@ -286,7 +286,7 @@ Page {
         pingInProgress = false;
         pingStatus.rttMS = -1;
         console.log("ping failed");
-        main.processStreamDGRPCError(main.dxProducerClient, error);
+        dashboard.root.processStreamDGRPCError(dashboard.root.dxProducerClient, error);
     }
 
     function onChatNewMessage(chatMessage): void {
@@ -348,7 +348,7 @@ Page {
 
     function onChatMessagesErrored(error): void {
         console.log("Errored", error);
-        main.processStreamDGRPCError(main.dxProducerClient, error);
+        dashboard.root.processStreamDGRPCError(dashboard.root.dxProducerClient, error);
         timers.retryTimerSubscribeToChatMessages.start();
     }
 
@@ -373,20 +373,20 @@ Page {
     property var updateStreamStatusKickInProgress: false
 
     function updateStreamStatus() {
-        if (!main.checkStreamDClient()) {
+        if (!dashboard.root.checkStreamDClient()) {
             return;
         }
         if (!updateStreamStatusYouTubeInProgress) {
             updateStreamStatusYouTubeInProgress = true;
-            main.dxProducerClient.getStreamStatus("youtube", false, onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, main.grpcCallOptions);
+            dashboard.root.dxProducerClient.getStreamStatus("youtube", false, onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, dashboard.root.grpcCallOptions);
         }
         if (!updateStreamStatusTwitchInProgress) {
             updateStreamStatusTwitchInProgress = true;
-            main.dxProducerClient.getStreamStatus("twitch", false, onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, main.grpcCallOptions);
+            dashboard.root.dxProducerClient.getStreamStatus("twitch", false, onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, dashboard.root.grpcCallOptions);
         }
         if (!updateStreamStatusKickInProgress) {
             updateStreamStatusKickInProgress = true;
-            main.dxProducerClient.getStreamStatus("kick", false, onUpdateStreamStatusKick, onUpdateStreamStatusKickError, main.grpcCallOptions);
+            dashboard.root.dxProducerClient.getStreamStatus("kick", false, onUpdateStreamStatusKick, onUpdateStreamStatusKickError, dashboard.root.grpcCallOptions);
         }
     }
 
@@ -408,7 +408,7 @@ Page {
     }
     function onUpdateStreamStatusYouTubeError(error) {
         updateStreamStatusYouTubeInProgress = false;
-        main.processStreamDGRPCError(main.dxProducerClient, error);
+        dashboard.root.processStreamDGRPCError(dashboard.root.dxProducerClient, error);
     }
 
     function onUpdateStreamStatusTwitch(streamStatus) {
@@ -422,7 +422,7 @@ Page {
     }
     function onUpdateStreamStatusTwitchError(error) {
         updateStreamStatusTwitchInProgress = false;
-        main.processStreamDGRPCError(main.dxProducerClient, error);
+        dashboard.root.processStreamDGRPCError(dashboard.root.dxProducerClient, error);
     }
 
     function onUpdateStreamStatusKick(streamStatus) {
@@ -436,11 +436,11 @@ Page {
     }
     function onUpdateStreamStatusKickError(error) {
         updateStreamStatusKickInProgress = false;
-        main.processStreamDGRPCError(main.dxProducerClient, error);
+        dashboard.root.processStreamDGRPCError(dashboard.root.dxProducerClient, error);
     }
 
     function updateWiFiInfo() {
-        var wifiInfo = main.platform.getCurrentWiFiConnection();
+        var wifiInfo = dashboard.root.platform.getCurrentWiFiConnection();
         //console.log("WiFi info:", wifiInfo.toJSON());
         if (wifiInfo !== null && (wifiInfo.ssid !== "" || wifiInfo.bssid !== "")) {
             //console.log("updating WiFi status:", wifiInfo.ssid, wifiInfo.bssid, wifiInfo.rssi);
@@ -455,7 +455,7 @@ Page {
     }
 
     function updateChannelQualityInfo() {
-        var channelsQualityInfo = main.platform.getChannelsQualityInfo();
+        var channelsQualityInfo = dashboard.root.platform.getChannelsQualityInfo();
         //console.log("channels quality info:", channelsQualityInfo, "; len:", channelsQualityInfo.length);
         for (var i = 0; i < channelsQualityInfo.length; i++) {
             var qualityInfo = channelsQualityInfo[i];
@@ -493,9 +493,9 @@ Page {
             "viewersKick": kickCounter.value,
             "signal": signalStatus.signalStrength,
             "streamTime": Math.round(statusStreamTime.seconds),
-            "cpuUtilization": main.platform.cpuUtilization,
-            "memoryUtilization": main.platform.memoryUtilization,
-            "temperatures": main.platform.temperatures
+            "cpuUtilization": dashboard.root.platform.cpuUtilization,
+            "memoryUtilization": dashboard.root.platform.memoryUtilization,
+            "temperatures": dashboard.root.platform.temperatures
         };
 
         var msg = {};
@@ -524,16 +524,16 @@ Page {
         diagnosticsUpdateCount++;
         lastDiagnostics = currentDiagnostics;
 
-        if (!main.checkFFStreamClient()) {
+        if (!dashboard.root.checkFFStreamClient()) {
             return;
         }
-        main.ffstreamClient.injectDiagnostics(msg, 1000000000, function () {}, function (error) {
-            main.processFFStreamGRPCError(main.ffstreamClient, error);
-        }, main.grpcCallOptions);
+        dashboard.root.ffstreamClient.injectDiagnostics(msg, 1000000000, function () {}, function (error) {
+            dashboard.root.processFFStreamGRPCError(dashboard.root.ffstreamClient, error);
+        }, dashboard.root.grpcCallOptions);
     }
 
     Connections {
-        target: main.platform
+        target: dashboard.root.platform
         function onSignalStrengthChanged(strength) {
             console.log("new value of the signal strength: " + strength);
             signalStatus.signalStrength = strength;
@@ -979,7 +979,7 @@ Page {
                         height: 10
                         radius: 5
                         color: "transparent"
-                        border.color: dashboard.cpuUtilizationColor(main.platform.cpuUtilization)
+                        border.color: dashboard.cpuUtilizationColor(dashboard.root.platform.cpuUtilization)
                         border.width: 1
                         Text {
                             anchors.centerIn: parent
@@ -994,7 +994,7 @@ Page {
                         height: 10
                         radius: 5
                         color: "transparent"
-                        border.color: dashboard.memUtilizationColor(main.platform.memoryUtilization)
+                        border.color: dashboard.memUtilizationColor(dashboard.root.platform.memoryUtilization)
                         border.width: 1
                         Text {
                             anchors.centerIn: parent
@@ -1046,8 +1046,8 @@ Page {
                                 return (temp - low) / (high - low);
                             }
 
-                            for (var i = 0; i < main.platform.temperatures.length; i++) {
-                                var t = main.platform.temperatures[i];
+                            for (var i = 0; i < dashboard.root.platform.temperatures.length; i++) {
+                                var t = dashboard.root.platform.temperatures[i];
                                 var typeStr = (t.type || "").toLowerCase();
                                 var weight = getWeight(t.temp, typeStr);
 
@@ -1304,7 +1304,7 @@ Page {
 
     ChatView {
         id: chatView
-        model: globalChatMessagesModel
+        model: dashboard.root.globalChatMessagesModel
         soundEnabled: appSettings.soundEnabled
         platformCapabilities: dashboard.platformCapabilities
         y: soundToggleBtn.y + soundToggleBtn.height + 2

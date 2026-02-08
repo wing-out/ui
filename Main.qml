@@ -71,6 +71,11 @@ Pane {
         deadlineTimeout: 365 * 24 * 3600 * 1000
     }
 
+    property alias ffstreamClient: ffstreamClient
+    property alias dxProducerClient: dxProducerClient
+    property alias globalChatMessagesModel: globalChatMessagesModel
+    property alias grpcCallOptions: grpcCallOptions
+    property alias streamingGrpcCallOptions: streamingGrpcCallOptions
     readonly property var platform: platformInstance
 
     // Create a real gRPC HTTP/2 channel for the ffstream connection.
@@ -193,32 +198,40 @@ Pane {
 
         Dashboard {
             id: dashboardPage
-            main: main
+            root: main
         }
         Cameras {
             id: camerasPage
+            root: main
         }
         DJIControl {
             id: djiControlPage
+            root: main
             Component.onCompleted: console.log("DJIControl page completed")
         }
         Chat {
             id: chatPage
+            root: main
         }
         Players {
             id: playersPage
+            root: main
         }
         Restreams {
             id: restreamsPage
+            root: main
         }
         Monitor {
             id: monitorPage
+            root: main
         }
         Profiles {
             id: profilesPage
+            root: main
         }
         Settings {
             id: settingsPage
+            root: main
         }
     }
 
