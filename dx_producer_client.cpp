@@ -117,6 +117,14 @@ void Client::subscribeToChatMessages(
   defer[=] { qDebug() << "/subscribeToChatMessages"; };
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
+
+  if (this->chatStream) {
+    qDebug() << "Cancelling previous chat stream";
+    this->chatStream->cancel();
+    delete this->chatStream;
+    this->chatStream = nullptr;
+  }
+
   streamd::SubscribeToChatMessagesRequest arg{};
   arg.setSinceUNIXNano(since.toMSecsSinceEpoch() * 1000 * 1000);
   arg.setLimit(limit);
@@ -127,13 +135,14 @@ void Client::subscribeToChatMessages(
     return;
   }
 
-  auto stream = this->client()
+  this->chatStream = this->client()
                     ->SubscribeToChatMessages(
                         arg, options ? options->options() : QGrpcCallOptions{})
                     .release();
 
   auto messageReceivedFunc = [=]() mutable {
-    auto message = stream->read<streamd::ChatMessage>();
+    if (!this->chatStream) return;
+    auto message = this->chatStream->read<streamd::ChatMessage>();
     if (!message) {
       return;
     }
@@ -143,7 +152,9 @@ void Client::subscribeToChatMessages(
   };
 
   auto finishedFunc = [=](const QGrpcStatus &status) mutable {
-    delete stream;
+    if (!this->chatStream) return;
+    delete this->chatStream;
+    this->chatStream = nullptr;
     if (status.code() == QtGrpc::StatusCode::Ok) {
       finishCallback.call();
       return;
@@ -153,9 +164,10 @@ void Client::subscribeToChatMessages(
     errorCallback.call(argsOut);
   };
 
-  QObject::connect(stream, &QGrpcServerStream::messageReceived, this,
+  QObject::connect(this->chatStream, &QGrpcServerStream::messageReceived, this,
                    messageReceivedFunc);
-  QObject::connect(stream, &QGrpcServerStream::finished, this, finishedFunc);
+
+  QObject::connect(this->chatStream, &QGrpcServerStream::finished, this, finishedFunc);
 }
 
 void Client::getStreamStatus(
@@ -319,6 +331,14 @@ void Client::subscribeToImage(
   defer[=] { qDebug() << "/subscribeToImage" << key; };
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
+
+  if (this->imageStream) {
+    qDebug() << "Cancelling previous image stream";
+    this->imageStream->cancel();
+    delete this->imageStream;
+    this->imageStream = nullptr;
+  }
+
   streamd::SubscribeToVariableRequest arg;
   arg.setKey("image/" + key);
 
@@ -329,14 +349,15 @@ void Client::subscribeToImage(
     return;
   }
 
-  auto stream = this->client()
+  this->imageStream = this->client()
                     ->SubscribeToVariable(arg, options ? options->options()
                                                        : QGrpcCallOptions{})
                     .release();
 
   auto messageReceivedFunc = [=]() mutable {
-    auto message = stream->read<streamd::VariableChange>();
-    if (ignoreImages) {
+    if (!this->imageStream) return;
+    auto message = this->imageStream->read<streamd::VariableChange>();
+    if (ignoreImages || !message) {
       return;
     }
     QByteArray webpData = message->value();
@@ -349,7 +370,9 @@ void Client::subscribeToImage(
   };
 
   auto finishedFunc = [=](const QGrpcStatus &status) mutable {
-    delete stream;
+    if (!this->imageStream) return;
+    delete this->imageStream;
+    this->imageStream = nullptr;
     if (status.code() == QtGrpc::StatusCode::Ok) {
       finishCallback.call();
       return;
@@ -359,10 +382,10 @@ void Client::subscribeToImage(
     errorCallback.call(argsOut);
   };
 
-  QObject::connect(stream, &QGrpcServerStream::messageReceived, this,
+  QObject::connect(this->imageStream, &QGrpcServerStream::messageReceived, this,
                    messageReceivedFunc);
 
-  QObject::connect(stream, &QGrpcServerStream::finished, this, finishedFunc);
+  QObject::connect(this->imageStream, &QGrpcServerStream::finished, this, finishedFunc);
 }
 
 void Client::getConfig(

@@ -131,6 +131,8 @@ private:
   QUrl serverURI;
   QGrpcChannelOptions serverChannelOptions;
   bool ignoreImages = false;
+  QGrpcServerStream *chatStream = nullptr;
+  QGrpcServerStream *imageStream = nullptr;
 };
 } // namespace DXProducer
 
