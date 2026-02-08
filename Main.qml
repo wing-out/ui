@@ -20,6 +20,7 @@ Pane {
 
     property var applicationWindow: Window.window
     property string dxProducerHost: ""
+    required property var platformInstance
 
     property bool locked: false
     readonly property bool isLandscape: width > height
@@ -192,6 +193,7 @@ Pane {
 
         Dashboard {
             id: dashboardPage
+            main: main
         }
         Cameras {
             id: camerasPage

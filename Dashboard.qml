@@ -12,6 +12,7 @@ Page {
     Material.accent: Material.Purple
     title: qsTr("Dashboard")
 
+    required property Main main
     property var latestChatMessageTimestampUNIXNano: null
     property var pingCurrentID: 0
     property var pingTimestamps: ({})
@@ -1080,6 +1081,7 @@ Page {
                             return res;
                         }
                         Rectangle {
+                            id: temperatureIndicator
                             required property var modelData
                             width: 10
                             height: 10
@@ -1089,7 +1091,7 @@ Page {
                             border.width: 1
                             Text {
                                 anchors.centerIn: parent
-                                text: modelData.icon
+                                text: temperatureIndicator.modelData.icon
                                 font.pixelSize: 8
                                 font.bold: true
                                 color: parent.border.color

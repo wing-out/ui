@@ -11,6 +11,7 @@ Page {
     Material.theme: Material.Dark
     Material.accent: Material.Purple
 
+    property Main main
     property var streamSources: []
     property var streamServers: []
 

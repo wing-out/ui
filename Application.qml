@@ -51,6 +51,7 @@ ApplicationWindow {
         sourceComponent: Component {
             Main {
                 dxProducerHost: appSettings.dxProducerHost
+                platformInstance: platformInstance
             }
         }
     }

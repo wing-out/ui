@@ -30,7 +30,9 @@ Client::Client(QObject *parent) : ffstream_grpc::FFStream::QmlClient{parent} {
 ffstream_grpc::FFStream::Client *Client::client() { return this; }
 
 void Client::setServerUri(const QString &uri) {
+  QMutexLocker locker(&this->locker);
   this->serverURI = QUrl(uri);
+  this->_reconnectIfNeeded();
 }
 
 void Client::_onChannelChanged() {
@@ -69,6 +71,10 @@ void Client::processGRPCError(const QVariant &error) {
     return;
   }
   if (status.code() == QtGrpc::StatusCode::Unavailable) {
+    qDebug() << "processGRPCError(" << this->objectName()
+             << ") attempting reconnect after Unavailable";
+    QMutexLocker locker(&this->locker);
+    this->_reconnectIfNeeded();
     return;
   }
   {
@@ -86,11 +92,49 @@ void Client::processGRPCError(const QVariant &error) {
 }
 
 void Client::_reconnectIfNeeded() {
-  if (this->channel() != nullptr) {
+  bool hasValidUri = this->serverURI.isValid() && !this->serverURI.host().isEmpty();
+  if (!hasValidUri) {
+    qWarning() << "re-creating the channel skipped, server URI is not set";
     return;
   }
-  qWarning() << "re-creating the channel";
+
+  auto http2Channel = dynamic_cast<QGrpcHttp2Channel *>(this->channel().get());
+  if (http2Channel && http2Channel->hostUri().scheme() == "https" &&
+      this->serverURI.scheme() == "http") {
+    qWarning() << "re-creating the channel skipped: insecure URI with secure channel"
+               << this->serverURI;
+    return;
+  }
+
+  bool needsReconnect = (this->channel() == nullptr);
+  if (!needsReconnect) {
+    auto http2Channel =
+        dynamic_cast<QGrpcHttp2Channel *>(this->channel().get());
+    if (!http2Channel) {
+      needsReconnect = true;
+    } else {
+      QUrl channelUri = http2Channel->hostUri();
+      if (!channelUri.isValid() || channelUri.host().isEmpty()) {
+        needsReconnect = true;
+      } else if (channelUri.scheme() != this->serverURI.scheme() ||
+                 channelUri.host() != this->serverURI.host() ||
+                 channelUri.port() != this->serverURI.port()) {
+        needsReconnect = true;
+      }
+    }
+  }
+
+  if (!needsReconnect) {
+    return;
+  }
+
+  qWarning() << "re-creating the channel" << this->serverURI;
   defer[=] { qDebug() << "/re-creating the channel"; };
+  QSslConfiguration sslConfig =
+      this->serverChannelOptions.sslConfiguration().value_or(
+          QSslConfiguration());
+  sslConfig.setPeerVerifyMode(QSslSocket::PeerVerifyMode::VerifyNone);
+  this->serverChannelOptions.setSslConfiguration(sslConfig);
   this->attachChannel(std::make_shared<QGrpcHttp2Channel>(
       this->serverURI, this->serverChannelOptions));
 }
