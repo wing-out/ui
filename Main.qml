@@ -5,11 +5,13 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import QtCore
+import QtGrpc
 
 import QtGrpc
 
 import streamd 1.0 as StreamD
 import ffstream_grpc 1.0 as FFStream
+import Platform 1.0
 
 Pane {
     id: main
@@ -67,6 +69,8 @@ Pane {
         id: streamingGrpcCallOptions
         deadlineTimeout: 365 * 24 * 3600 * 1000
     }
+
+    readonly property var platform: platformInstance
 
     // Create a real gRPC HTTP/2 channel for the ffstream connection.
     // Same pattern as the streamd channel (dxProducerChannel).
@@ -135,65 +139,20 @@ Pane {
         }
     }
 
-    QtObject {
-        id: platform
-        property real cpuUtilization: 0.0
-        property real memoryUtilization: 0.0
-        property var temperatures: []
-        property bool isHotspotEnabled: false
-        property bool isLocalHotspotEnabled: false
-        property string hotspotIPAddress: ""
-        function getSafeAreaInsets() {
-            return {
-                top: 0,
-                bottom: 0,
-                left: 0,
-                right: 0
-            };
+    function checkStreamDClient() {
+        if (!dxProducerClient) {
+            console.warn("Main.qml: StreamD client not initialized");
+            return false;
         }
-        function setEnableRunningInBackground(v) { /* stub */
+        return true;
+    }
+
+    function checkFFStreamClient() {
+        if (!ffstreamClient) {
+            console.warn("Main.qml: FFStream client not initialized");
+            return false;
         }
-        function startMonitoringSignalStrength() { /* stub */
-        }
-        function refreshWiFiState() { /* stub */
-        }
-        function startWiFiScan() { /* stub */
-        }
-        function updateResources() { /* stub */
-        }
-        function getCurrentWiFiConnection() {
-            return {
-                ssid: "",
-                bssid: "",
-                rssi: -32768
-            };
-        }
-        function getChannelsQualityInfo() {
-            return [];
-        }
-        function getLocalOnlyHotspotInfo() {
-            return {
-                ssid: "",
-                psk: ""
-            };
-        }
-        function getHotspotConfiguration() {
-            return {
-                ssid: "",
-                psk: ""
-            };
-        }
-        function saveHotspotConfiguration(ssid, psk) { /* stub */
-        }
-        function setHotspotEnabled(enabled) {
-            isHotspotEnabled = enabled;
-        }
-        function setLocalHotspotEnabled(enabled) {
-            isLocalHotspotEnabled = enabled;
-        }
-        function vibrate(ms, fallback) { /* stub */
-        }
-        signal signalStrengthChanged(int strength)
+        return true;
     }
 
     Connections {
@@ -205,6 +164,7 @@ Pane {
     }
 
     Component.onCompleted: {
+        console.log("Platform object type:", platform);
         if (platform && typeof platform.refreshWiFiState === 'function')
             platform.refreshWiFiState();
     }

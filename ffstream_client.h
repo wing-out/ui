@@ -47,6 +47,11 @@ public:
                     quint64 durationNS, const QJSValue &finishCallback,
                     const QJSValue &errorCallback,
                     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
+  Q_INVOKABLE void
+  injectDiagnostics(const QVariantMap &diagnosticsMap, quint64 durationNS,
+                    const QJSValue &finishCallback,
+                    const QJSValue &errorCallback,
+                    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
 signals:
 private:
   void _onChannelChanged();

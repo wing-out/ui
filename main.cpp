@@ -1,5 +1,9 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QLoggingCategory>
+#include <cstdio>
+#include "platform.h"
 #ifdef Q_OS_ANDROID
 #include "android_permissions.cpp"
 #include <QtCore/private/qandroidextras_p.h>
@@ -27,11 +31,17 @@ static void filteredQtHandler(QtMsgType type, const QMessageLogContext &ctx,
 
 int app(int argc, char *argv[]) {
   qDebug() << "Main: Starting app";
+  QGuiApplication::setOrganizationName("WingOut");
+  QGuiApplication::setOrganizationDomain("wingout.app");
+  QGuiApplication::setApplicationName("WingOut");
   QGuiApplication app(argc, argv);
-  app.setOrganizationName("WingOut");
-  app.setOrganizationDomain("wingout.app");
-  app.setApplicationName("WingOut");
-  // g_prevHandler = qInstallMessageHandler(filteredQtHandler);
+  QString loggingRules = QString::fromLocal8Bit(qgetenv("QT_LOGGING_RULES"));
+  if (!loggingRules.isEmpty()) {
+    loggingRules.append('\n');
+  }
+  loggingRules.append(QStringLiteral("qt.core.qfuture.continuations=false"));
+  QLoggingCategory::setFilterRules(loggingRules);
+  g_prevHandler = qInstallMessageHandler(filteredQtHandler);
 
 #ifdef Q_OS_ANDROID
   androidEnsureWifiLocationPermission();
@@ -40,6 +50,9 @@ int app(int argc, char *argv[]) {
 #endif
 
   QQmlApplicationEngine engine;
+  Platform *platformInstance = new Platform(&engine);
+  engine.rootContext()->setContextProperty("platformInstance", platformInstance);
+
   QObject::connect(
       &engine, &QQmlApplicationEngine::objectCreationFailed, &app,
       []() { QCoreApplication::exit(-1); }, Qt::QueuedConnection);

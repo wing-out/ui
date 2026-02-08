@@ -68,7 +68,9 @@ Page {
 
     function refreshPlayers() {
         console.log("Players.qml: Requesting list of stream players...");
-        
+        if (!main.checkStreamDClient()) {
+            return;
+        }
         main.dxProducerClient.listStreamPlayers(function(reply) {
             console.log("Players.qml: Received reply:", JSON.stringify(reply));
             playersModel.clear();

@@ -16,6 +16,9 @@ Page {
 
     function refresh() {
         console.log("Cameras.qml: Requesting stream sources and servers...");
+        if (!main.checkStreamDClient()) {
+            return;
+        }
         main.dxProducerClient.listStreamSources(function (response) {
             console.log("Cameras.qml: Received stream sources response: " + JSON.stringify(response));
             camerasPage.streamSources = response.streamSourcesData || response.streamSources || [];

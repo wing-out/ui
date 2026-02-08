@@ -34,46 +34,59 @@ Page {
         property bool soundEnabled: true
     }
 
+    Timers {
+        id: timers
+    }
+
     Component.onCompleted: {
         subscribeToChatMessages();
         fetchPlatformCapabilities();
         pingTimestamps = {};
         ping();
-        main.timers.pingTicker.callback = ping;
-        main.timers.pingTicker.start();
-        main.timers.streamStatusTicker.callback = updateStreamStatus;
-        main.timers.streamStatusTicker.start();
+        timers.pingTicker.callback = ping;
+        timers.pingTicker.start();
+        timers.streamStatusTicker.callback = updateStreamStatus;
+        timers.streamStatusTicker.start();
         updateFFStreamLatencies();
-        main.timers.updateFFStreamLatenciesTicker.callback = updateFFStreamLatencies;
-        main.timers.updateFFStreamLatenciesTicker.start();
+        timers.updateFFStreamLatenciesTicker.callback = updateFFStreamLatencies;
+        timers.updateFFStreamLatenciesTicker.start();
         updatePlayerLag();
-        main.timers.updatePlayerLagTicker.callback = updatePlayerLag;
-        main.timers.updatePlayerLagTicker.start();
+        timers.updatePlayerLagTicker.callback = updatePlayerLag;
+        timers.updatePlayerLagTicker.start();
         fetchPlayerLag();
-        main.timers.fetchPlayerLagTicker.callback = fetchPlayerLag;
-        main.timers.fetchPlayerLagTicker.start();
+        timers.fetchPlayerLagTicker.callback = fetchPlayerLag;
+        timers.fetchPlayerLagTicker.start();
         updateFFStreamInputQuality();
-        main.timers.updateFFStreamInputQualityTicker.callback = updateFFStreamInputQuality;
-        main.timers.updateFFStreamInputQualityTicker.start();
+        timers.updateFFStreamInputQualityTicker.callback = updateFFStreamInputQuality;
+        timers.updateFFStreamInputQualityTicker.start();
         updateFFStreamOutputQuality();
-        main.timers.updateFFStreamOutputQualityTicker.callback = updateFFStreamOutputQuality;
-        main.timers.updateFFStreamOutputQualityTicker.start();
+        timers.updateFFStreamOutputQualityTicker.callback = updateFFStreamOutputQuality;
+        timers.updateFFStreamOutputQualityTicker.start();
         updateFFStreamBitRates();
-        main.timers.updateFFStreamBitRatesTicker.callback = updateFFStreamBitRates;
-        main.timers.updateFFStreamBitRatesTicker.start();
+        timers.updateFFStreamBitRatesTicker.callback = updateFFStreamBitRates;
+        timers.updateFFStreamBitRatesTicker.start();
         updateWiFiInfo();
-        main.timers.updateWiFiInfoTicker.callback = updateWiFiInfo;
-        main.timers.updateWiFiInfoTicker.start();
-        main.timers.updateResourcesTicker.callback = main.platform.updateResources;
-        main.timers.updateResourcesTicker.start();
+        timers.updateWiFiInfoTicker.callback = updateWiFiInfo;
+        timers.updateWiFiInfoTicker.start();
+        timers.updateResourcesTicker.callback = function () {
+            main.platform.updateResources();
+        };
+        timers.updateResourcesTicker.start();
         updateChannelQualityInfo();
-        main.timers.channelQualityInfoTicker.callback = updateChannelQualityInfo;
-        main.timers.channelQualityInfoTicker.start();
-        main.timers.injectDiagnosticsSubtitlesTicker.callback = injectDiagnosticsSubtitles;
-        main.timers.injectDiagnosticsSubtitlesTicker.start();
+        timers.channelQualityInfoTicker.callback = updateChannelQualityInfo;
+        timers.channelQualityInfoTicker.start();
+        timers.injectDiagnosticsSubtitlesTicker.callback = injectDiagnosticsSubtitles;
+        timers.injectDiagnosticsSubtitlesTicker.start();
+        timers.retryTimerSubscribeToChatMessages.callback = function () {
+            console.log("re-subscribing to chat messages");
+            subscribeToChatMessages();
+        };
     }
 
     function ping() {
+        if (!main.checkStreamDClient()) {
+            return;
+        }
         var now = new Date();
         var sinceLastSuccess = -1;
         for (var i = pingCurrentID - 1; i != pingCurrentID; i--) {
@@ -113,6 +126,9 @@ Page {
     }
 
     function updateFFStreamLatencies() {
+        if (!main.checkFFStreamClient()) {
+            return;
+        }
         main.ffstreamClient.getLatencies(onGetLatenciesSuccess, onGetLatenciesError, main.grpcCallOptions);
     }
 
@@ -140,6 +156,9 @@ Page {
     }
 
     function updateFFStreamInputQuality() {
+        if (!main.checkFFStreamClient()) {
+            return;
+        }
         main.ffstreamClient.getInputQuality(onGetInputQualitySuccess, onGetInputQualityError, main.grpcCallOptions);
     }
 
@@ -154,6 +173,9 @@ Page {
     }
 
     function updateFFStreamOutputQuality() {
+        if (!main.checkFFStreamClient()) {
+            return;
+        }
         main.ffstreamClient.getOutputQuality(onGetOutputQualitySuccess, onGetOutputQualityError, main.grpcCallOptions);
     }
 
@@ -168,6 +190,9 @@ Page {
     }
 
     function updateFFStreamBitRates() {
+        if (!main.checkFFStreamClient()) {
+            return;
+        }
         main.ffstreamClient.getBitRates(onGetBitRatesSuccess, onGetBitRatesError, main.grpcCallOptions);
     }
 
@@ -198,6 +223,9 @@ Page {
     }
 
     function fetchPlayerLag() {
+        if (!main.checkStreamDClient()) {
+            return;
+        }
         main.dxProducerClient.getPlayerLag(onGetPlayerLagSuccess, onGetPlayerLagError, main.grpcCallOptions);
     }
 
@@ -223,6 +251,9 @@ Page {
     }
 
     function subscribeToChatMessages() {
+        if (!main.checkStreamDClient()) {
+            return;
+        }
         var since = null;
 
         if (latestChatMessageTimestampUNIXNano == null) {
@@ -311,13 +342,13 @@ Page {
     }
     function onChatMessagesFinished(status): void {
         console.log("Finished", status);
-        main.timers.retryTimerSubscribeToChatMessages.start();
+        timers.retryTimerSubscribeToChatMessages.start();
     }
 
     function onChatMessagesErrored(error): void {
         console.log("Errored", error);
         main.processStreamDGRPCError(main.dxProducerClient, error);
-        main.timers.retryTimerSubscribeToChatMessages.start();
+        timers.retryTimerSubscribeToChatMessages.start();
     }
 
     function fetchPlatformCapabilities() {
@@ -341,19 +372,19 @@ Page {
     property var updateStreamStatusKickInProgress: false
 
     function updateStreamStatus() {
+        if (!main.checkStreamDClient()) {
+            return;
+        }
         if (!updateStreamStatusYouTubeInProgress) {
             updateStreamStatusYouTubeInProgress = true;
-
             main.dxProducerClient.getStreamStatus("youtube", false, onUpdateStreamStatusYouTube, onUpdateStreamStatusYouTubeError, main.grpcCallOptions);
         }
         if (!updateStreamStatusTwitchInProgress) {
             updateStreamStatusTwitchInProgress = true;
-
             main.dxProducerClient.getStreamStatus("twitch", false, onUpdateStreamStatusTwitch, onUpdateStreamStatusTwitchError, main.grpcCallOptions);
         }
         if (!updateStreamStatusKickInProgress) {
             updateStreamStatusKickInProgress = true;
-
             main.dxProducerClient.getStreamStatus("kick", false, onUpdateStreamStatusKick, onUpdateStreamStatusKickError, main.grpcCallOptions);
         }
     }
@@ -492,7 +523,10 @@ Page {
         diagnosticsUpdateCount++;
         lastDiagnostics = currentDiagnostics;
 
-main.ffstreamClient.injectDiagnostics(msg, 1000000000, function () {}, function (error) {
+        if (!main.checkFFStreamClient()) {
+            return;
+        }
+        main.ffstreamClient.injectDiagnostics(msg, 1000000000, function () {}, function (error) {
             main.processFFStreamGRPCError(main.ffstreamClient, error);
         }, main.grpcCallOptions);
     }
@@ -502,16 +536,6 @@ main.ffstreamClient.injectDiagnostics(msg, 1000000000, function () {}, function 
         function onSignalStrengthChanged(strength) {
             console.log("new value of the signal strength: " + strength);
             signalStatus.signalStrength = strength;
-        }
-    }
-
-    Timers {
-        id: timers
-        Component.onCompleted: {
-            main.timers.retryTimerSubscribeToChatMessages.callback = function () {
-                console.log("re-subscribing to chat messages");
-                subscribeToChatMessages();
-            };
         }
     }
 
@@ -1056,6 +1080,7 @@ main.ffstreamClient.injectDiagnostics(msg, 1000000000, function () {}, function 
                             return res;
                         }
                         Rectangle {
+                            required property var modelData
                             width: 10
                             height: 10
                             radius: 5

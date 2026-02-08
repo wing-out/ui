@@ -120,9 +120,42 @@ void Client::subscribeToChatMessages(
   streamd::SubscribeToChatMessagesRequest arg{};
   arg.setSinceUNIXNano(since.toMSecsSinceEpoch() * 1000 * 1000);
   arg.setLimit(limit);
-  streamd::ChatMessage a;
-  this->SubscribeToChatMessages(arg, messageCallback, finishCallback,
-                                errorCallback, options);
+  QJSEngine *jsEngine = qjsEngine(this);
+  if (jsEngine == nullptr) {
+    qWarning() << "Unable to call subscribeToChatMessages, it's only "
+                  "callable from JS engine context";
+    return;
+  }
+
+  auto stream = this->client()
+                    ->SubscribeToChatMessages(
+                        arg, options ? options->options() : QGrpcCallOptions{})
+                    .release();
+
+  auto messageReceivedFunc = [=]() mutable {
+    auto message = stream->read<streamd::ChatMessage>();
+    if (!message) {
+      return;
+    }
+    QJSValueList argsOut;
+    argsOut << jsEngine->toScriptValue(*message);
+    messageCallback.call(argsOut);
+  };
+
+  auto finishedFunc = [=](const QGrpcStatus &status) mutable {
+    delete stream;
+    if (status.code() == QtGrpc::StatusCode::Ok) {
+      finishCallback.call();
+      return;
+    }
+    QJSValueList argsOut;
+    argsOut << jsEngine->toScriptValue(status);
+    errorCallback.call(argsOut);
+  };
+
+  QObject::connect(stream, &QGrpcServerStream::messageReceived, this,
+                   messageReceivedFunc);
+  QObject::connect(stream, &QGrpcServerStream::finished, this, finishedFunc);
 }
 
 void Client::getStreamStatus(

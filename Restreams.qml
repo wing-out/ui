@@ -75,7 +75,9 @@ Page {
 
     function refreshRestreams() {
         console.log("Restreams.qml: Requesting stream forwards...");
-        
+        if (!main.checkStreamDClient()) {
+            return;
+        }
         main.dxProducerClient.listStreamForwards(function(reply) {
             console.log("Restreams.qml: Received reply:", JSON.stringify(reply));
             restreamsModel.clear();

@@ -257,9 +257,10 @@ Page {
         x: (parent.width - width) / 2
         y: (parent.height - height) / 2
         modal: true
+        width: 300
         contentItem: ColumnLayout {
             spacing: 8
-            TextField { placeholderText: "Profile name" }
+            TextField { placeholderText: "Profile name"; Layout.fillWidth: true }
         }
     }
 
@@ -270,9 +271,10 @@ Page {
         x: (parent.width - width) / 2
         y: (parent.height - height) / 2
         modal: true
+        width: 300
         contentItem: ColumnLayout {
             spacing: 8
-            TextField { placeholderText: "New profile name" }
+            TextField { placeholderText: "New profile name"; Layout.fillWidth: true }
         }
     }
 
@@ -283,6 +285,7 @@ Page {
         x: (parent.width - width) / 2
         y: (parent.height - height) / 2
         modal: true
+        width: 300
         contentItem: ColumnLayout {
             spacing: 8
             Label { text: "Are you sure you want to delete this profile?" }
@@ -291,7 +294,9 @@ Page {
 
     function refreshProfiles() {
         console.log("Profiles.qml: Requesting list of profiles...");
-        
+        if (!main.checkStreamDClient()) {
+            return;
+        }
         main.dxProducerClient.listProfiles(function(reply) {
             console.log("Profiles.qml: Received reply:", JSON.stringify(reply));
             var names = [];
@@ -311,9 +316,11 @@ Page {
     }
 
     function startClicked() {
-        var platIDs = ["twitch", "youtube", "kick"]; 
+        if (!main.checkStreamDClient()) {
+            return;
+        }
+        var platIDs = ["twitch", "youtube", "kick"];
         for (var i = 0; i < platIDs.length; i++) {
-            
             main.dxProducerClient.startStream(platIDs[i], profileNameField.text, function() {
                 console.log("Profiles.qml: Started stream on success");
             }, function(error) {
@@ -324,9 +331,11 @@ Page {
     }
 
     function stopClicked() {
+        if (!main.checkStreamDClient()) {
+            return;
+        }
         var platIDs = ["twitch", "youtube", "kick"];
         for (var i = 0; i < platIDs.length; i++) {
-            
             main.dxProducerClient.endStream(platIDs[i], function() {
                 console.log("Profiles.qml: Stopped stream success");
             }, function(error) {

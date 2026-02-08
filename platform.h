@@ -15,7 +15,7 @@ class Platform : public QObject {
   QML_ELEMENT
   QML_NAMED_ELEMENT(Platform)
   Q_PROPERTY(int signalStrength READ getSignalStrength WRITE setSignalStrength
-                 NOTIFY onSignalStrengthChanged)
+                 NOTIFY signalStrengthChanged)
   Q_PROPERTY(bool isHotspotEnabled READ isHotspotEnabled WRITE setHotspotEnabled
                  NOTIFY isHotspotEnabledChanged)
   Q_PROPERTY(bool isLocalHotspotEnabled READ isLocalHotspotEnabled WRITE setLocalHotspotEnabled
@@ -47,7 +47,7 @@ public:
   void setSignalStrength(int strength) {
     if (signalStrength != strength) {
       signalStrength = strength;
-      emit onSignalStrengthChanged(strength);
+      emit signalStrengthChanged(strength);
     }
   }
 
@@ -77,7 +77,7 @@ public:
   Q_INVOKABLE QVariantMap getSafeAreaInsets();
 
 signals:
-  void onSignalStrengthChanged(int strength);
+  void signalStrengthChanged(int strength);
   void isHotspotEnabledChanged(bool enabled);
   void isLocalHotspotEnabledChanged(bool enabled);
   void hotspotIPAddressChanged();

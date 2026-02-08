@@ -16,6 +16,9 @@ Page {
 
     function refresh() {
         console.log("Monitor.qml: Requesting stream sources...");
+        if (!main.checkStreamDClient()) {
+            return;
+        }
         main.dxProducerClient.listStreamSources(function(response) {
             console.log("Monitor.qml: Received response:", JSON.stringify(response));
             monitorPage.streams = response.streamSourcesData || response.streamSources || [];
@@ -78,4 +81,3 @@ Page {
         }
     }
 }
-

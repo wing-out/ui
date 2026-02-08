@@ -146,4 +146,66 @@ void Client::injectDiagnostics(
   this->InjectSubtitles(arg, finishCallback, errorCallback, options);
 }
 
+void Client::injectDiagnostics(
+    const QVariantMap &map, quint64 durationNS, const QJSValue &finishCallback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  wingout_diagnostics::Diagnostics d;
+  if (map.contains("latencyPreSending"))
+    d.setLatencyPreSending(map.value("latencyPreSending").toInt());
+  if (map.contains("latencySending"))
+    d.setLatencySending(map.value("latencySending").toInt());
+  if (map.contains("fpsInput"))
+    d.setFpsInput(map.value("fpsInput").toInt());
+  if (map.contains("fpsOutput"))
+    d.setFpsOutput(map.value("fpsOutput").toInt());
+  if (map.contains("bitrateVideo"))
+    d.setBitrateVideo(map.value("bitrateVideo").toLongLong());
+  if (map.contains("playerLagMin"))
+    d.setPlayerLagMin(map.value("playerLagMin").toInt());
+  if (map.contains("playerLagMax"))
+    d.setPlayerLagMax(map.value("playerLagMax").toInt());
+  if (map.contains("pingRtt"))
+    d.setPingRtt(map.value("pingRtt").toInt());
+  if (map.contains("wifiSsid"))
+    d.setWifiSsid(map.value("wifiSsid").toString());
+  if (map.contains("wifiBssid"))
+    d.setWifiBssid(map.value("wifiBssid").toString());
+  if (map.contains("wifiRssi"))
+    d.setWifiRssi(map.value("wifiRssi").toInt());
+  if (map.contains("channels")) {
+    QtProtobuf::int32List channels;
+    for (const auto &v : map.value("channels").toList())
+      channels.append(v.toInt());
+    d.setChannels(channels);
+  }
+  if (map.contains("viewersYoutube"))
+    d.setViewersYoutube(map.value("viewersYoutube").toInt());
+  if (map.contains("viewersTwitch"))
+    d.setViewersTwitch(map.value("viewersTwitch").toInt());
+  if (map.contains("viewersKick"))
+    d.setViewersKick(map.value("viewersKick").toInt());
+  if (map.contains("signal"))
+    d.setSignal(map.value("signal").toInt());
+  if (map.contains("streamTime"))
+    d.setStreamTime(map.value("streamTime").toInt());
+  if (map.contains("cpuUtilization"))
+    d.setCpuUtilization(map.value("cpuUtilization").toFloat());
+  if (map.contains("memoryUtilization"))
+    d.setMemoryUtilization(map.value("memoryUtilization").toFloat());
+  if (map.contains("temperatures")) {
+    QList<wingout_diagnostics::Temperature> temps;
+    for (const auto &v : map.value("temperatures").toList()) {
+      QVariantMap tm = v.toMap();
+      wingout_diagnostics::Temperature t;
+      t.setType(tm.value("type").toString());
+      t.setTemp(tm.value("temp").toFloat());
+      temps.append(t);
+    }
+    d.setTemperatures(temps);
+  }
+  this->injectDiagnostics(d, durationNS, finishCallback, errorCallback,
+                          options);
+}
+
 } // namespace FFStream
