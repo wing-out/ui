@@ -13,7 +13,6 @@
 class Platform : public QObject {
   Q_OBJECT
   QML_ELEMENT
-  QML_NAMED_ELEMENT(Platform)
   Q_PROPERTY(int signalStrength READ getSignalStrength WRITE setSignalStrength
                  NOTIFY signalStrengthChanged)
   Q_PROPERTY(bool isHotspotEnabled READ isHotspotEnabled WRITE setHotspotEnabled
