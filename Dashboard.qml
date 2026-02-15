@@ -839,9 +839,17 @@ Page {
         anchors.top: statusBarTop.bottom
         width: parent.width
         height: parent.width * 9 / 16
-        source: sourcePreview
-        property string sourcePreview: "rtmp://" + dashboard.streamdHost() + ":1935/preview/horizontal"
+        property string configuredPreview: dashboard.root.appSettings.previewRTMPUrl
         property string sourceRawCamera: "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3"
+        property string lowBitRatePreview: "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3?reason=low-bitrate"
+        property bool useLowBitratePreview: false
+        property bool useRawSource: false
+        readonly property string effectivePreview: useLowBitratePreview
+            ? lowBitRatePreview
+            : ((configuredPreview && configuredPreview.length > 0)
+                ? configuredPreview
+                : dashboard.root.previewRtmpUrl)
+        source: useRawSource ? sourceRawCamera : effectivePreview
 
         Shape {
             id: overlayGrid
@@ -887,7 +895,7 @@ Page {
             opacity: hovered ? 1.0 : defaultOpacity
             onToggled: function () {
                 console.log("toggling video source to ", checked ? "raw" : "prod");
-                imageScreenshot.source = videoSourceToggle.checked ? imageScreenshot.sourceRawCamera : imageScreenshot.sourcePreview;
+                imageScreenshot.useRawSource = videoSourceToggle.checked;
             }
             text: checked ? "📷" : "🌐"
             ToolTip.visible: hovered
@@ -1205,16 +1213,7 @@ Page {
                     if (videoBitrate <= 0) {
                         return;
                     }
-                    var isPreviewEnabled = imageScreenshot.source === imageScreenshot.sourcePreview;
-                    var lowBitRateSource = "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3?reason=low-bitrate";
-                    if (videoBitrate < 2000000) {
-                        imageScreenshot.sourcePreview = lowBitRateSource;
-                    } else {
-                        imageScreenshot.sourcePreview = "rtmp://" + dashboard.streamdHost() + ":1935/preview/horizontal";
-                    }
-                    if (isPreviewEnabled) {
-                        imageScreenshot.source = imageScreenshot.sourcePreview;
-                    }
+                    imageScreenshot.useLowBitratePreview = videoBitrate < 2000000;
                 }
             }
 

@@ -42,6 +42,15 @@ Rectangle {
         // bind(remote_addr) → EADDRNOTAVAIL on Android.
         playbackOptions.networkTimeoutMs: 0
 
+        Component.onCompleted: {
+            var src = String(mediaPlayer.source || "").trim();
+            if (src.length > 0) {
+                mediaPlayer.setSource(src);
+                mediaPlayer.play();
+            }
+            console.log("MediaPlayer source: ", mediaPlayer.source);
+        }
+
         property var lastProgressAt: Date.now()
         property var lastRestartAt: 0
         property var started: false
@@ -97,9 +106,6 @@ Rectangle {
         }
         onMetaDataChanged: function () {
         //console.log("onMetaDataChanged: ", mediaPlayer.metaData);
-        }
-        Component.onCompleted: function () {
-            console.log("MediaPlayer source: ", mediaPlayer.source);
         }
     }
 

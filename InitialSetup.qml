@@ -40,6 +40,19 @@ Window {
             focus: true
         }
 
+        Label {
+            text: qsTr("Enter Preview RTMP URL:")
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+
+        TextField {
+            id: setupPreviewUrlField
+            placeholderText: "rtmp://host:port/app/stream"
+            text: setupWindow.appSettings.previewRTMPUrl
+            Layout.fillWidth: true
+        }
+
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
@@ -71,6 +84,11 @@ Window {
                         val = "http://" + val;
                     }
                     setupWindow.appSettings.dxProducerHost = val;
+                    var previewUrl = setupPreviewUrlField.text.trim();
+                    if (previewUrl.length === 0) {
+                        previewUrl = "rtmp://192.168.0.134:1935/preview/horizontal";
+                    }
+                    setupWindow.appSettings.previewRTMPUrl = previewUrl;
                     setupWindow.finished();
                     setupWindow.close();
                 }

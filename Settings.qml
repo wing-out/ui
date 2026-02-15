@@ -7,6 +7,7 @@ import QtQuick.Layouts
 
 Page {
     required property var root
+    required property var appSettings
     id: settingsPage
     Material.theme: Material.Dark
     Material.accent: Material.Purple
@@ -46,6 +47,9 @@ Page {
             }
             TabButton {
                 text: "System"
+            }
+            TabButton {
+                text: "App"
             }
         }
 
@@ -172,6 +176,53 @@ Page {
                     }
                 }
 
+
+                Item {
+                    Layout.fillHeight: true
+                }
+            }
+
+            // App Tab
+            ColumnLayout {
+                spacing: 20
+                Layout.margins: 20
+
+                Label {
+                    text: "App Settings"
+                    font.bold: true
+                    font.pixelSize: 18
+                }
+
+                Label {
+                    text: "Preview RTMP URL:"
+                }
+
+                TextField {
+                    id: previewUrlField
+                    Layout.fillWidth: true
+                    text: settingsPage.appSettings.previewRTMPUrl
+                    placeholderText: "rtmp://host:port/app/stream"
+                    onTextChanged: {
+                        var trimmed = text.trim();
+                        if (trimmed.length === 0) {
+                            return;
+                        }
+                        settingsPage.appSettings.previewRTMPUrl = trimmed;
+                    }
+                }
+
+                Button {
+                    text: "Save Preview URL"
+                    highlighted: true
+                    Layout.fillWidth: true
+                    onClicked: {
+                        var url = previewUrlField.text.trim();
+                        if (url.length > 0) {
+                            settingsPage.appSettings.previewRTMPUrl = url;
+                            console.log("Preview RTMP URL saved:", url);
+                        }
+                    }
+                }
 
                 Item {
                     Layout.fillHeight: true

@@ -27,6 +27,7 @@ ApplicationWindow {
     Core.Settings {
         id: appSettings
         property string dxProducerHost: ""
+        property string previewRTMPUrl: ""
     }
 
     Loader {
@@ -52,6 +53,7 @@ ApplicationWindow {
             Main {
                 dxProducerHost: appSettings.dxProducerHost
                 platformInstance: platformInstance
+                appSettings: appSettings
             }
         }
     }

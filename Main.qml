@@ -16,8 +16,9 @@ Pane {
     padding: 0
 
     property var applicationWindow: Window.window
-    property string dxProducerHost: ""
     required property var platformInstance
+    property var appSettings
+    readonly property string dxProducerHost: appSettings ? appSettings.dxProducerHost : ""
 
     property bool locked: false
     readonly property bool isLandscape: width > height
@@ -75,11 +76,67 @@ Pane {
     property alias streamingGrpcCallOptions: streamingGrpcCallOptions
     readonly property var platform: platformInstance
 
+    function normalizeGrpcUri(rawValue, defaultScheme) {
+        if (rawValue === undefined || rawValue === null) {
+            return "";
+        }
+        var value = String(rawValue).trim();
+        if (value.length === 0) {
+            return "";
+        }
+        if (value.startsWith("tcp+ssl://")) {
+            value = "https://" + value.substring("tcp+ssl://".length);
+        } else if (value.startsWith("tcp+ssl:")) {
+            value = "https://" + value.substring("tcp+ssl:".length);
+        } else if (value.startsWith("tcp+insecure://")) {
+            value = "http://" + value.substring("tcp+insecure://".length);
+        } else if (value.startsWith("tcp+insecure:")) {
+            value = "http://" + value.substring("tcp+insecure:".length);
+        } else if (value.startsWith("tcp://")) {
+            value = "http://" + value.substring("tcp://".length);
+        } else if (value.startsWith("tcp:")) {
+            value = "http://" + value.substring("tcp:".length);
+        }
+        if (!value.startsWith("http://") && !value.startsWith("https://")) {
+            var scheme = defaultScheme && defaultScheme.length > 0 ? defaultScheme : "https";
+            value = scheme + "://" + value;
+        }
+        return value;
+    }
+
+    function extractHostFromGrpcUri(rawValue) {
+        var normalized = normalizeGrpcUri(rawValue, "https");
+        if (normalized.length === 0) {
+            return "";
+        }
+        var match = normalized.match(/^https?:\/\/([^\/:]+)/);
+        return match ? match[1] : "";
+    }
+
+    function deriveFFStreamUri() {
+        var host = extractHostFromGrpcUri(main.dxProducerHost);
+        if (host.length === 0) {
+            host = "localhost";
+        }
+        return "https://" + host + ":3593";
+    }
+
+    function derivePreviewRtmpUrl() {
+        var host = extractHostFromGrpcUri(main.dxProducerHost);
+        if (host.length === 0) {
+            return "";
+        }
+        return "rtmp://" + host + ":1935/preview/horizontal";
+    }
+
+    readonly property string normalizedDxProducerHost: normalizeGrpcUri(appSettings ? appSettings.dxProducerHost : "", "https")
+    readonly property string normalizedFFStreamHost: deriveFFStreamUri()
+    readonly property string previewRtmpUrl: derivePreviewRtmpUrl()
+
     // Create a real gRPC HTTP/2 channel for the ffstream connection.
-    // Same pattern as the streamd channel (dxProducerChannel).
     GrpcHttp2Channel {
         id: ffstreamChannel
-        hostUri: "http://localhost:3593"
+        hostUri: main.normalizedFFStreamHost
     }
 
     FFStream.Client {
@@ -205,7 +262,7 @@ Pane {
     // disables SSL peer verification, and re-creates the channel.
     GrpcHttp2Channel {
         id: dxProducerChannel
-        hostUri: main.dxProducerHost
+        hostUri: main.normalizedDxProducerHost
     }
 
     StreamD.Client {
@@ -257,6 +314,7 @@ Pane {
         Settings {
             id: settingsPage
             root: main
+            appSettings: main.appSettings
         }
     }
 
