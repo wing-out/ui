@@ -12,15 +12,10 @@ ApplicationWindow {
     width: 1080
     height: 1920
     visible: true
+    readonly property var externalPlatformInstance: platformInstance
     Material.theme: Material.Dark
     Material.accent: Material.Purple
     title: qsTr("Wing Out")
-
-    Component.onCompleted: {
-        Qt.application.organizationName = "WingOut"
-        Qt.application.organizationDomain = "wingout.app"
-        Qt.application.applicationName = "WingOut"
-    }
 
     // Use qualified import to avoid shadowing by local Settings.qml
     // (which is a Page component for the config editor, not QSettings).
@@ -28,14 +23,25 @@ ApplicationWindow {
         id: appSettings
         property string dxProducerHost: ""
         property string previewRTMPUrl: ""
+        property string previewRTMPPort: ""
+        property string previewRTMPStreamID: ""
+        property string ffstreamHost: ""
+    }
+
+    readonly property bool hasPreviewConfig: appSettings.previewRTMPUrl !== "" || appSettings.previewRTMPPort !== "" || appSettings.previewRTMPStreamID !== ""
+    readonly property bool setupRequired: !appSettings.dxProducerHost || !hasPreviewConfig
+
+    Component.onCompleted: {
+        Qt.application.organizationName = "WingOut"
+        Qt.application.organizationDomain = "wingout.app"
+        Qt.application.applicationName = "WingOut"
+        console.log("Application.qml: dxProducerHost:", appSettings.dxProducerHost, "previewRTMPUrl:", appSettings.previewRTMPUrl, "previewRTMPPort:", appSettings.previewRTMPPort, "previewRTMPStreamID:", appSettings.previewRTMPStreamID);
+        console.log("Application.qml: hasPreviewConfig:", hasPreviewConfig, "setupRequired:", setupRequired);
     }
 
     Loader {
         id: setupLoader
-        active: !appSettings.dxProducerHost
-        // Assign appSettings imperatively: inside a Component{} block the
-        // unqualified "appSettings" resolves to InitialSetup's own property
-        // (self-reference), not to the outer id.
+        active: application.setupRequired
         onLoaded: item.appSettings = appSettings
         sourceComponent: Component {
             InitialSetup {
@@ -48,7 +54,7 @@ ApplicationWindow {
     Loader {
         id: mainLoader
         anchors.fill: parent
-        active: !!appSettings.dxProducerHost
+        active: !application.setupRequired
         sourceComponent: Component {
             Main {
                 dxProducerHost: appSettings.dxProducerHost

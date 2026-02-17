@@ -15,6 +15,7 @@ Rectangle {
     property alias audioOutput: audioOutput
     property alias muteToggleButton: muteToggleButton
     property alias lastProgressAt: mediaPlayer.lastProgressAt
+    property real videoFrameRate: -1
 
     function stop() {
         mediaPlayer.stop();
@@ -47,8 +48,11 @@ Rectangle {
             if (src.length > 0) {
                 mediaPlayer.setSource(src);
                 mediaPlayer.play();
+                mediaPlayer.statusLogRemaining = 12;
             }
+            videoPlayerRTMP.updateVideoFrameRate();
             console.log("MediaPlayer source: ", mediaPlayer.source);
+            console.log("MediaPlayer init state:", mediaPlayer.playbackState, "status:", mediaPlayer.mediaStatus, "playing:", mediaPlayer.playing);
         }
 
         property var lastProgressAt: Date.now()
@@ -60,6 +64,8 @@ Rectangle {
         // Exponential backoff: current retry delay in ms (3000 → 5000 max).
         // Must be ≥ 3000 to allow RTMP handshake + stream probe to complete.
         property int retryBackoffMs: 3000
+        property bool loggedFirstPosition: false
+        property int statusLogRemaining: 0
 
         videoOutput: videoOutput
         audioOutput: audioOutput
@@ -72,6 +78,8 @@ Rectangle {
             mediaPlayer.play();
             mediaPlayer.retryBackoffMs = 3000;
             mediaPlayer.sourceTransitioning = false;
+            mediaPlayer.statusLogRemaining = 12;
+            videoPlayerRTMP.videoFrameRate = -1;
         }
         onErrorOccurred: function (code, msg) {
             console.log("onErrorOccurred:", code, " ", msg);
@@ -94,6 +102,10 @@ Rectangle {
             mediaPlayer.started = true;
             // Reset backoff on successful playback progress.
             mediaPlayer.retryBackoffMs = 3000;
+            if (!mediaPlayer.loggedFirstPosition && mediaPlayer.position > 0) {
+                mediaPlayer.loggedFirstPosition = true;
+                console.log("MediaPlayer first position:", mediaPlayer.position, "source:", mediaPlayer.source);
+            }
         }
         onDurationChanged: function () {
             console.log("onDurationChanged: ", mediaPlayer.duration);
@@ -105,7 +117,58 @@ Rectangle {
             console.log("onPlaybackRateChanged: ", mediaPlayer.playbackRate);
         }
         onMetaDataChanged: function () {
-        //console.log("onMetaDataChanged: ", mediaPlayer.metaData);
+            videoPlayerRTMP.updateVideoFrameRate();
+        }
+    }
+
+    function updateVideoFrameRate() {
+        var meta = mediaPlayer.metaData;
+        if (!meta) {
+            videoFrameRate = -1;
+            return;
+        }
+        var fps = Number(meta.videoFrameRate);
+        if (!isFinite(fps) || fps <= 0) {
+            videoFrameRate = -1;
+            return;
+        }
+        videoFrameRate = fps;
+    }
+
+    Timer {
+        id: statusLogTimer
+        interval: 500
+        repeat: true
+        running: mediaPlayer.statusLogRemaining > 0
+        onTriggered: {
+            console.log(
+                "MediaPlayer status tick:",
+                "state", mediaPlayer.playbackState,
+                "status", mediaPlayer.mediaStatus,
+                "playing", mediaPlayer.playing,
+                "error", mediaPlayer.error,
+                "errorString", mediaPlayer.errorString,
+                "source", mediaPlayer.source
+            );
+            mediaPlayer.statusLogRemaining--;
+        }
+    }
+
+    Timer {
+        id: steadyStatusLogTimer
+        interval: 1500
+        repeat: true
+        running: true
+        onTriggered: {
+            console.log(
+                "MediaPlayer steady tick:",
+                "state", mediaPlayer.playbackState,
+                "status", mediaPlayer.mediaStatus,
+                "playing", mediaPlayer.playing,
+                "error", mediaPlayer.error,
+                "errorString", mediaPlayer.errorString,
+                "source", mediaPlayer.source
+            );
         }
     }
 

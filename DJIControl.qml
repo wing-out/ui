@@ -27,6 +27,9 @@ Page {
         interval: 2000
         repeat: false
         onTriggered: {
+            if (!djiControlPage.root || !djiControlPage.root.platform) {
+                return;
+            }
             djiControlPage.root.platform.refreshWiFiState()
             var isLocal = djiControlPage.root.platform.isLocalHotspotEnabled
             var isNormal = djiControlPage.root.platform.isHotspotEnabled
@@ -55,8 +58,11 @@ Page {
     }
 
     Connections {
-        target: djiControlPage.root.platform
+        target: djiControlPage.root ? djiControlPage.root.platform : null
         function onIsLocalHotspotEnabledChanged() {
+            if (!djiControlPage.root || !djiControlPage.root.platform) {
+                return;
+            }
             if (djiControlPage.root.platform.isLocalHotspotEnabled) {
                 if (DJIController.djiBleLoggingEnabled) {
                     console.log("[DJI-BLE] QML: Local hotspot enabled, starting auto-fill timer...")
@@ -66,6 +72,9 @@ Page {
             }
         }
         function onIsHotspotEnabledChanged() {
+            if (!djiControlPage.root || !djiControlPage.root.platform) {
+                return;
+            }
             if (djiControlPage.root.platform.isHotspotEnabled) {
                 if (DJIController.djiBleLoggingEnabled) {
                     console.log("[DJI-BLE] QML: Hotspot enabled, starting auto-fill timer...")
@@ -139,15 +148,16 @@ Page {
             console.log("[DJI-BLE] QML: Starting auto-discovery...")
         }
         DJIController.startDeviceDiscovery()
-
-        djiControlPage.root.platform.refreshWiFiState()
-        var hotspot = djiControlPage.root.platform.isLocalHotspotEnabled ? djiControlPage.root.platform.getLocalOnlyHotspotInfo() : djiControlPage.root.platform.getHotspotConfiguration()
-        if (hotspot && hotspot.ssid) {
-            if (DJIController.djiBleLoggingEnabled) {
-                console.log("[DJI-BLE] QML: Auto-filled hotspot info for SSID:", hotspot.ssid)
+        if (djiControlPage.root && djiControlPage.root.platform) {
+            djiControlPage.root.platform.refreshWiFiState()
+            var hotspot = djiControlPage.root.platform.isLocalHotspotEnabled ? djiControlPage.root.platform.getLocalOnlyHotspotInfo() : djiControlPage.root.platform.getHotspotConfiguration()
+            if (hotspot && hotspot.ssid) {
+                if (DJIController.djiBleLoggingEnabled) {
+                    console.log("[DJI-BLE] QML: Auto-filled hotspot info for SSID:", hotspot.ssid)
+                }
+                wifiSsidField.text = hotspot.ssid
+                wifiPskField.text = hotspot.psk
             }
-            wifiSsidField.text = hotspot.ssid
-            wifiPskField.text = hotspot.psk
         }
     }
 
@@ -188,10 +198,12 @@ Page {
                     }
                     Switch {
                         id: hotspotSwitch
-                        checked: djiControlPage.root.platform.isHotspotEnabled
+                        checked: djiControlPage.root && djiControlPage.root.platform ? djiControlPage.root.platform.isHotspotEnabled : false
                         enabled: !localHotspotSwitch.checked
                         onToggled: {
-                            djiControlPage.root.platform.setHotspotEnabled(checked)
+                            if (djiControlPage.root && djiControlPage.root.platform) {
+                                djiControlPage.root.platform.setHotspotEnabled(checked)
+                            }
                         }
                     }
                     Label {
@@ -199,10 +211,12 @@ Page {
                     }
                     Switch {
                         id: localHotspotSwitch
-                        checked: djiControlPage.root.platform.isLocalHotspotEnabled
+                        checked: djiControlPage.root && djiControlPage.root.platform ? djiControlPage.root.platform.isLocalHotspotEnabled : false
                         enabled: !hotspotSwitch.checked
                         onToggled: {
-                            djiControlPage.root.platform.setLocalHotspotEnabled(checked)
+                            if (djiControlPage.root && djiControlPage.root.platform) {
+                                djiControlPage.root.platform.setLocalHotspotEnabled(checked)
+                            }
                         }
                     }
                 }

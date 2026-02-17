@@ -41,7 +41,7 @@ Window {
         }
 
         Label {
-            text: qsTr("Enter Preview RTMP URL:")
+            text: qsTr("Preview RTMP (optional override):")
             wrapMode: Text.Wrap
             Layout.fillWidth: true
         }
@@ -55,6 +55,41 @@ Window {
 
         RowLayout {
             Layout.fillWidth: true
+            spacing: 8
+
+            TextField {
+                id: setupPreviewPortField
+                placeholderText: "RTMP port (default 1945)"
+                text: setupWindow.appSettings.previewRTMPPort
+                Layout.fillWidth: true
+                Layout.preferredWidth: 140
+                inputMethodHints: Qt.ImhDigitsOnly
+            }
+
+            TextField {
+                id: setupPreviewStreamField
+                placeholderText: "Stream ID (default pixel/dji-osmo-pocket-3-merged/)"
+                text: setupWindow.appSettings.previewRTMPStreamID
+                Layout.fillWidth: true
+            }
+        }
+
+        Label {
+            text: qsTr("Enter FFStream gRPC host (optional, e.g. https://127.0.0.1:3593):")
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+
+        TextField {
+            id: setupFFStreamField
+            placeholderText: "https://127.0.0.1:3593"
+            text: setupWindow.appSettings.ffstreamHost
+            Layout.fillWidth: true
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignRight
             spacing: 8
 
             Item { Layout.fillWidth: true }
@@ -79,16 +114,27 @@ Window {
                     if (val.length === 0) {
                         return;
                     }
-                    // Ensure scheme is present; default to http:// if omitted
+                    // Ensure scheme is present; default to https:// if omitted
                     if (!val.startsWith("http://") && !val.startsWith("https://")) {
-                        val = "http://" + val;
+                        val = "https://" + val;
                     }
                     setupWindow.appSettings.dxProducerHost = val;
                     var previewUrl = setupPreviewUrlField.text.trim();
-                    if (previewUrl.length === 0) {
-                        previewUrl = "rtmp://192.168.0.134:1935/preview/horizontal";
+                    var previewPort = setupPreviewPortField.text.trim();
+                    var previewStream = setupPreviewStreamField.text.trim();
+                    if (previewUrl.length === 0 && previewPort.length === 0 && previewStream.length === 0) {
+                        previewPort = "1945";
+                        previewStream = "pixel/dji-osmo-pocket-3-merged/";
                     }
                     setupWindow.appSettings.previewRTMPUrl = previewUrl;
+                    setupWindow.appSettings.previewRTMPPort = previewPort.length > 0 ? previewPort : "";
+                    setupWindow.appSettings.previewRTMPStreamID = previewStream.length > 0 ? previewStream : "";
+                    var ffstreamUrl = setupFFStreamField.text.trim();
+                    if (ffstreamUrl.length > 0) {
+                        setupWindow.appSettings.ffstreamHost = ffstreamUrl;
+                    } else {
+                        setupWindow.appSettings.ffstreamHost = "";
+                    }
                     setupWindow.finished();
                     setupWindow.close();
                 }

@@ -83,6 +83,16 @@ Item {
     }
 
     Timer {
+        id: updateFFStreamFPSFractionTicker
+        interval: 1000
+        repeat: true
+        property var callback: null
+        onTriggered: {
+            callback()
+        }
+    }
+
+    Timer {
         id: updateFFStreamOutputQualityTicker
         interval: 200
         repeat: true
@@ -147,6 +157,7 @@ Item {
     property alias updatePlayerLagTicker: updatePlayerLagTicker
     property alias fetchPlayerLagTicker: fetchPlayerLagTicker
     property alias updateFFStreamInputQualityTicker: updateFFStreamInputQualityTicker
+    property alias updateFFStreamFPSFractionTicker: updateFFStreamFPSFractionTicker
     property alias updateFFStreamOutputQualityTicker: updateFFStreamOutputQualityTicker
     property alias updateFFStreamBitRatesTicker: updateFFStreamBitRatesTicker
     property alias updateWiFiInfoTicker: updateWiFiInfoTicker

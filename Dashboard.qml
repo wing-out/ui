@@ -21,6 +21,7 @@ Page {
     property var lastDiagnostics: ({})
     property int diagnosticsUpdateCount: 0
     property var platformCapabilities: ({})
+    property int lastFPSLogAt: 0
 
     // Uses "dashboard" category so this Settings writes to
     // [dashboard] section, not [General]. Application.qml has
@@ -60,6 +61,9 @@ Page {
         updateFFStreamInputQuality();
         timers.updateFFStreamInputQualityTicker.callback = updateFFStreamInputQuality;
         timers.updateFFStreamInputQualityTicker.start();
+        updateFFStreamFPSFraction();
+        timers.updateFFStreamFPSFractionTicker.callback = updateFFStreamFPSFraction;
+        timers.updateFFStreamFPSFractionTicker.start();
         updateFFStreamOutputQuality();
         timers.updateFFStreamOutputQualityTicker.callback = updateFFStreamOutputQuality;
         timers.updateFFStreamOutputQualityTicker.start();
@@ -82,6 +86,73 @@ Page {
             console.log("re-subscribing to chat messages");
             subscribeToChatMessages();
         };
+    }
+
+    function normalizeNumber(value) {
+        if (value === undefined || value === null) {
+            return null;
+        }
+        var num = Number(value);
+        if (!isFinite(num)) {
+            return null;
+        }
+        return num;
+    }
+
+    function normalizeLatencyU(value) {
+        var num = normalizeNumber(value);
+        if (num === null || num < 0 || num > 1e12) {
+            return null;
+        }
+        return num;
+    }
+
+    function sumLatencyParts(track) {
+        if (!track) {
+            return null;
+        }
+        var parts = [track.preTranscodingU, track.transcodingU, track.transcodedPreSendU];
+        var sum = 0;
+        var hasAny = false;
+        for (var i = 0; i < parts.length; i++) {
+            var part = normalizeLatencyU(parts[i]);
+            if (part !== null) {
+                sum += part;
+                hasAny = true;
+            }
+        }
+        return hasAny ? sum : null;
+    }
+
+    function maxValidNumber(a, b) {
+        if (a === null && b === null) {
+            return null;
+        }
+        if (a === null) {
+            return b;
+        }
+        if (b === null) {
+            return a;
+        }
+        return Math.max(a, b);
+    }
+
+    function normalizeFPS(value) {
+        var num = normalizeNumber(value);
+        if (num === null || num <= 0) {
+            return null;
+        }
+        return num;
+    }
+
+    function pickFPS(primary, fallback) {
+        if (primary !== null && primary >= 2) {
+            return primary;
+        }
+        if (fallback !== null && fallback >= 2) {
+            return fallback;
+        }
+        return null;
     }
 
     function ping() {
@@ -138,15 +209,29 @@ Page {
 
     function onGetLatenciesSuccess(latencies) {
         console.log("Dashboard.qml: Received latencies: " + JSON.stringify(latencies));
+        if (!latencies || !latencies.latencies) {
+            sendingLatencyText.preSendingLatency = -1;
+            sendingLatencyText.sendingLatency = -1;
+            return;
+        }
         var audioLatencies = latencies.latencies.audio;
-        var audioPreSending = audioLatencies.preTranscodingU + audioLatencies.transcodingU + audioLatencies.transcodedPreSendU;
-        var audioSending = audioLatencies.sendingU;
         var videoLatencies = latencies.latencies.video;
-        var videoPreSending = videoLatencies.preTranscodingU + videoLatencies.transcodingU + videoLatencies.transcodedPreSendU;
-        var videoSending = videoLatencies.sendingU;
+        var audioPreSending = sumLatencyParts(audioLatencies);
+        var videoPreSending = sumLatencyParts(videoLatencies);
+        var audioSending = normalizeLatencyU(audioLatencies ? audioLatencies.sendingU : null);
+        var videoSending = normalizeLatencyU(videoLatencies ? videoLatencies.sendingU : null);
 
-        var preSendingLatency = Math.max(audioPreSending, videoPreSending) / 1000000;
-        var sendingLatency = Math.max(audioSending, videoSending) / 1000000;
+        var preSendingU = maxValidNumber(audioPreSending, videoPreSending);
+        var sendingU = maxValidNumber(audioSending, videoSending);
+
+        if (preSendingU === null && sendingU === null) {
+            sendingLatencyText.preSendingLatency = -1;
+            sendingLatencyText.sendingLatency = -1;
+            return;
+        }
+
+        var preSendingLatency = preSendingU !== null ? preSendingU / 1000000 : 0;
+        var sendingLatency = sendingU !== null ? sendingU / 1000000 : 0;
 
         sendingLatencyText.preSendingLatency = preSendingLatency;
         sendingLatencyText.sendingLatency = sendingLatency;
@@ -167,12 +252,64 @@ Page {
     }
 
     function onGetInputQualitySuccess(inputQuality) {
-        inputFPSText.inputFPS = inputQuality.video.frameRate;
+        var fps = null;
+        if (inputQuality && inputQuality.video) {
+            fps = normalizeFPS(inputQuality.video.frameRate);
+        }
+        var fallback = normalizeFPS(inputFPSText.fallbackFPS);
+        var previewFallback = normalizeFPS(imageScreenshot.videoFrameRate);
+        var outputFallback = normalizeFPS(outputFPSText.outputFPS);
+        var picked = pickFPS(fps, fallback);
+        if (picked === null) {
+            picked = pickFPS(previewFallback, outputFallback);
+        }
+        inputFPSText.inputFPS = picked !== null ? picked : -1;
+        if (picked === null) {
+            var now = Date.now();
+            if (now - dashboard.lastFPSLogAt > 5000) {
+                dashboard.lastFPSLogAt = now;
+                console.log("Dashboard.qml: Input FPS unavailable; raw:", fps, "fallback:", fallback, "preview:", previewFallback, "output:", outputFallback);
+            }
+        }
         //console.log("input quality fps:", inputQuality.Video.frameRate);
     }
 
     function onGetInputQualityError(error) {
-        inputFPSText.inputFPS = -1;
+        var fallback = normalizeFPS(inputFPSText.fallbackFPS);
+        var previewFallback = normalizeFPS(imageScreenshot.videoFrameRate);
+        var outputFallback = normalizeFPS(outputFPSText.outputFPS);
+        var picked = fallback !== null && fallback >= 2 ? fallback : null;
+        if (picked === null) {
+            picked = pickFPS(previewFallback, outputFallback);
+        }
+        inputFPSText.inputFPS = picked !== null ? picked : -1;
+        dashboard.root.processFFStreamGRPCError(dashboard.root.ffstreamClient, error);
+    }
+
+    function updateFFStreamFPSFraction() {
+        if (!dashboard.root.checkFFStreamClient()) {
+            return;
+        }
+        dashboard.root.ffstreamClient.getFPSFraction(onGetFPSFractionSuccess, onGetFPSFractionError, dashboard.root.grpcCallOptions);
+    }
+
+    function onGetFPSFractionSuccess(reply) {
+        if (!reply) {
+            inputFPSText.fallbackFPS = -1;
+            return;
+        }
+        var num = normalizeNumber(reply.num);
+        var den = normalizeNumber(reply.den);
+        if (num === null || den === null || den <= 0) {
+            inputFPSText.fallbackFPS = -1;
+            return;
+        }
+        var fps = num / den;
+        inputFPSText.fallbackFPS = isFinite(fps) && fps > 0 ? fps : -1;
+    }
+
+    function onGetFPSFractionError(error) {
+        inputFPSText.fallbackFPS = -1;
         dashboard.root.processFFStreamGRPCError(dashboard.root.ffstreamClient, error);
     }
 
@@ -184,7 +321,11 @@ Page {
     }
 
     function onGetOutputQualitySuccess(outputQuality) {
-        outputFPSText.outputFPS = outputQuality.video.frameRate;
+        var fps = null;
+        if (outputQuality && outputQuality.video) {
+            fps = normalizeFPS(outputQuality.video.frameRate);
+        }
+        outputFPSText.outputFPS = fps !== null ? fps : -1;
         //console.log("output quality fps:", outputQuality.Video.frameRate);
     }
 
@@ -202,8 +343,16 @@ Page {
 
     function onGetBitRatesSuccess(bitRates) {
         console.log("Dashboard.qml: Received bitRates: " + JSON.stringify(bitRates));
-        //console.log("bitRates:", bitRates.bitRates.outputBitRate);
-        encodingBitrateText.videoBitrate = bitRates.bitRates.outputBitRate.video;
+        if (!bitRates || !bitRates.bitRates || !bitRates.bitRates.outputBitRate) {
+            encodingBitrateText.videoBitrate = -1;
+            return;
+        }
+        var video = normalizeNumber(bitRates.bitRates.outputBitRate.video);
+        if (video === null || video <= 0) {
+            encodingBitrateText.videoBitrate = -1;
+            return;
+        }
+        encodingBitrateText.videoBitrate = video;
         //console.log("video bitrate:", bitRates.bitRates.outputBitRate.video);
     }
 
@@ -443,6 +592,9 @@ Page {
     }
 
     function updateWiFiInfo() {
+        if (!dashboard.root || !dashboard.root.platform) {
+            return;
+        }
         var wifiInfo = dashboard.root.platform.getCurrentWiFiConnection();
         //console.log("WiFi info:", wifiInfo.toJSON());
         if (wifiInfo !== null && (wifiInfo.ssid !== "" || wifiInfo.bssid !== "")) {
@@ -458,6 +610,9 @@ Page {
     }
 
     function updateChannelQualityInfo() {
+        if (!dashboard.root || !dashboard.root.platform) {
+            return;
+        }
         var channelsQualityInfo = dashboard.root.platform.getChannelsQualityInfo();
         //console.log("channels quality info:", channelsQualityInfo, "; len:", channelsQualityInfo.length);
         for (var i = 0; i < channelsQualityInfo.length; i++) {
@@ -478,11 +633,15 @@ Page {
     }
 
     function injectDiagnosticsSubtitles() {
+        var platform = dashboard.root ? dashboard.root.platform : null;
+        if (!platform) {
+            return;
+        }
         var currentDiagnostics = {
             "latencyPreSending": Math.round(sendingLatencyText.preSendingLatency),
             "latencySending": Math.round(sendingLatencyText.sendingLatency),
-            "fpsInput": inputFPSText.inputFPS,
-            "fpsOutput": outputFPSText.outputFPS,
+            "fpsInput": inputFPSText.inputFPS < 0 ? -1 : Math.round(inputFPSText.inputFPS),
+            "fpsOutput": outputFPSText.outputFPS < 0 ? -1 : Math.round(outputFPSText.outputFPS),
             "bitrateVideo": encodingBitrateText.videoBitrate,
             "playerLagMin": Math.round(playerLagText.playerLagMin),
             "playerLagMax": Math.round(playerLagText.playerLagMax),
@@ -496,9 +655,9 @@ Page {
             "viewersKick": kickCounter.value,
             "signal": signalStatus.signalStrength,
             "streamTime": Math.round(statusStreamTime.seconds),
-            "cpuUtilization": dashboard.root.platform.cpuUtilization,
-            "memoryUtilization": dashboard.root.platform.memoryUtilization,
-            "temperatures": dashboard.root.platform.temperatures
+            "cpuUtilization": platform.cpuUtilization,
+            "memoryUtilization": platform.memoryUtilization,
+            "temperatures": platform.temperatures
         };
 
         var msg = {};
@@ -530,13 +689,16 @@ Page {
         if (!dashboard.root.checkFFStreamClient()) {
             return;
         }
+        if (!dashboard.root.ffstreamClient.isChannelReady()) {
+            return;
+        }
         dashboard.root.ffstreamClient.injectDiagnostics(msg, 1000000000, function () {}, function (error) {
             dashboard.root.processFFStreamGRPCError(dashboard.root.ffstreamClient, error);
         }, dashboard.root.grpcCallOptions);
     }
 
     Connections {
-        target: dashboard.root.platform
+        target: dashboard.root ? dashboard.root.platform : null
         function onSignalStrengthChanged(strength) {
             console.log("new value of the signal strength: " + strength);
             signalStatus.signalStrength = strength;
@@ -750,9 +912,9 @@ Page {
     }
 
     function formatDuration(durationMS) {
-        /*if (durationMS < 200) {
-            return durationMS + " ms";
-        }*/
+        if (durationMS < 200) {
+            return Math.round(durationMS) + " ms";
+        }
         var deciSeconds = Math.floor(durationMS / 100);
         var minutes = Math.floor(deciSeconds / 600);
         var seconds = Math.floor(deciSeconds / 10) % 60;
@@ -850,6 +1012,10 @@ Page {
                 ? configuredPreview
                 : dashboard.root.previewRtmpUrl)
         source: useRawSource ? sourceRawCamera : effectivePreview
+
+        onEffectivePreviewChanged: {
+            console.log("Dashboard preview URL:", effectivePreview);
+        }
 
         Shape {
             id: overlayGrid
@@ -1119,8 +1285,8 @@ Page {
                 font.pixelSize: 20
                 font.bold: true
                 horizontalAlignment: Text.AlignRight
-                property int preSendingLatency: 0
-                property int sendingLatency: 0
+                property real preSendingLatency: 0
+                property real sendingLatency: 0
                 text: (preSendingLatency < 0 || sendingLatency < 0 ? "N/A" : dashboard.formatDuration(preSendingLatency) + "+" + dashboard.formatDuration(sendingLatency)) + "📱"
                 color: dashboard.pingColorFromMS(preSendingLatency + sendingLatency, 100, 400, 1500)
             }
@@ -1183,8 +1349,9 @@ Page {
                 font.pixelSize: 20
                 font.bold: true
                 horizontalAlignment: Text.AlignLeft
-                property int inputFPS: 0
-                text: "in-FPS: " + (inputFPS < 0 ? "N/A" : inputFPS)
+                property real inputFPS: -1
+                property real fallbackFPS: -1
+                text: "in-FPS: " + (inputFPS < 0 ? "N/A" : Math.round(inputFPS * 10) / 10)
                 color: dashboard.fpsColor(inputFPS, 15, 21, 24)
             }
 

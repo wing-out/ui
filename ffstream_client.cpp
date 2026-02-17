@@ -91,6 +91,8 @@ void Client::processGRPCError(const QVariant &error) {
   }
 }
 
+bool Client::isChannelReady() { return this->channel() != nullptr; }
+
 void Client::_reconnectIfNeeded() {
   bool hasValidUri = this->serverURI.isValid() && !this->serverURI.host().isEmpty();
   if (!hasValidUri) {
@@ -162,6 +164,14 @@ void Client::getOutputQuality(
   this->_reconnectIfNeeded();
   ffstream_grpc::GetOutputQualityRequest arg{};
   this->GetOutputQuality(arg, finishCallback, errorCallback, options);
+}
+
+void Client::getFPSFraction(
+    const QJSValue &finishCallback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  this->_reconnectIfNeeded();
+  ffstream_grpc::GetFPSFractionRequest arg{};
+  this->GetFPSFraction(arg, finishCallback, errorCallback, options);
 }
 
 void Client::getBitRates(

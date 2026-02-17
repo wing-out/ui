@@ -224,6 +224,60 @@ Page {
                     }
                 }
 
+                Label {
+                    text: "Preview RTMP Port:"
+                }
+
+                TextField {
+                    id: previewPortField
+                    Layout.fillWidth: true
+                    text: settingsPage.appSettings.previewRTMPPort
+                    placeholderText: "1945"
+                    inputMethodHints: Qt.ImhDigitsOnly
+                    onTextChanged: {
+                        settingsPage.appSettings.previewRTMPPort = text.trim();
+                    }
+                }
+
+                Label {
+                    text: "Preview RTMP Stream ID:"
+                }
+
+                TextField {
+                    id: previewStreamField
+                    Layout.fillWidth: true
+                    text: settingsPage.appSettings.previewRTMPStreamID
+                    placeholderText: "pixel/dji-osmo-pocket-3-merged/"
+                    onTextChanged: {
+                        settingsPage.appSettings.previewRTMPStreamID = text.trim();
+                    }
+                }
+
+                Label {
+                    text: "FFStream gRPC Host (optional):"
+                }
+
+                TextField {
+                    id: ffstreamHostField
+                    Layout.fillWidth: true
+                    text: settingsPage.appSettings.ffstreamHost
+                    placeholderText: "https://127.0.0.1:3593"
+                    onTextChanged: {
+                        var trimmed = text.trim();
+                        settingsPage.appSettings.ffstreamHost = trimmed;
+                    }
+                }
+
+                Button {
+                    text: "Save FFStream Host"
+                    Layout.fillWidth: true
+                    onClicked: {
+                        var url = ffstreamHostField.text.trim();
+                        settingsPage.appSettings.ffstreamHost = url;
+                        console.log("FFStream host saved:", url);
+                    }
+                }
+
                 Item {
                     Layout.fillHeight: true
                 }

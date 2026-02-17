@@ -26,6 +26,7 @@ public:
   ffstream_grpc::FFStream::Client *client();
   Q_INVOKABLE void setServerUri(const QString &uri);
   Q_INVOKABLE void processGRPCError(const QVariant &error);
+  Q_INVOKABLE bool isChannelReady();
   Q_INVOKABLE void
   getLatencies(const QJSValue &finishCallback, const QJSValue &errorCallback,
                const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
@@ -36,6 +37,9 @@ public:
   getOutputQuality(const QJSValue &finishCallback,
                    const QJSValue &errorCallback,
                    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
+  Q_INVOKABLE void
+  getFPSFraction(const QJSValue &finishCallback, const QJSValue &errorCallback,
+                 const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
   Q_INVOKABLE void
   getBitRates(const QJSValue &finishCallback, const QJSValue &errorCallback,
               const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);

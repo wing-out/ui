@@ -105,7 +105,7 @@ Pane {
     }
 
     function extractHostFromGrpcUri(rawValue) {
-        var normalized = normalizeGrpcUri(rawValue, "https");
+        var normalized = normalizeGrpcUri(rawValue, "http");
         if (normalized.length === 0) {
             return "";
         }
@@ -114,9 +114,13 @@ Pane {
     }
 
     function deriveFFStreamUri() {
+        var explicitFFStream = normalizeGrpcUri(appSettings ? appSettings.ffstreamHost : "", "https");
+        if (explicitFFStream.length > 0) {
+            return explicitFFStream;
+        }
         var host = extractHostFromGrpcUri(main.dxProducerHost);
         if (host.length === 0) {
-            host = "localhost";
+            return "https://localhost:3593";
         }
         return "https://" + host + ":3593";
     }
@@ -126,7 +130,18 @@ Pane {
         if (host.length === 0) {
             return "";
         }
-        return "rtmp://" + host + ":1935/preview/horizontal";
+        var port = "" + (appSettings ? appSettings.previewRTMPPort : "");
+        if (port.trim().length === 0) {
+            port = "1945";
+        }
+        var streamId = "" + (appSettings ? appSettings.previewRTMPStreamID : "");
+        if (streamId.trim().length === 0) {
+            streamId = "pixel/dji-osmo-pocket-3-merged/";
+        }
+        if (streamId.startsWith("/")) {
+            streamId = streamId.slice(1);
+        }
+        return "rtmp://" + host + ":" + port + "/" + streamId;
     }
 
     readonly property string normalizedDxProducerHost: normalizeGrpcUri(appSettings ? appSettings.dxProducerHost : "", "https")
