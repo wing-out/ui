@@ -12,6 +12,7 @@ import Platform 1.0
 
 Pane {
     id: main
+    objectName: "main"
     anchors.fill: parent
     padding: 0
 
@@ -290,6 +291,7 @@ Pane {
 
     StackLayout {
         id: stack
+        objectName: "stack"
         anchors.fill: parent
         currentIndex: 0
 
@@ -335,6 +337,7 @@ Pane {
 
     RoundButton {
         id: menuButton
+        objectName: "menuButton"
         text: "☰"
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
@@ -399,6 +402,7 @@ Pane {
 
     Button {
         id: lockButton
+        objectName: "lockButton"
         visible: !main.locked && stack.currentIndex === 0
         text: "🔒"
         anchors.top: stack.top

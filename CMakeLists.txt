@@ -99,10 +99,14 @@ add_custom_target(fonts ALL DEPENDS ${FONT_PATH})
 
 set_source_files_properties(${FONT_PATH} PROPERTIES QT_RESOURCE_ALIAS fonts/FreeSans.ttf)
 
+# Build the WingOut QML module as a static library so both the app and tests
+# can link against it.
+qt_add_library(wingout_qml STATIC)
+add_dependencies(wingout_qml fonts)
+
 qt_add_executable(wingout
     main.cpp
 )
-add_dependencies(wingout fonts)
 
 ## Explicitly list QML files for the WingOut module. This makes it easy to
 ## remove desktop-only QML from the Android build (see WINGOUT_DESKTOP_QML
@@ -149,7 +153,7 @@ if(ANDROID)
     endforeach()
 endif()
 
-qt_add_qml_module(wingout
+qt_add_qml_module(wingout_qml
     URI WingOut
     VERSION 1.0
     QML_FILES
@@ -350,7 +354,7 @@ if(ANDROID)
     add_android_openssl_libraries(wingout)
 endif()
 
-target_link_libraries(wingout
+target_link_libraries(wingout_qml
     PRIVATE
     DXProducer.ChatWebHook
     DXProducer.StreamControl
@@ -372,7 +376,12 @@ target_link_libraries(wingout
     Qt6::Multimedia
 )
 
-target_precompile_headers(wingout PRIVATE
+target_link_libraries(wingout
+    PRIVATE
+    wingout_qml
+)
+
+target_precompile_headers(wingout_qml PRIVATE
     <QtCore/QtCore>
     <QtGui/QtGui>
     <QtQuick/QtQuick>
@@ -386,3 +395,9 @@ install(TARGETS wingout
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# Headless test suite (desktop only)
+enable_testing()
+if(NOT ANDROID)
+    add_subdirectory(tests)
+endif()

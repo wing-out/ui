@@ -34,6 +34,7 @@ Window {
 
         TextField {
             id: setupHostField
+            objectName: "setupHostField"
             placeholderText: "http://host:port"
             text: setupWindow.appSettings.dxProducerHost
             Layout.fillWidth: true
@@ -87,6 +88,20 @@ Window {
             Layout.fillWidth: true
         }
 
+        Label {
+            text: qsTr("Input FPS (leave empty for auto, or enter 30/60):")
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+
+        TextField {
+            id: setupManualFPSField
+            placeholderText: "30 or 60 (optional)"
+            text: setupWindow.appSettings.manualInputFPS
+            Layout.fillWidth: true
+            inputMethodHints: Qt.ImhDigitsOnly
+        }
+
         RowLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignRight
@@ -102,6 +117,7 @@ Window {
             }
 
             Button {
+                objectName: "saveButton"
                 text: qsTr("Save")
                 highlighted: true
                 onClicked: {
@@ -135,6 +151,8 @@ Window {
                     } else {
                         setupWindow.appSettings.ffstreamHost = "";
                     }
+                    var manualFPS = setupManualFPSField.text.trim();
+                    setupWindow.appSettings.manualInputFPS = manualFPS.length > 0 ? manualFPS : "";
                     setupWindow.finished();
                     setupWindow.close();
                 }

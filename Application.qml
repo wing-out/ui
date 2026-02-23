@@ -17,6 +17,16 @@ ApplicationWindow {
     Material.accent: Material.Purple
     title: qsTr("Wing Out")
 
+    Component.onCompleted: {
+        // Only set org/app name when not already overridden (e.g. by tests).
+        if (Qt.application.organizationName === "")
+            Qt.application.organizationName = "WingOut"
+        if (Qt.application.organizationDomain === "")
+            Qt.application.organizationDomain = "wingout.app"
+        if (Qt.application.applicationName === "")
+            Qt.application.applicationName = "WingOut"
+    }
+
     // Use qualified import to avoid shadowing by local Settings.qml
     // (which is a Page component for the config editor, not QSettings).
     Core.Settings {
@@ -26,25 +36,20 @@ ApplicationWindow {
         property string previewRTMPPort: ""
         property string previewRTMPStreamID: ""
         property string ffstreamHost: ""
+        property string manualInputFPS: ""  // Manual override for input FPS
     }
 
     readonly property bool hasPreviewConfig: appSettings.previewRTMPUrl !== "" || appSettings.previewRTMPPort !== "" || appSettings.previewRTMPStreamID !== ""
     readonly property bool setupRequired: !appSettings.dxProducerHost || !hasPreviewConfig
 
-    Component.onCompleted: {
-        Qt.application.organizationName = "WingOut"
-        Qt.application.organizationDomain = "wingout.app"
-        Qt.application.applicationName = "WingOut"
-        console.log("Application.qml: dxProducerHost:", appSettings.dxProducerHost, "previewRTMPUrl:", appSettings.previewRTMPUrl, "previewRTMPPort:", appSettings.previewRTMPPort, "previewRTMPStreamID:", appSettings.previewRTMPStreamID);
-        console.log("Application.qml: hasPreviewConfig:", hasPreviewConfig, "setupRequired:", setupRequired);
-    }
-
     Loader {
         id: setupLoader
+        objectName: "setupLoader"
         active: application.setupRequired
         onLoaded: item.appSettings = appSettings
         sourceComponent: Component {
             InitialSetup {
+                objectName: "setupWindow"
                 visible: true
                 onFinished: setupLoader.active = false
             }
@@ -53,6 +58,7 @@ ApplicationWindow {
 
     Loader {
         id: mainLoader
+        objectName: "mainLoader"
         anchors.fill: parent
         active: !application.setupRequired
         sourceComponent: Component {

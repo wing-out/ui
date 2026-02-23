@@ -8,7 +8,7 @@ Item {
         repeat: false
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -18,7 +18,7 @@ Item {
         repeat: false
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -28,7 +28,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -38,7 +38,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -48,7 +48,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -58,7 +58,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -68,7 +68,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -78,7 +78,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -88,7 +88,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -98,7 +98,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -108,7 +108,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -118,7 +118,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
 
@@ -128,7 +128,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
     Timer {
@@ -137,7 +137,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
     Timer {
@@ -146,7 +146,7 @@ Item {
         repeat: true
         property var callback: null
         onTriggered: {
-            callback()
+            if (callback) callback()
         }
     }
     property alias retryTimerSubscribeToChatMessages: retryTimerSubscribeToChatMessages
