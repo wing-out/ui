@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtMultimedia
 import QtTextToSpeech
 import "../components" as Components
 import WingOut
@@ -55,14 +54,7 @@ Item {
         return mm
     }
 
-    TextToSpeech {
-        id: tts
-    }
-
-    SoundEffect {
-        id: chatSound
-        source: "qrc:/audio/chat_message_add.wav"
-    }
+    TextToSpeech { id: tts }
 
     // Subscribe to chat messages when connected
     Component.onCompleted: {
@@ -86,30 +78,7 @@ Item {
                 "timestamp": message.timestamp || 0,
                 "eventType": message.eventType || 0
             });
-
-            // Skip bots for notifications
-            if (root.isBot(userName)) {
-                return;
-            }
-
-            // Strip HTML tags and URLs for TTS
-            var cleanText = text.replace(/<[^>]*>/g, "");
-            cleanText = cleanText.replace(/https?:\/\/[^\s]+/g, "<HTTP-link>");
-
-            if (root.settings.ttsEnabled && tts.state !== TextToSpeech.Error) {
-                var ttsText = cleanText;
-                if (root.settings.ttsUsernames) {
-                    var speakName = displayName || userName;
-                    ttsText = "from " + speakName + ": " + ttsText;
-                }
-                tts.enqueue(ttsText);
-            } else if (root.settings.soundEnabled) {
-                chatSound.play();
-            }
-
-            if (root.settings.vibrateEnabled) {
-                platformInstance.vibrate(500, true);
-            }
+            // TTS/sound/vibrate handled by DashboardPage to avoid double firing
         }
     }
 
