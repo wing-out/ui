@@ -1,0 +1,24 @@
+module WingOut
+singleton Theme 2.0 qml/Theme.qml
+Main 2.0 qml/Main.qml
+GlassCard 2.0 qml/components/GlassCard.qml
+GlassButton 2.0 qml/components/GlassButton.qml
+GlassPanel 2.0 qml/components/GlassPanel.qml
+StatusBadge 2.0 qml/components/StatusBadge.qml
+MetricTile 2.0 qml/components/MetricTile.qml
+NavMenu 2.0 qml/components/NavMenu.qml
+SwipeLockOverlay 2.0 qml/components/SwipeLockOverlay.qml
+SearchField 2.0 qml/components/SearchField.qml
+VideoPlayerRTMP 2.0 qml/components/VideoPlayerRTMP.qml
+DashboardPage 2.0 qml/pages/DashboardPage.qml
+CamerasPage 2.0 qml/pages/CamerasPage.qml
+DJIControlPage 2.0 qml/pages/DJIControlPage.qml
+ChatPage 2.0 qml/pages/ChatPage.qml
+PlayersPage 2.0 qml/pages/PlayersPage.qml
+RestreamsPage 2.0 qml/pages/RestreamsPage.qml
+MonitorPage 2.0 qml/pages/MonitorPage.qml
+ProfilesPage 2.0 qml/pages/ProfilesPage.qml
+SettingsPage 2.0 qml/pages/SettingsPage.qml
+InitialSetup 2.0 qml/dialogs/InitialSetup.qml
+ErrorDialog 2.0 qml/dialogs/ErrorDialog.qml
+depends QtQuick

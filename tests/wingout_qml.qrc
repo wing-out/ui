@@ -1,0 +1,29 @@
+<RCC>
+  <qresource prefix="/qt/qml/WingOut">
+    <file alias="qmldir">wingout_test_qmldir</file>
+  </qresource>
+  <qresource prefix="/qt/qml/WingOut/">
+    <file alias="qml/Main.qml">../qml/Main.qml</file>
+    <file alias="qml/Theme.qml">../qml/Theme.qml</file>
+    <file alias="qml/components/GlassCard.qml">../qml/components/GlassCard.qml</file>
+    <file alias="qml/components/GlassButton.qml">../qml/components/GlassButton.qml</file>
+    <file alias="qml/components/GlassPanel.qml">../qml/components/GlassPanel.qml</file>
+    <file alias="qml/components/StatusBadge.qml">../qml/components/StatusBadge.qml</file>
+    <file alias="qml/components/MetricTile.qml">../qml/components/MetricTile.qml</file>
+    <file alias="qml/components/NavMenu.qml">../qml/components/NavMenu.qml</file>
+    <file alias="qml/components/SwipeLockOverlay.qml">../qml/components/SwipeLockOverlay.qml</file>
+    <file alias="qml/components/SearchField.qml">../qml/components/SearchField.qml</file>
+    <file alias="qml/components/VideoPlayerRTMP.qml">../qml/components/VideoPlayerRTMP.qml</file>
+    <file alias="qml/pages/DashboardPage.qml">../qml/pages/DashboardPage.qml</file>
+    <file alias="qml/pages/CamerasPage.qml">../qml/pages/CamerasPage.qml</file>
+    <file alias="qml/pages/DJIControlPage.qml">../qml/pages/DJIControlPage.qml</file>
+    <file alias="qml/pages/ChatPage.qml">../qml/pages/ChatPage.qml</file>
+    <file alias="qml/pages/PlayersPage.qml">../qml/pages/PlayersPage.qml</file>
+    <file alias="qml/pages/RestreamsPage.qml">../qml/pages/RestreamsPage.qml</file>
+    <file alias="qml/pages/MonitorPage.qml">../qml/pages/MonitorPage.qml</file>
+    <file alias="qml/pages/ProfilesPage.qml">../qml/pages/ProfilesPage.qml</file>
+    <file alias="qml/pages/SettingsPage.qml">../qml/pages/SettingsPage.qml</file>
+    <file alias="qml/dialogs/InitialSetup.qml">../qml/dialogs/InitialSetup.qml</file>
+    <file alias="qml/dialogs/ErrorDialog.qml">../qml/dialogs/ErrorDialog.qml</file>
+  </qresource>
+</RCC>

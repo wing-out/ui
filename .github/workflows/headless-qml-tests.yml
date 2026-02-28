@@ -1,0 +1,35 @@
+name: Headless QML Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt 6
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.0'
+          modules: 'qtshadertools qtmultimedia qtgrpc qtprotobuf'
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build protobuf-compiler
+
+      - name: Configure
+        run: cmake -B build -S . -GNinja -DCMAKE_PREFIX_PATH=$Qt6_DIR
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Run QML tests (headless)
+        run: |
+          cd build
+          QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
+            ctest --output-on-failure -R tst_wingout
