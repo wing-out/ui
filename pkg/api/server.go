@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/xaionaro-go/wingout2/pkg/backend"
 	"google.golang.org/grpc"
@@ -89,7 +90,7 @@ func (s *Server) Serve(ctx context.Context, lis net.Listener) error {
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
-		s.grpcServer.GracefulStop()
+		s.gracefulStopWithTimeout(5 * time.Second)
 		return ctx.Err()
 	}
 }
@@ -114,6 +115,23 @@ func (s *Server) Stop() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.grpcServer != nil {
+		s.gracefulStopWithTimeout(5 * time.Second)
+	}
+}
+
+// gracefulStopWithTimeout attempts GracefulStop but falls back to Stop
+// if it doesn't complete within the timeout. GracefulStop waits for all
+// in-flight RPCs to finish, which blocks forever if a client in the same
+// process never disconnects (e.g. Android Activity teardown deadlock).
+func (s *Server) gracefulStopWithTimeout(timeout time.Duration) {
+	done := make(chan struct{})
+	go func() {
 		s.grpcServer.GracefulStop()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(timeout):
+		s.grpcServer.Stop()
 	}
 }
