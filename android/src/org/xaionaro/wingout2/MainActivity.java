@@ -21,7 +21,9 @@ public class MainActivity extends QtActivity {
             PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "WingOut2:WakeLockTag");
         acquireWakeLock();
 
-        daemon = new WingOutDaemon();
+        if (daemon == null) {
+            daemon = new WingOutDaemon();
+        }
     }
 
     @Override

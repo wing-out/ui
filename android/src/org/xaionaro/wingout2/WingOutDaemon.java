@@ -6,6 +6,9 @@ import android.util.Log;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Manages the wingoutd Go daemon lifecycle.
@@ -16,6 +19,7 @@ public class WingOutDaemon {
     private static final String TAG = "WingOutDaemon";
     private static final String BINARY_NAME = "libwingoutd.so";
     private static final String DEFAULT_LISTEN = "127.0.0.1:3595";
+    private static final int HANDSHAKE_TIMEOUT_SECONDS = 30;
 
     private Process process;
     private String listenAddr;
@@ -61,10 +65,48 @@ public class WingOutDaemon {
             pb.redirectErrorStream(false);
             process = pb.start();
 
-            // Read the handshake line from stdout (JSON with grpc_addr)
-            BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()));
-            String handshake = reader.readLine();
+            // Start draining stderr BEFORE reading stdout to prevent pipe deadlock.
+            // If the daemon writes enough to stderr to fill the OS pipe buffer (~64KB)
+            // before writing the handshake to stdout, both sides would block forever:
+            // the daemon blocked on write(stderr), Java blocked on read(stdout).
+            new Thread(() -> {
+                try {
+                    BufferedReader errReader = new BufferedReader(
+                        new InputStreamReader(process.getErrorStream()));
+                    String line;
+                    while ((line = errReader.readLine()) != null) {
+                        Log.w(TAG, "wingoutd stderr: " + line);
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG, "Error reading wingoutd stderr", e);
+                }
+            }, "wingoutd-stderr").start();
+
+            // Read the handshake line from stdout (JSON with grpc_addr) with a timeout.
+            AtomicReference<String> handshakeRef = new AtomicReference<>(null);
+            CountDownLatch latch = new CountDownLatch(1);
+            Thread readerThread = new Thread(() -> {
+                try {
+                    BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(process.getInputStream()));
+                    handshakeRef.set(reader.readLine());
+                } catch (Exception e) {
+                    Log.e(TAG, "Error reading wingoutd handshake", e);
+                } finally {
+                    latch.countDown();
+                }
+            }, "wingoutd-handshake");
+            readerThread.start();
+
+            boolean received = latch.await(HANDSHAKE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!received) {
+                Log.e(TAG, "Timed out waiting for wingoutd handshake after "
+                    + HANDSHAKE_TIMEOUT_SECONDS + "s");
+                stop();
+                return null;
+            }
+
+            String handshake = handshakeRef.get();
             if (handshake != null && handshake.contains("grpc_addr")) {
                 // Parse grpc_addr from JSON: {"grpc_addr":"[::]:3595","version":"2.0.0"}
                 int idx = handshake.indexOf("grpc_addr");
@@ -81,20 +123,6 @@ public class WingOutDaemon {
                 listenAddr = DEFAULT_LISTEN;
                 Log.w(TAG, "No handshake received, assuming default: " + DEFAULT_LISTEN);
             }
-
-            // Log stderr in background
-            new Thread(() -> {
-                try {
-                    BufferedReader errReader = new BufferedReader(
-                        new InputStreamReader(process.getErrorStream()));
-                    String line;
-                    while ((line = errReader.readLine()) != null) {
-                        Log.w(TAG, "wingoutd stderr: " + line);
-                    }
-                } catch (Exception e) {
-                    Log.w(TAG, "Error reading wingoutd stderr", e);
-                }
-            }, "wingoutd-stderr").start();
 
             return listenAddr;
         } catch (Exception e) {
