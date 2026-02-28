@@ -262,4 +262,94 @@ QtObject {
         if (value === undefined || value === null || isNaN(value)) return defaultVal
         return Number(value)
     }
+
+    // Color coding functions for dashboard metrics
+    // All use smooth gradients via colorMix between success/warning/error
+
+    function fpsColor(fps: real): color {
+        if (fps < 15) return error
+        if (fps < 24) return colorMix(error, warning, (fps - 15) / 9)
+        if (fps < 28) return colorMix(warning, success, (fps - 24) / 4)
+        return success
+    }
+
+    function latencyColor(ms: real): color {
+        if (ms < 100) return success
+        if (ms < 400) return colorMix(success, warning, (ms - 100) / 300)
+        if (ms < 1500) return colorMix(warning, error, (ms - 400) / 1100)
+        return error
+    }
+
+    function bitrateColor(bps: real): color {
+        if (bps < 50000) return error
+        if (bps < 1000000) return colorMix(error, warning, (bps - 50000) / 950000)
+        if (bps < 5000000) return colorMix(warning, success, (bps - 1000000) / 4000000)
+        return success
+    }
+
+    function rssiColor(dBm: int): color {
+        if (dBm > -50) return success
+        if (dBm > -60) return colorMix(success, warning, (-50 - dBm) / 10)
+        if (dBm > -70) return colorMix(warning, error, (-60 - dBm) / 10)
+        return error
+    }
+
+    function pingColor(ms: real): color {
+        if (ms < 20) return success
+        if (ms < 100) return colorMix(success, warning, (ms - 20) / 80)
+        if (ms < 1000) return colorMix(warning, error, (ms - 100) / 900)
+        return error
+    }
+
+    function channelQualityColor(q: real): color {
+        if (q < -33) return error
+        if (q < 5) return colorMix(error, warning, (q + 33) / 38)
+        if (q < 20) return colorMix(warning, success, (q - 5) / 15)
+        return success
+    }
+
+    function temperatureColor(temp: real, sensorType: string): color {
+        var warnThresh, critThresh
+        if (sensorType === "battery") {
+            warnThresh = 38; critThresh = 45
+        } else if (sensorType === "cpu") {
+            warnThresh = 70; critThresh = 90
+        } else if (sensorType === "skin") {
+            warnThresh = 38; critThresh = 45
+        } else {
+            warnThresh = 50; critThresh = 70
+        }
+        if (temp < warnThresh) return success
+        if (temp < critThresh) return colorMix(warning, error, (temp - warnThresh) / (critThresh - warnThresh))
+        return error
+    }
+
+    function cpuColor(util: real): color {
+        if (util < 50) return success
+        if (util < 80) return colorMix(success, warning, (util - 50) / 30)
+        if (util < 95) return colorMix(warning, error, (util - 80) / 15)
+        return error
+    }
+
+    function memColor(util: real): color {
+        if (util < 60) return success
+        if (util < 80) return colorMix(success, warning, (util - 60) / 20)
+        if (util < 95) return colorMix(warning, error, (util - 80) / 15)
+        return error
+    }
+
+    function playerLagColor(ms: real): color {
+        if (ms < 500) return warning  // too low = risky
+        if (ms < 1000) return colorMix(warning, success, (ms - 500) / 500)
+        if (ms < 5000) return success
+        if (ms < 10000) return colorMix(success, warning, (ms - 5000) / 5000)
+        return error
+    }
+
+    function qualityColor(continuity: real): color {
+        if (continuity > 0.99) return success
+        if (continuity > 0.95) return colorMix(success, warning, (0.99 - continuity) / 0.04)
+        if (continuity > 0.90) return colorMix(warning, error, (0.95 - continuity) / 0.05)
+        return error
+    }
 }
