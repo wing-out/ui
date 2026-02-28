@@ -309,18 +309,21 @@ QtObject {
     }
 
     function temperatureColor(temp: real, sensorType: string): color {
-        var warnThresh, critThresh
+        // Three thresholds matching original wingout:
+        // below low = green, low→warn = green→yellow, warn→high = yellow→red, above high = red
+        var low, warn, high
         if (sensorType === "battery") {
-            warnThresh = 38; critThresh = 45
+            low = 35; warn = 42; high = 48
         } else if (sensorType === "cpu") {
-            warnThresh = 70; critThresh = 90
+            low = 50; warn = 85; high = 100
         } else if (sensorType === "skin") {
-            warnThresh = 35; critThresh = 42
+            low = 35; warn = 40; high = 45
         } else {
-            warnThresh = 50; critThresh = 70
+            low = 40; warn = 70; high = 90
         }
-        if (temp < warnThresh) return success
-        if (temp < critThresh) return colorMix(warning, error, (temp - warnThresh) / (critThresh - warnThresh))
+        if (temp < low) return success
+        if (temp < warn) return colorMix(success, warning, (temp - low) / (warn - low))
+        if (temp < high) return colorMix(warning, error, (temp - warn) / (high - warn))
         return error
     }
 
