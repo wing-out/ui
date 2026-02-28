@@ -202,7 +202,11 @@ Item {
             model: root.messages
             clip: true
             spacing: Theme.spacingTiny
-            verticalLayoutDirection: ListView.BottomToTop
+            verticalLayoutDirection: ListView.TopToBottom
+
+            onCountChanged: {
+                Qt.callLater(function() { chatList.positionViewAtEnd() })
+            }
 
             delegate: Components.GlassCard {
                 width: chatList.width

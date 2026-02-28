@@ -765,14 +765,19 @@ Item {
             model: root.messages
             clip: true
             spacing: Theme.spacingTiny
-            verticalLayoutDirection: ListView.BottomToTop
+            verticalLayoutDirection: ListView.TopToBottom
+
+            // Auto-scroll to bottom when new messages arrive
+            onCountChanged: {
+                Qt.callLater(function() { chatList.positionViewAtEnd() })
+            }
 
             delegate: Item {
                 width: chatList.width
-                implicitHeight: msgRow.implicitHeight + Theme.spacingTiny
+                implicitHeight: msgFlow.implicitHeight + Theme.spacingTiny
 
-                Row {
-                    id: msgRow
+                Flow {
+                    id: msgFlow
                     width: parent.width
                     spacing: Theme.spacingSmall
 
@@ -788,7 +793,6 @@ Item {
                             if (model.platform === "kick") return Theme.kick
                             return Theme.textTertiary
                         }
-                        anchors.verticalCenter: parent.verticalCenter
                     }
 
                     Rectangle {
@@ -800,7 +804,6 @@ Item {
                             if (model.platform === "kick") return Theme.kick
                             return Theme.textTertiary
                         }
-                        anchors.verticalCenter: parent.verticalCenter
                     }
 
                     Text {
@@ -814,8 +817,8 @@ Item {
                         text: model.message || ""
                         font.pixelSize: root.settings.chatFontSize
                         color: Theme.textPrimary
-                        elide: Text.ElideRight
-                        width: parent.width - x
+                        wrapMode: Text.Wrap
+                        width: msgFlow.width
                     }
                 }
             }
