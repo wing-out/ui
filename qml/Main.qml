@@ -36,6 +36,7 @@ ApplicationWindow {
         property bool ttsUsernames: false
         property bool vibrateEnabled: false
         property bool soundEnabled: true
+        property int chatFontSize: 16
     }
 
     // Start embedded daemon and/or connect to backend

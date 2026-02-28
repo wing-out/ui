@@ -409,6 +409,22 @@ Item {
                 }
             }
 
+            Text { text: "Chat Font Size"; font.pixelSize: Theme.fontSmall; color: Theme.textSecondary }
+            Row {
+                spacing: Theme.spacingSmall
+
+                Repeater {
+                    model: [12, 14, 16, 18, 20, 24]
+                    Components.GlassButton {
+                        objectName: "chatFontSize" + modelData
+                        text: modelData.toString()
+                        width: 48
+                        filled: root.settings.chatFontSize === modelData
+                        onClicked: root.settings.chatFontSize = modelData
+                    }
+                }
+            }
+
             // App info
             Text {
                 text: "About"

@@ -535,6 +535,111 @@ Item {
                 }
             }
 
+            // Thermal zones section (collapsible)
+            Rectangle {
+                id: thermalHeader
+                width: parent.width
+                height: thermalHeaderRow.implicitHeight + Theme.spacingSmall * 2
+                radius: Theme.glassRadius
+                color: {
+                    var all = platformInstance.temperatures || []
+                    if (all.length === 0) return Theme.surfaceColor
+                    var worst = Theme.success
+                    for (var i = 0; i < all.length; i++) {
+                        var t = (all[i].type || "").toLowerCase()
+                        var c = Theme.temperatureColor(all[i].temp,
+                            (t.indexOf("batt") !== -1 || t.indexOf("bms") !== -1) ? "battery"
+                            : (t.indexOf("cpu") !== -1 || t.indexOf("gpu") !== -1 || t.indexOf("soc") !== -1) ? "cpu"
+                            : "skin")
+                        if (c === Theme.error) { worst = Theme.error; break }
+                        if (c !== Theme.success) worst = c
+                    }
+                    return Qt.rgba(worst.r, worst.g, worst.b, 0.15)
+                }
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.08)
+                property bool expanded: false
+                visible: (platformInstance.temperatures || []).length > 0
+
+                Row {
+                    id: thermalHeaderRow
+                    anchors.fill: parent
+                    anchors.margins: Theme.spacingSmall
+                    spacing: Theme.spacingSmall
+
+                    Text {
+                        text: thermalHeader.expanded ? "\u25BC" : "\u25B6"
+                        font.pixelSize: Theme.fontSmall
+                        color: Theme.textSecondary
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    Text {
+                        text: "Thermal Zones (" + (platformInstance.temperatures || []).length + ")"
+                        font.pixelSize: Theme.fontLarge
+                        font.weight: Font.Medium
+                        color: Theme.textPrimary
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: thermalHeader.expanded = !thermalHeader.expanded
+                }
+            }
+
+            Column {
+                width: parent.width
+                spacing: Theme.spacingTiny
+                visible: thermalHeader.expanded
+
+                Repeater {
+                    model: platformInstance.temperatures || []
+                    delegate: Row {
+                        required property var modelData
+                        width: parent.width
+                        spacing: Theme.spacingSmall
+
+                        Rectangle {
+                            width: 10; height: 10; radius: 5
+                            color: {
+                                var t = (modelData.type || "").toLowerCase()
+                                var sensor = (t.indexOf("batt") !== -1 || t.indexOf("bms") !== -1) ? "battery"
+                                    : (t.indexOf("cpu") !== -1 || t.indexOf("gpu") !== -1
+                                       || t.indexOf("soc") !== -1 || t.indexOf("tsens") !== -1) ? "cpu"
+                                    : "skin"
+                                return Theme.temperatureColor(modelData.temp, sensor)
+                            }
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Text {
+                            text: Math.round(modelData.temp) + "\u00B0C"
+                            font.pixelSize: Theme.fontSmall
+                            font.weight: Font.Bold
+                            color: {
+                                var t = (modelData.type || "").toLowerCase()
+                                var sensor = (t.indexOf("batt") !== -1 || t.indexOf("bms") !== -1) ? "battery"
+                                    : (t.indexOf("cpu") !== -1 || t.indexOf("gpu") !== -1
+                                       || t.indexOf("soc") !== -1 || t.indexOf("tsens") !== -1) ? "cpu"
+                                    : "skin"
+                                return Theme.temperatureColor(modelData.temp, sensor)
+                            }
+                            width: 50
+                        }
+
+                        Text {
+                            text: modelData.type || "unknown"
+                            font.pixelSize: Theme.fontSmall
+                            color: Theme.textSecondary
+                            elide: Text.ElideRight
+                            width: parent.width - 80
+                        }
+                    }
+                }
+            }
+
             // Diagnostics section
             Text {
                 text: "Diagnostics"

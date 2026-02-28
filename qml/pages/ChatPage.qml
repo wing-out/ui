@@ -230,7 +230,7 @@ Item {
 
                         Text {
                             text: model.userName || "Anonymous"
-                            font.pixelSize: Theme.fontSmall
+                            font.pixelSize: root.settings.chatFontSize
                             font.weight: Font.Bold
                             color: root.usernameColor(model.userName || "Anonymous")
                         }
@@ -239,7 +239,7 @@ Item {
                             property string ts: root.formatTimestamp(model.timestamp)
                             visible: ts !== ""
                             text: ts
-                            font.pixelSize: Theme.fontTiny
+                            font.pixelSize: root.settings.chatFontSize - 4
                             color: root.platformColor(model.platform)
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -247,7 +247,7 @@ Item {
 
                     Text {
                         text: model.message || ""
-                        font.pixelSize: Theme.fontMedium
+                        font.pixelSize: root.settings.chatFontSize + 2
                         color: Theme.textPrimary
                         wrapMode: Text.Wrap
                         width: parent.width

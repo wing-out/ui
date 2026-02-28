@@ -18,6 +18,7 @@ TestCase {
         property bool vibrateEnabled: false
         property bool soundEnabled: true
         property string chatTimestampFormat: "mm"
+        property int chatFontSize: 16
     }
 
     Component {

@@ -24,6 +24,7 @@ Item {
     property real inputContinuity: -1
     property real playerLagMs: -1
     property string wifiSsid: ""
+    property string wifiBssid: ""
     property int wifiRssi: 0
     property real preSendLatency: 0
     property real sendLatency: 0
@@ -232,6 +233,7 @@ Item {
             var conn = platformInstance.getCurrentWiFiConnection()
             if (conn) {
                 root.wifiSsid = conn.ssid || ""
+                root.wifiBssid = conn.bssid || ""
                 root.wifiRssi = conn.rssi || 0
             } else {
                 root.wifiSsid = ""
@@ -354,6 +356,25 @@ Item {
         if (fmt === "hh:mm") return hh + ":" + mm
         if (fmt === "none") return ""
         return mm
+    }
+
+    function formatSSID(ssid, bssid) {
+        if (!ssid || ssid === "") return "\uD83D\uDEAB"
+        var b = (bssid || "").toUpperCase()
+        switch (ssid) {
+        case "home.dx.center":
+        case "dslmodem.dx.center":
+        case "slow.dslmodem.dx.center":
+            switch (b) {
+            case "A8:29:48:3E:E2:F4": return "\uD83C\uDFE1\u25C9"
+            case "A8:29:48:3E:E7:A6": return "\uD83C\uDFD8\u25C9"
+            case "A8:29:48:3E:E3:B2": return "\uD83C\uDFE0\u25C9"
+            case "3C:A6:2F:15:B1:04": return "\u260E\u25C9"
+            default: return "?\uD83C\uDFE0\u25C9"
+            }
+        default:
+            return "\uD83D\uDEDC\u25C9"
+        }
     }
 
     function usernameColor(name) {
@@ -669,11 +690,11 @@ Item {
 
             Text { text: "|"; font.pixelSize: Theme.fontTiny; color: Theme.textTertiary }
 
-            // WiFi SSID + RSSI
+            // WiFi icon + RSSI
             Text {
                 text: root.wifiSsid !== ""
-                    ? root.wifiSsid + " (" + root.wifiRssi + ")"
-                    : "WiFi:--"
+                    ? root.formatSSID(root.wifiSsid, root.wifiBssid) + " " + root.wifiRssi
+                    : root.formatSSID("", "")
                 font.pixelSize: Theme.fontTiny
                 font.weight: Font.Medium
                 color: root.wifiSsid !== "" ? Theme.rssiColor(root.wifiRssi) : Theme.textTertiary
@@ -760,7 +781,7 @@ Item {
                         property string ts: root.formatTimestamp(model.timestamp)
                         visible: ts !== ""
                         text: ts
-                        font.pixelSize: Theme.fontTiny
+                        font.pixelSize: root.settings.chatFontSize - 4
                         color: {
                             if (model.platform === "twitch") return Theme.twitch
                             if (model.platform === "youtube") return Theme.youtube
@@ -784,14 +805,14 @@ Item {
 
                     Text {
                         text: model.userName || "Anonymous"
-                        font.pixelSize: Theme.fontSmall
+                        font.pixelSize: root.settings.chatFontSize
                         font.weight: Font.Bold
                         color: root.usernameColor(model.userName || "Anonymous")
                     }
 
                     Text {
                         text: model.message || ""
-                        font.pixelSize: Theme.fontSmall
+                        font.pixelSize: root.settings.chatFontSize
                         color: Theme.textPrimary
                         elide: Text.ElideRight
                         width: parent.width - x
