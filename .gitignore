@@ -5,9 +5,8 @@ build-*/
 *.so
 *.apk
 
-# Go binaries
-wingoutd
-cmd/wingoutd/wingoutd
+# Go binaries (root-level only)
+/wingoutd
 
 # IDE
 .idea/
