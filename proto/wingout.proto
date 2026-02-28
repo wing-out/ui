@@ -1,0 +1,1507 @@
+syntax = "proto3";
+package wingout;
+option go_package = "github.com/xaionaro-go/wingout2/pkg/api";
+
+service WingOutService {
+  // Health
+  rpc Ping(PingRequest) returns (PingReply) {}
+
+  // FFStream: Monitoring
+  rpc GetStats(GetStatsRequest) returns (GetStatsReply) {}
+  rpc GetBitRates(GetBitRatesRequest) returns (GetBitRatesReply) {}
+  rpc GetLatencies(GetLatenciesRequest) returns (GetLatenciesReply) {}
+  rpc GetInputQuality(GetInputQualityRequest) returns (GetInputQualityReply) {}
+  rpc GetOutputQuality(GetOutputQualityRequest) returns (GetOutputQualityReply) {}
+  rpc GetFPSFraction(GetFPSFractionRequest) returns (GetFPSFractionReply) {}
+  rpc SetFPSFraction(SetFPSFractionRequest) returns (SetFPSFractionReply) {}
+  rpc InjectSubtitles(InjectSubtitlesRequest) returns (InjectSubtitlesReply) {}
+  rpc InjectData(InjectDataRequest) returns (InjectDataReply) {}
+
+  // StreamD: Config
+  rpc GetConfig(GetConfigRequest) returns (GetConfigReply) {}
+  rpc SetConfig(SetConfigRequest) returns (SetConfigReply) {}
+  rpc SaveConfig(SaveConfigRequest) returns (SaveConfigReply) {}
+  rpc SubscribeToConfigChanges(SubscribeToConfigChangesRequest) returns (stream ConfigChangeEvent) {}
+
+  // StreamD: Stream Control
+  rpc GetStreamStatus(GetStreamStatusRequest) returns (GetStreamStatusReply) {}
+  rpc ListStreamForwards(ListStreamForwardsRequest) returns (ListStreamForwardsReply) {}
+  rpc ListStreamServers(ListStreamServersRequest) returns (ListStreamServersReply) {}
+  rpc ListStreamPlayers(ListStreamPlayersRequest) returns (ListStreamPlayersReply) {}
+  rpc ListProfiles(ListProfilesRequest) returns (ListProfilesReply) {}
+
+  // StreamD: Chat
+  rpc SubscribeToChatMessages(SubscribeToChatMessagesRequest) returns (stream ChatMessageProto) {}
+
+  // Backend
+  rpc GetBackendMode(GetBackendModeRequest) returns (GetBackendModeReply) {}
+
+  // StreamD: Logging
+  rpc SetLoggingLevel(SetLoggingLevelRequest) returns (SetLoggingLevelReply) {}
+  rpc GetLoggingLevel(GetLoggingLevelRequest) returns (GetLoggingLevelReply) {}
+
+  // StreamD: Cache
+  rpc ResetCache(ResetCacheRequest) returns (ResetCacheReply) {}
+  rpc InitCache(InitCacheRequest) returns (InitCacheReply) {}
+
+  // StreamD: Stream Lifecycle
+  rpc SetStreamActive(SetStreamActiveRequest) returns (SetStreamActiveReply) {}
+  rpc GetStreams(GetStreamsRequest) returns (GetStreamsReply) {}
+  rpc CreateStream(CreateStreamRequest) returns (CreateStreamReply) {}
+  rpc DeleteStream(DeleteStreamRequest) returns (DeleteStreamReply) {}
+  rpc GetActiveStreamIDs(GetActiveStreamIDsRequest) returns (GetActiveStreamIDsReply) {}
+  rpc StartStream(StartStreamRequest) returns (StartStreamReply) {}
+  rpc EndStream(EndStreamRequest) returns (EndStreamReply) {}
+  rpc SubscribeToStreamsChanges(SubscribeToStreamsChangesRequest) returns (stream StreamChangeEvent) {}
+
+  // StreamD: Accounts/Platforms
+  rpc GetAccounts(GetAccountsRequest) returns (GetAccountsReply) {}
+  rpc IsBackendEnabled(IsBackendEnabledRequest) returns (IsBackendEnabledReply) {}
+  rpc GetBackendInfo(GetBackendInfoRequest) returns (GetBackendInfoReply) {}
+  rpc GetPlatforms(GetPlatformsRequest) returns (GetPlatformsReply) {}
+
+  // StreamD: Stream Metadata
+  rpc SetTitle(SetTitleRequest) returns (SetTitleReply) {}
+  rpc SetDescription(SetDescriptionRequest) returns (SetDescriptionReply) {}
+
+  // StreamD: Profiles
+  rpc ApplyProfile(ApplyProfileRequest) returns (ApplyProfileReply) {}
+
+  // StreamD: Variables
+  rpc GetVariable(GetVariableRequest) returns (GetVariableReply) {}
+  rpc GetVariableHash(GetVariableHashRequest) returns (GetVariableHashReply) {}
+  rpc SetVariable(SetVariableRequest) returns (SetVariableReply) {}
+  rpc SubscribeToVariable(SubscribeToVariableRequest) returns (stream VariableChangeEvent) {}
+
+  // StreamD: OAuth
+  rpc SubscribeToOAuthRequests(SubscribeToOAuthRequestsRequest) returns (stream OAuthRequestEvent) {}
+  rpc SubmitOAuthCode(SubmitOAuthCodeRequest) returns (SubmitOAuthCodeReply) {}
+
+  // StreamD: Stream Servers
+  rpc StartStreamServer(StartStreamServerRequest) returns (StartStreamServerReply) {}
+  rpc StopStreamServer(StopStreamServerRequest) returns (StopStreamServerReply) {}
+  rpc SubscribeToStreamServersChanges(SubscribeToStreamServersChangesRequest) returns (stream StreamServerChangeEvent) {}
+
+  // StreamD: Stream Sources
+  rpc ListStreamSources(ListStreamSourcesRequest) returns (ListStreamSourcesReply) {}
+  rpc AddStreamSource(AddStreamSourceRequest) returns (AddStreamSourceReply) {}
+  rpc RemoveStreamSource(RemoveStreamSourceRequest) returns (RemoveStreamSourceReply) {}
+  rpc SubscribeToStreamSourcesChanges(SubscribeToStreamSourcesChangesRequest) returns (stream StreamSourceChangeEvent) {}
+
+  // StreamD: Stream Sinks
+  rpc ListStreamSinks(ListStreamSinksRequest) returns (ListStreamSinksReply) {}
+  rpc AddStreamSink(AddStreamSinkRequest) returns (AddStreamSinkReply) {}
+  rpc UpdateStreamSink(UpdateStreamSinkRequest) returns (UpdateStreamSinkReply) {}
+  rpc GetStreamSinkConfig(GetStreamSinkConfigRequest) returns (GetStreamSinkConfigReply) {}
+  rpc RemoveStreamSink(RemoveStreamSinkRequest) returns (RemoveStreamSinkReply) {}
+  rpc SubscribeToStreamSinksChanges(SubscribeToStreamSinksChangesRequest) returns (stream StreamSinkChangeEvent) {}
+
+  // StreamD: Stream Forwards CRUD
+  rpc AddStreamForward(AddStreamForwardRequest) returns (AddStreamForwardReply) {}
+  rpc UpdateStreamForward(UpdateStreamForwardRequest) returns (UpdateStreamForwardReply) {}
+  rpc RemoveStreamForward(RemoveStreamForwardRequest) returns (RemoveStreamForwardReply) {}
+  rpc SubscribeToStreamForwardsChanges(SubscribeToStreamForwardsChangesRequest) returns (stream StreamForwardChangeEvent) {}
+
+  // StreamD: Stream Publisher
+  rpc WaitForStreamPublisher(WaitForStreamPublisherRequest) returns (WaitForStreamPublisherReply) {}
+
+  // StreamD: Stream Players CRUD
+  rpc AddStreamPlayer(AddStreamPlayerRequest) returns (AddStreamPlayerReply) {}
+  rpc RemoveStreamPlayer(RemoveStreamPlayerRequest) returns (RemoveStreamPlayerReply) {}
+  rpc UpdateStreamPlayer(UpdateStreamPlayerRequest) returns (UpdateStreamPlayerReply) {}
+  rpc GetStreamPlayer(GetStreamPlayerRequest) returns (GetStreamPlayerReply) {}
+  rpc SubscribeToStreamPlayersChanges(SubscribeToStreamPlayersChangesRequest) returns (stream StreamPlayerChangeEvent) {}
+
+  // StreamD: Player Control
+  rpc StreamPlayerOpen(StreamPlayerOpenRequest) returns (StreamPlayerOpenReply) {}
+  rpc StreamPlayerProcessTitle(StreamPlayerProcessTitleRequest) returns (StreamPlayerProcessTitleReply) {}
+  rpc StreamPlayerGetLink(StreamPlayerGetLinkRequest) returns (StreamPlayerGetLinkReply) {}
+  rpc StreamPlayerEndChan(StreamPlayerEndChanRequest) returns (stream StreamPlayerEndEvent) {}
+  rpc StreamPlayerIsEnded(StreamPlayerIsEndedRequest) returns (StreamPlayerIsEndedReply) {}
+  rpc StreamPlayerGetPosition(StreamPlayerGetPositionRequest) returns (StreamPlayerGetPositionReply) {}
+  rpc StreamPlayerGetLength(StreamPlayerGetLengthRequest) returns (StreamPlayerGetLengthReply) {}
+  rpc StreamPlayerGetLag(StreamPlayerGetLagRequest) returns (StreamPlayerGetLagReply) {}
+  rpc StreamPlayerSetSpeed(StreamPlayerSetSpeedRequest) returns (StreamPlayerSetSpeedReply) {}
+  rpc StreamPlayerGetSpeed(StreamPlayerGetSpeedRequest) returns (StreamPlayerGetSpeedReply) {}
+  rpc StreamPlayerSetPause(StreamPlayerSetPauseRequest) returns (StreamPlayerSetPauseReply) {}
+  rpc StreamPlayerStop(StreamPlayerStopRequest) returns (StreamPlayerStopReply) {}
+  rpc StreamPlayerClose(StreamPlayerCloseRequest) returns (StreamPlayerCloseReply) {}
+
+  // StreamD: Timers
+  rpc AddTimer(AddTimerRequest) returns (AddTimerReply) {}
+  rpc RemoveTimer(RemoveTimerRequest) returns (RemoveTimerReply) {}
+  rpc ListTimers(ListTimersRequest) returns (ListTimersReply) {}
+
+  // StreamD: Trigger Rules
+  rpc ListTriggerRules(ListTriggerRulesRequest) returns (ListTriggerRulesReply) {}
+  rpc AddTriggerRule(AddTriggerRuleRequest) returns (AddTriggerRuleReply) {}
+  rpc RemoveTriggerRule(RemoveTriggerRuleRequest) returns (RemoveTriggerRuleReply) {}
+  rpc UpdateTriggerRule(UpdateTriggerRuleRequest) returns (UpdateTriggerRuleReply) {}
+
+  // StreamD: Events
+  rpc SubmitEvent(SubmitEventRequest) returns (SubmitEventReply) {}
+
+  // StreamD: Chat Management
+  rpc SendChatMessage(SendChatMessageRequest) returns (SendChatMessageReply) {}
+  rpc InjectPlatformEvent(InjectPlatformEventRequest) returns (InjectPlatformEventReply) {}
+  rpc RemoveChatMessage(RemoveChatMessageRequest) returns (RemoveChatMessageReply) {}
+  rpc BanUser(BanUserRequest) returns (BanUserReply) {}
+
+  // StreamD: Social
+  rpc Shoutout(ShoutoutRequest) returns (ShoutoutReply) {}
+  rpc RaidTo(RaidToRequest) returns (RaidToReply) {}
+  rpc GetPeerIDs(GetPeerIDsRequest) returns (GetPeerIDsReply) {}
+
+  // StreamD: AI
+  rpc LLMGenerate(LLMGenerateRequest) returns (LLMGenerateReply) {}
+
+  // StreamD: System
+  rpc Restart(RestartRequest) returns (RestartReply) {}
+  rpc EXPERIMENTAL_ReinitStreamControllers(ReinitStreamControllersRequest) returns (ReinitStreamControllersReply) {}
+
+  // FFStream: Extended
+  rpc FFSetLoggingLevel(FFSetLoggingLevelRequest) returns (FFSetLoggingLevelReply) {}
+  rpc RemoveOutput(RemoveOutputRequest) returns (RemoveOutputReply) {}
+  rpc GetCurrentOutput(GetCurrentOutputRequest) returns (GetCurrentOutputReply) {}
+  rpc SwitchOutputByProps(SwitchOutputByPropsRequest) returns (SwitchOutputByPropsReply) {}
+  rpc GetOutputSRTStats(GetOutputSRTStatsRequest) returns (GetOutputSRTStatsReply) {}
+  rpc GetSRTFlagInt(GetSRTFlagIntRequest) returns (GetSRTFlagIntReply) {}
+  rpc SetSRTFlagInt(SetSRTFlagIntRequest) returns (SetSRTFlagIntReply) {}
+  rpc FFWaitChan(FFWaitChanRequest) returns (stream FFWaitEvent) {}
+  rpc FFEnd(FFEndRequest) returns (FFEndReply) {}
+  rpc GetPipelines(GetPipelinesRequest) returns (GetPipelinesReply) {}
+  rpc GetVideoAutoBitRateConfig(GetVideoAutoBitRateConfigRequest) returns (GetVideoAutoBitRateConfigReply) {}
+  rpc SetVideoAutoBitRateConfig(SetVideoAutoBitRateConfigRequest) returns (SetVideoAutoBitRateConfigReply) {}
+  rpc GetVideoAutoBitRateCalculator(GetVideoAutoBitRateCalculatorRequest) returns (GetVideoAutoBitRateCalculatorReply) {}
+  rpc SetVideoAutoBitRateCalculator(SetVideoAutoBitRateCalculatorRequest) returns (SetVideoAutoBitRateCalculatorReply) {}
+  rpc FFMonitor(FFMonitorRequest) returns (stream FFMonitorEvent) {}
+  rpc GetInputsInfo(GetInputsInfoRequest) returns (GetInputsInfoReply) {}
+  rpc SetInputCustomOption(SetInputCustomOptionRequest) returns (SetInputCustomOptionReply) {}
+  rpc SetStopInput(SetStopInputRequest) returns (SetStopInputReply) {}
+
+  // Diagnostics
+  rpc InjectDiagnostics(InjectDiagnosticsRequest) returns (InjectDiagnosticsReply) {}
+
+  // Backend Addresses
+  rpc SetBackendAddresses(SetBackendAddressesRequest) returns (SetBackendAddressesReply) {}
+  rpc GetBackendAddresses(GetBackendAddressesRequest) returns (GetBackendAddressesReply) {}
+}
+
+// ========================================================================
+// Enums
+// ========================================================================
+
+enum LoggingLevel {
+  LOGGING_LEVEL_NONE = 0;
+  LOGGING_LEVEL_FATAL = 1;
+  LOGGING_LEVEL_PANIC = 2;
+  LOGGING_LEVEL_ERROR = 3;
+  LOGGING_LEVEL_WARNING = 4;
+  LOGGING_LEVEL_INFO = 5;
+  LOGGING_LEVEL_DEBUG = 6;
+  LOGGING_LEVEL_TRACE = 7;
+}
+
+enum Capability {
+  CAPABILITY_UNDEFINED = 0;
+  CAPABILITY_SEND_CHAT_MESSAGE = 1;
+  CAPABILITY_DELETE_CHAT_MESSAGE = 2;
+  CAPABILITY_BAN_USER = 3;
+  CAPABILITY_SHOUTOUT = 4;
+  CAPABILITY_IS_CHANNEL_STREAMING = 5;
+  CAPABILITY_RAID = 6;
+}
+
+enum StreamServerType {
+  STREAM_SERVER_TYPE_UNDEFINED = 0;
+  STREAM_SERVER_TYPE_RTSP = 1;
+  STREAM_SERVER_TYPE_RTMP = 2;
+  STREAM_SERVER_TYPE_SRT = 3;
+}
+
+enum StreamSinkType {
+  STREAM_SINK_TYPE_UNDEFINED = 0;
+  STREAM_SINK_TYPE_CUSTOM = 1;
+  STREAM_SINK_TYPE_LOOPBACK = 2;
+  STREAM_SINK_TYPE_EXTERNAL_PLATFORM = 3;
+}
+
+enum AudioCodec {
+  AUDIO_CODEC_COPY = 0;
+  AUDIO_CODEC_AAC = 1;
+  AUDIO_CODEC_VORBIS = 2;
+  AUDIO_CODEC_OPUS = 3;
+}
+
+enum VideoCodec {
+  VIDEO_CODEC_COPY = 0;
+  VIDEO_CODEC_H264 = 1;
+  VIDEO_CODEC_HEVC = 2;
+  VIDEO_CODEC_AV1 = 3;
+}
+
+enum PlayerType {
+  PLAYER_TYPE_AUTO = 0;
+  PLAYER_TYPE_LIBVLC = 1;
+  PLAYER_TYPE_MPV = 2;
+}
+
+enum EventType {
+  EVENT_TYPE_UNDEFINED = 0;
+  EVENT_TYPE_WINDOW_FOCUS_CHANGE = 1;
+  EVENT_TYPE_OBS_SCENE_CHANGE = 2;
+}
+
+enum TextFormatType {
+  TEXT_FORMAT_UNDEFINED = 0;
+  TEXT_FORMAT_PLAIN = 1;
+  TEXT_FORMAT_MARKDOWN = 2;
+  TEXT_FORMAT_HTML = 3;
+}
+
+enum HashType {
+  HASH_SHA1 = 0;
+}
+
+enum SRTFlagInt {
+  SRT_FLAG_INT_UNDEFINED = 0;
+  SRT_FLAG_INT_LATENCY = 1;
+}
+
+enum PlatformID {
+  PLATFORM_ID_UNDEFINED = 0;
+  PLATFORM_ID_KICK = 1;
+  PLATFORM_ID_TWITCH = 2;
+  PLATFORM_ID_YOUTUBE = 3;
+}
+
+enum PlatformEventType {
+  PLATFORM_EVENT_TYPE_UNDEFINED = 0;
+  PLATFORM_EVENT_TYPE_CHAT_MESSAGE = 1;
+  PLATFORM_EVENT_TYPE_CHEER = 2;
+  PLATFORM_EVENT_TYPE_AD_BREAK = 3;
+  PLATFORM_EVENT_TYPE_FOLLOW = 4;
+  PLATFORM_EVENT_TYPE_STREAM_ONLINE = 5;
+  PLATFORM_EVENT_TYPE_STREAM_OFFLINE = 6;
+  PLATFORM_EVENT_TYPE_SUBSCRIPTION_NEW = 7;
+  PLATFORM_EVENT_TYPE_SUBSCRIPTION_RENEWED = 8;
+  PLATFORM_EVENT_TYPE_GIFTED_SUBSCRIPTION = 9;
+  PLATFORM_EVENT_TYPE_RAID = 10;
+  PLATFORM_EVENT_TYPE_SHOUTOUT_RECEIVE = 11;
+  PLATFORM_EVENT_TYPE_BAN = 12;
+  PLATFORM_EVENT_TYPE_AUTOMOD_HOLD = 13;
+  PLATFORM_EVENT_TYPE_OTHER = 14;
+}
+
+enum Currency {
+  CURRENCY_UNDEFINED = 0;
+  CURRENCY_USD = 1;
+  CURRENCY_EUR = 2;
+  CURRENCY_GBP = 3;
+  CURRENCY_JPY = 4;
+  CURRENCY_TWITCH_BITS = 5;
+  CURRENCY_OTHER = 6;
+}
+
+// ========================================================================
+// Existing messages (Health)
+// ========================================================================
+
+message PingRequest { string payload = 1; }
+message PingReply { string payload = 1; }
+
+// ========================================================================
+// Existing messages (FFStream: Stats)
+// ========================================================================
+
+message GetStatsRequest {}
+message GetStatsReply {
+  uint64 received_packets = 1;
+  uint64 received_frames = 2;
+  uint64 processed_packets = 3;
+  uint64 processed_frames = 4;
+  uint64 sent_packets = 5;
+  uint64 sent_frames = 6;
+}
+
+// ========================================================================
+// Existing messages (FFStream: BitRates)
+// ========================================================================
+
+message BitRateInfoProto {
+  uint64 audio = 1;
+  uint64 video = 2;
+  uint64 other = 3;
+}
+message GetBitRatesRequest {}
+message GetBitRatesReply {
+  BitRateInfoProto input_bit_rate = 1;
+  BitRateInfoProto encoded_bit_rate = 2;
+  BitRateInfoProto output_bit_rate = 3;
+}
+
+// ========================================================================
+// Existing messages (FFStream: Latencies)
+// ========================================================================
+
+message TrackLatenciesProto {
+  uint64 pre_transcoding_us = 1;
+  uint64 transcoding_us = 2;
+  uint64 transcoded_pre_send_us = 3;
+  uint64 sending_us = 4;
+}
+message GetLatenciesRequest {}
+message GetLatenciesReply {
+  TrackLatenciesProto audio = 1;
+  TrackLatenciesProto video = 2;
+}
+
+// ========================================================================
+// Existing messages (FFStream: Quality)
+// ========================================================================
+
+message StreamQualityProto {
+  double continuity = 1;
+  double overlap = 2;
+  double frame_rate = 3;
+  uint64 invalid_dts = 4;
+}
+message GetInputQualityRequest {}
+message GetInputQualityReply {
+  StreamQualityProto audio = 1;
+  StreamQualityProto video = 2;
+}
+message GetOutputQualityRequest {}
+message GetOutputQualityReply {
+  StreamQualityProto audio = 1;
+  StreamQualityProto video = 2;
+}
+
+// ========================================================================
+// Existing messages (FFStream: FPS)
+// ========================================================================
+
+message GetFPSFractionRequest {}
+message GetFPSFractionReply {
+  uint32 num = 1;
+  uint32 den = 2;
+}
+message SetFPSFractionRequest {
+  uint32 num = 1;
+  uint32 den = 2;
+}
+message SetFPSFractionReply {}
+
+// ========================================================================
+// Existing messages (FFStream: Injection)
+// ========================================================================
+
+message InjectSubtitlesRequest {
+  bytes data = 1;
+  uint64 duration_ns = 2;
+}
+message InjectSubtitlesReply {}
+message InjectDataRequest {
+  bytes data = 1;
+  uint64 duration_ns = 2;
+}
+message InjectDataReply {}
+
+// ========================================================================
+// Existing messages (StreamD: Config)
+// ========================================================================
+
+message GetConfigRequest {}
+message GetConfigReply { string config = 1; }
+message SetConfigRequest { string config = 1; }
+message SetConfigReply {}
+message SaveConfigRequest {}
+message SaveConfigReply {}
+
+// ========================================================================
+// Existing messages (StreamD: Stream Status)
+// ========================================================================
+
+message GetStreamStatusRequest {
+  string platform_id = 1;
+  string account_id = 2;
+  string stream_id = 3;
+  bool no_cache = 4;
+}
+message GetStreamStatusReply {
+  bool is_active = 1;
+  optional int64 started_at = 2;
+  optional uint64 viewers_count = 3;
+}
+
+// ========================================================================
+// Existing messages (StreamD: Forwards)
+// ========================================================================
+
+message StreamForwardProto {
+  string source_id = 1;
+  string sink_id = 2;
+  string sink_type = 3;
+  bool enabled = 4;
+}
+message ListStreamForwardsRequest {}
+message ListStreamForwardsReply {
+  repeated StreamForwardProto forwards = 1;
+}
+
+// ========================================================================
+// Existing messages (StreamD: Servers)
+// ========================================================================
+
+message StreamServerProto {
+  string id = 1;
+  string type = 2;
+  string listen_addr = 3;
+}
+message ListStreamServersRequest {}
+message ListStreamServersReply {
+  repeated StreamServerProto servers = 1;
+}
+
+// ========================================================================
+// Existing messages (StreamD: Players)
+// ========================================================================
+
+message StreamPlayerProto {
+  string id = 1;
+  string title = 2;
+  string link = 3;
+  double position = 4;
+  double length = 5;
+  bool is_paused = 6;
+  PlayerType player_type = 7;
+  double speed = 8;
+}
+message ListStreamPlayersRequest {}
+message ListStreamPlayersReply {
+  repeated StreamPlayerProto players = 1;
+}
+
+// ========================================================================
+// Existing messages (StreamD: Profiles)
+// ========================================================================
+
+message ProfileProto {
+  string name = 1;
+  string description = 2;
+}
+message ListProfilesRequest {}
+message ListProfilesReply {
+  repeated ProfileProto profiles = 1;
+}
+
+// ========================================================================
+// Existing messages (StreamD: Chat) - updated with full event data
+// ========================================================================
+
+message SubscribeToChatMessagesRequest {
+  int64 since_unix_nano = 1;
+  int32 limit = 2;
+}
+message ChatMessageProto {
+  string id = 1;
+  string platform = 2;
+  string user_name = 3;
+  string message = 4;
+  int64 timestamp = 5;
+  ChatEventProto event = 6;
+}
+
+// ========================================================================
+// Existing messages (Backend)
+// ========================================================================
+
+message GetBackendModeRequest {}
+message GetBackendModeReply { string mode = 1; }
+
+// ========================================================================
+// Shared complex message types
+// ========================================================================
+
+// Stream ID
+message StreamIDFullyQualifiedProto {
+  string platform_id = 1;
+  string account_id = 2;
+  string stream_id = 3;
+}
+
+// Account info
+message AccountInfoProto {
+  string platform_id = 1;
+  string account_id = 2;
+  bool is_enabled = 3;
+}
+
+// Stream info
+message StreamInfoProto {
+  StreamIDFullyQualifiedProto id = 1;
+  bool is_active = 2;
+  string title = 3;
+  string description = 4;
+}
+
+// Stream source
+message StreamSourceProto {
+  string id = 1;
+  string url = 2;
+  bool is_active = 3;
+}
+
+// Stream sink
+message StreamSinkProto {
+  string id = 1;
+  StreamSinkType sink_type = 2;
+  string url = 3;
+  EncoderConfigProto encoder_config = 4;
+}
+
+// Stream sink config
+message StreamSinkConfigProto {
+  string url = 1;
+  EncoderConfigProto encoder = 2;
+}
+
+// Encoder config
+message EncoderConfigProto {
+  AudioCodec audio_codec = 1;
+  VideoCodec video_codec = 2;
+  uint64 audio_bitrate = 3;
+  uint64 video_bitrate = 4;
+  uint32 video_width = 5;
+  uint32 video_height = 6;
+}
+
+// Stream forward quirks
+message StreamForwardQuirksProto {
+  bool restart_on_error = 1;
+  uint32 platform_recognition_wait_seconds = 2;
+}
+
+// Stream forward detail (extended version with quirks)
+message StreamForwardDetailProto {
+  string source_id = 1;
+  string sink_id = 2;
+  StreamSinkType sink_type = 3;
+  bool enabled = 4;
+  StreamForwardQuirksProto quirks = 5;
+}
+
+// Timer
+message TimerProto {
+  string id = 1;
+  uint32 interval_seconds = 2;
+  ActionProto action = 3;
+}
+
+// Action
+message ActionProto {
+  string type = 1;
+  map<string, string> params = 2;
+}
+
+// Trigger rule
+message TriggerRuleProto {
+  string id = 1;
+  EventQueryProto event_query = 2;
+  ActionProto action = 3;
+  bool enabled = 4;
+}
+
+// Event query
+message EventQueryProto {
+  EventType event_type = 1;
+  string filter = 2;
+}
+
+// Event
+message EventProto {
+  EventType type = 1;
+  bytes data = 2;
+}
+
+// Chat types
+message ChatEventProto {
+  string id = 1;
+  int64 created_at_unix_nano = 2;
+  PlatformEventType event_type = 3;
+  PlatformID platform = 4;
+  ChatUserProto user = 5;
+  ChatUserProto target_user = 6;
+  ChatMessageContentProto message = 7;
+  MoneyProto money = 8;
+}
+
+message ChatUserProto {
+  string id = 1;
+  string slug = 2;
+  string name = 3;
+  string name_readable = 4;
+}
+
+message ChatMessageContentProto {
+  string content = 1;
+  TextFormatType format_type = 2;
+  string in_reply_to = 3;
+}
+
+message MoneyProto {
+  Currency currency = 1;
+  double amount = 2;
+}
+
+// TLS types
+message TLSCertificateProto {
+  string cert_pem = 1;
+}
+
+message PrivateKeyProto {
+  string key_pem = 1;
+}
+
+// ========================================================================
+// Streaming event types (for server-streaming RPCs)
+// ========================================================================
+
+message ConfigChangeEvent {
+  string config = 1;
+}
+
+message StreamChangeEvent {
+  StreamInfoProto stream = 1;
+}
+
+message StreamServerChangeEvent {
+  StreamServerProto server = 1;
+}
+
+message StreamSourceChangeEvent {
+  StreamSourceProto source = 1;
+}
+
+message StreamSinkChangeEvent {
+  StreamSinkProto sink = 1;
+}
+
+message StreamForwardChangeEvent {
+  StreamForwardProto forward = 1;
+}
+
+message StreamPlayerChangeEvent {
+  StreamPlayerProto player = 1;
+}
+
+message StreamPlayerEndEvent {
+  string player_id = 1;
+}
+
+message VariableChangeEvent {
+  string key = 1;
+  bytes value = 2;
+}
+
+message OAuthRequestEvent {
+  string request_id = 1;
+  string auth_url = 2;
+  string platform_id = 3;
+}
+
+// ========================================================================
+// StreamD: Logging
+// ========================================================================
+
+message SetLoggingLevelRequest {
+  LoggingLevel level = 1;
+}
+message SetLoggingLevelReply {}
+
+message GetLoggingLevelRequest {}
+message GetLoggingLevelReply {
+  LoggingLevel level = 1;
+}
+
+// ========================================================================
+// StreamD: Config extensions
+// ========================================================================
+
+message SubscribeToConfigChangesRequest {}
+
+// ========================================================================
+// StreamD: Cache
+// ========================================================================
+
+message ResetCacheRequest {}
+message ResetCacheReply {}
+
+message InitCacheRequest {}
+message InitCacheReply {}
+
+// ========================================================================
+// StreamD: Stream Lifecycle
+// ========================================================================
+
+message SetStreamActiveRequest {
+  StreamIDFullyQualifiedProto stream_id = 1;
+  bool active = 2;
+}
+message SetStreamActiveReply {}
+
+message GetStreamsRequest {}
+message GetStreamsReply {
+  repeated StreamInfoProto streams = 1;
+}
+
+message CreateStreamRequest {
+  string platform_id = 1;
+  string title = 2;
+  string description = 3;
+  string profile = 4;
+}
+message CreateStreamReply {
+  StreamIDFullyQualifiedProto stream_id = 1;
+}
+
+message DeleteStreamRequest {
+  StreamIDFullyQualifiedProto stream_id = 1;
+}
+message DeleteStreamReply {}
+
+message GetActiveStreamIDsRequest {}
+message GetActiveStreamIDsReply {
+  repeated StreamIDFullyQualifiedProto stream_ids = 1;
+}
+
+message StartStreamRequest {
+  string platform_id = 1;
+  string profile_name = 2;
+}
+message StartStreamReply {}
+
+message EndStreamRequest {
+  string platform_id = 1;
+}
+message EndStreamReply {}
+
+message SubscribeToStreamsChangesRequest {}
+
+// ========================================================================
+// StreamD: Accounts/Platforms
+// ========================================================================
+
+message GetAccountsRequest {}
+message GetAccountsReply {
+  repeated AccountInfoProto accounts = 1;
+}
+
+message IsBackendEnabledRequest {
+  string platform_id = 1;
+}
+message IsBackendEnabledReply {
+  bool enabled = 1;
+}
+
+message GetBackendInfoRequest {
+  string platform_id = 1;
+}
+message GetBackendInfoReply {
+  string platform_id = 1;
+  repeated Capability capabilities = 2;
+}
+
+message GetPlatformsRequest {}
+message GetPlatformsReply {
+  repeated string platform_ids = 1;
+}
+
+// ========================================================================
+// StreamD: Stream Metadata
+// ========================================================================
+
+message SetTitleRequest {
+  string platform_id = 1;
+  string title = 2;
+}
+message SetTitleReply {}
+
+message SetDescriptionRequest {
+  string platform_id = 1;
+  string description = 2;
+}
+message SetDescriptionReply {}
+
+// ========================================================================
+// StreamD: Profiles (apply)
+// ========================================================================
+
+message ApplyProfileRequest {
+  string profile_name = 1;
+}
+message ApplyProfileReply {}
+
+// ========================================================================
+// StreamD: Variables
+// ========================================================================
+
+message GetVariableRequest {
+  string key = 1;
+}
+message GetVariableReply {
+  bytes value = 1;
+}
+
+message GetVariableHashRequest {
+  string key = 1;
+  HashType hash_type = 2;
+}
+message GetVariableHashReply {
+  string hash = 1;
+}
+
+message SetVariableRequest {
+  string key = 1;
+  bytes value = 2;
+}
+message SetVariableReply {}
+
+message SubscribeToVariableRequest {
+  string key = 1;
+}
+
+// ========================================================================
+// StreamD: OAuth
+// ========================================================================
+
+message SubscribeToOAuthRequestsRequest {}
+
+message SubmitOAuthCodeRequest {
+  string request_id = 1;
+  string code = 2;
+}
+message SubmitOAuthCodeReply {}
+
+// ========================================================================
+// StreamD: Stream Servers
+// ========================================================================
+
+message StartStreamServerRequest {
+  StreamServerType server_type = 1;
+  string listen_addr = 2;
+  TLSCertificateProto tls_cert = 3;
+  PrivateKeyProto tls_key = 4;
+}
+message StartStreamServerReply {
+  string server_id = 1;
+}
+
+message StopStreamServerRequest {
+  string server_id = 1;
+}
+message StopStreamServerReply {}
+
+message SubscribeToStreamServersChangesRequest {}
+
+// ========================================================================
+// StreamD: Stream Sources
+// ========================================================================
+
+message ListStreamSourcesRequest {}
+message ListStreamSourcesReply {
+  repeated StreamSourceProto sources = 1;
+}
+
+message AddStreamSourceRequest {
+  string source_id = 1;
+  string url = 2;
+}
+message AddStreamSourceReply {}
+
+message RemoveStreamSourceRequest {
+  string source_id = 1;
+}
+message RemoveStreamSourceReply {}
+
+message SubscribeToStreamSourcesChangesRequest {}
+
+// ========================================================================
+// StreamD: Stream Sinks
+// ========================================================================
+
+message ListStreamSinksRequest {}
+message ListStreamSinksReply {
+  repeated StreamSinkProto sinks = 1;
+}
+
+message AddStreamSinkRequest {
+  string sink_id = 1;
+  StreamSinkType sink_type = 2;
+  string url = 3;
+  EncoderConfigProto encoder_config = 4;
+}
+message AddStreamSinkReply {}
+
+message UpdateStreamSinkRequest {
+  string sink_id = 1;
+  StreamSinkType sink_type = 2;
+  string url = 3;
+  EncoderConfigProto encoder_config = 4;
+}
+message UpdateStreamSinkReply {}
+
+message GetStreamSinkConfigRequest {
+  string sink_id = 1;
+}
+message GetStreamSinkConfigReply {
+  StreamSinkConfigProto config = 1;
+}
+
+message RemoveStreamSinkRequest {
+  string sink_id = 1;
+}
+message RemoveStreamSinkReply {}
+
+message SubscribeToStreamSinksChangesRequest {}
+
+// ========================================================================
+// StreamD: Stream Forwards CRUD
+// ========================================================================
+
+message AddStreamForwardRequest {
+  string source_id = 1;
+  string sink_id = 2;
+  bool enabled = 3;
+  StreamForwardQuirksProto quirks = 4;
+}
+message AddStreamForwardReply {}
+
+message UpdateStreamForwardRequest {
+  string source_id = 1;
+  string sink_id = 2;
+  bool enabled = 3;
+  StreamForwardQuirksProto quirks = 4;
+}
+message UpdateStreamForwardReply {}
+
+message RemoveStreamForwardRequest {
+  string source_id = 1;
+  string sink_id = 2;
+}
+message RemoveStreamForwardReply {}
+
+message SubscribeToStreamForwardsChangesRequest {}
+
+// ========================================================================
+// StreamD: Stream Publisher
+// ========================================================================
+
+message WaitForStreamPublisherRequest {
+  string source_id = 1;
+}
+message WaitForStreamPublisherReply {}
+
+// ========================================================================
+// StreamD: Stream Players CRUD
+// ========================================================================
+
+message AddStreamPlayerRequest {
+  StreamPlayerProto player = 1;
+}
+message AddStreamPlayerReply {
+  string player_id = 1;
+}
+
+message RemoveStreamPlayerRequest {
+  string player_id = 1;
+}
+message RemoveStreamPlayerReply {}
+
+message UpdateStreamPlayerRequest {
+  StreamPlayerProto player = 1;
+}
+message UpdateStreamPlayerReply {}
+
+message GetStreamPlayerRequest {
+  string player_id = 1;
+}
+message GetStreamPlayerReply {
+  StreamPlayerProto player = 1;
+}
+
+message SubscribeToStreamPlayersChangesRequest {}
+
+// ========================================================================
+// StreamD: Player Control
+// ========================================================================
+
+message StreamPlayerOpenRequest {
+  string player_id = 1;
+  string url = 2;
+}
+message StreamPlayerOpenReply {}
+
+message StreamPlayerProcessTitleRequest {
+  string player_id = 1;
+  string title = 2;
+}
+message StreamPlayerProcessTitleReply {}
+
+message StreamPlayerGetLinkRequest {
+  string player_id = 1;
+}
+message StreamPlayerGetLinkReply {
+  string url = 1;
+}
+
+message StreamPlayerEndChanRequest {
+  string player_id = 1;
+}
+
+message StreamPlayerIsEndedRequest {
+  string player_id = 1;
+}
+message StreamPlayerIsEndedReply {
+  bool is_ended = 1;
+}
+
+message StreamPlayerGetPositionRequest {
+  string player_id = 1;
+}
+message StreamPlayerGetPositionReply {
+  double seconds = 1;
+}
+
+message StreamPlayerGetLengthRequest {
+  string player_id = 1;
+}
+message StreamPlayerGetLengthReply {
+  double seconds = 1;
+}
+
+message StreamPlayerGetLagRequest {
+  string player_id = 1;
+}
+message StreamPlayerGetLagReply {
+  double seconds = 1;
+}
+
+message StreamPlayerSetSpeedRequest {
+  string player_id = 1;
+  double speed = 2;
+}
+message StreamPlayerSetSpeedReply {}
+
+message StreamPlayerGetSpeedRequest {
+  string player_id = 1;
+}
+message StreamPlayerGetSpeedReply {
+  double speed = 1;
+}
+
+message StreamPlayerSetPauseRequest {
+  string player_id = 1;
+  bool paused = 2;
+}
+message StreamPlayerSetPauseReply {}
+
+message StreamPlayerStopRequest {
+  string player_id = 1;
+}
+message StreamPlayerStopReply {}
+
+message StreamPlayerCloseRequest {
+  string player_id = 1;
+}
+message StreamPlayerCloseReply {}
+
+// ========================================================================
+// StreamD: Timers
+// ========================================================================
+
+message AddTimerRequest {
+  TimerProto timer = 1;
+}
+message AddTimerReply {
+  string timer_id = 1;
+}
+
+message RemoveTimerRequest {
+  string timer_id = 1;
+}
+message RemoveTimerReply {}
+
+message ListTimersRequest {}
+message ListTimersReply {
+  repeated TimerProto timers = 1;
+}
+
+// ========================================================================
+// StreamD: Trigger Rules
+// ========================================================================
+
+message ListTriggerRulesRequest {}
+message ListTriggerRulesReply {
+  repeated TriggerRuleProto rules = 1;
+}
+
+message AddTriggerRuleRequest {
+  TriggerRuleProto rule = 1;
+}
+message AddTriggerRuleReply {
+  string rule_id = 1;
+}
+
+message RemoveTriggerRuleRequest {
+  string rule_id = 1;
+}
+message RemoveTriggerRuleReply {}
+
+message UpdateTriggerRuleRequest {
+  TriggerRuleProto rule = 1;
+}
+message UpdateTriggerRuleReply {}
+
+// ========================================================================
+// StreamD: Events
+// ========================================================================
+
+message SubmitEventRequest {
+  EventProto event = 1;
+}
+message SubmitEventReply {}
+
+// ========================================================================
+// StreamD: Chat Management
+// ========================================================================
+
+message SendChatMessageRequest {
+  string platform_id = 1;
+  string message = 2;
+}
+message SendChatMessageReply {}
+
+message InjectPlatformEventRequest {
+  ChatEventProto event = 1;
+}
+message InjectPlatformEventReply {}
+
+message RemoveChatMessageRequest {
+  string platform_id = 1;
+  string message_id = 2;
+}
+message RemoveChatMessageReply {}
+
+message BanUserRequest {
+  string platform_id = 1;
+  string user_id = 2;
+  string reason = 3;
+  uint64 duration_seconds = 4;
+}
+message BanUserReply {}
+
+// ========================================================================
+// StreamD: Social
+// ========================================================================
+
+message ShoutoutRequest {
+  string platform_id = 1;
+  string target_user_name = 2;
+}
+message ShoutoutReply {}
+
+message RaidToRequest {
+  string platform_id = 1;
+  string target_channel = 2;
+}
+message RaidToReply {}
+
+message GetPeerIDsRequest {}
+message GetPeerIDsReply {
+  repeated string peer_ids = 1;
+}
+
+// ========================================================================
+// StreamD: AI
+// ========================================================================
+
+message LLMGenerateRequest {
+  string prompt = 1;
+}
+message LLMGenerateReply {
+  string text = 1;
+}
+
+// ========================================================================
+// StreamD: System
+// ========================================================================
+
+message RestartRequest {}
+message RestartReply {}
+
+message ReinitStreamControllersRequest {}
+message ReinitStreamControllersReply {}
+
+// ========================================================================
+// FFStream: Extended - Logging
+// ========================================================================
+
+message FFSetLoggingLevelRequest {
+  LoggingLevel level = 1;
+}
+message FFSetLoggingLevelReply {}
+
+// ========================================================================
+// FFStream: Extended - Output
+// ========================================================================
+
+message RemoveOutputRequest {
+  string output_id = 1;
+}
+message RemoveOutputReply {}
+
+message CurrentOutputProto {
+  string output_id = 1;
+  string sender_type = 2;
+  map<string, string> props = 3;
+}
+
+message GetCurrentOutputRequest {}
+message GetCurrentOutputReply {
+  CurrentOutputProto output = 1;
+}
+
+message SwitchOutputByPropsRequest {
+  map<string, string> props = 1;
+}
+message SwitchOutputByPropsReply {}
+
+// ========================================================================
+// FFStream: Extended - SRT
+// ========================================================================
+
+message SRTStatsProto {
+  int64 pkt_sent = 1;
+  int64 pkt_received = 2;
+  int64 pkt_send_loss = 3;
+  int64 pkt_recv_loss = 4;
+  int64 pkt_retrans = 5;
+  int64 pkt_send_drop = 6;
+  int64 pkt_recv_drop = 7;
+  int64 pkt_recv_undecrypt = 8;
+  int64 pkt_send_filter_extra = 9;
+  int64 pkt_recv_filter_extra = 10;
+  int64 pkt_recv_filter_supply = 11;
+  int64 pkt_recv_filter_loss = 12;
+  int64 bytes_sent = 13;
+  int64 bytes_received = 14;
+  int64 bytes_send_drop = 15;
+  int64 bytes_recv_drop = 16;
+  int64 bytes_recv_undecrypt = 17;
+  double rtt_ms = 18;
+  double bandwidth_mbps = 19;
+  double send_rate_mbps = 20;
+  double recv_rate_mbps = 21;
+  double max_bandwidth_mbps = 22;
+  int64 pkt_flight_size = 23;
+  int64 pkt_send_buf = 24;
+  int64 pkt_recv_buf = 25;
+  int64 bytes_send_buf = 26;
+  int64 bytes_recv_buf = 27;
+  int64 ms_send_buf = 28;
+  int64 ms_recv_buf = 29;
+  int64 ms_send_tsb_pd_delay = 30;
+  int64 ms_recv_tsb_pd_delay = 31;
+  int64 pkt_reorder_distance = 32;
+  double pkt_recv_avg_belated_time = 33;
+  int64 pkt_recv_belated = 34;
+  int64 send_duration_us = 35;
+  int64 pkt_send_period_us = 36;
+  int64 pkt_flow_window = 37;
+  int64 pkt_congestion_window = 38;
+  int64 pkt_recv_avail_buf = 39;
+  int64 pkt_send_avail_buf = 40;
+}
+
+message GetOutputSRTStatsRequest {}
+message GetOutputSRTStatsReply {
+  SRTStatsProto stats = 1;
+}
+
+message GetSRTFlagIntRequest {
+  SRTFlagInt flag = 1;
+}
+message GetSRTFlagIntReply {
+  int64 value = 1;
+}
+
+message SetSRTFlagIntRequest {
+  SRTFlagInt flag = 1;
+  int64 value = 2;
+}
+message SetSRTFlagIntReply {}
+
+// ========================================================================
+// FFStream: Extended - Wait/End
+// ========================================================================
+
+message FFWaitChanRequest {}
+message FFWaitEvent {}
+
+message FFEndRequest {}
+message FFEndReply {}
+
+// ========================================================================
+// FFStream: Extended - Pipelines
+// ========================================================================
+
+message NodeProto {
+  string id = 1;
+  string type = 2;
+  string description = 3;
+}
+
+message PipelineProto {
+  string id = 1;
+  string description = 2;
+  repeated NodeProto nodes = 3;
+}
+
+message GetPipelinesRequest {}
+message GetPipelinesReply {
+  repeated PipelineProto pipelines = 1;
+}
+
+// ========================================================================
+// FFStream: Extended - Auto BitRate
+// ========================================================================
+
+message AutoBitRateVideoConfigProto {
+  uint64 min_bitrate = 1;
+  uint64 max_bitrate = 2;
+  double target_fps = 3;
+}
+
+message GetVideoAutoBitRateConfigRequest {}
+message GetVideoAutoBitRateConfigReply {
+  AutoBitRateVideoConfigProto config = 1;
+}
+
+message SetVideoAutoBitRateConfigRequest {
+  AutoBitRateVideoConfigProto config = 1;
+}
+message SetVideoAutoBitRateConfigReply {}
+
+message AutoBitRateCalculatorProto {
+  string type = 1;
+  bytes config = 2;
+}
+
+message GetVideoAutoBitRateCalculatorRequest {}
+message GetVideoAutoBitRateCalculatorReply {
+  AutoBitRateCalculatorProto calculator = 1;
+}
+
+message SetVideoAutoBitRateCalculatorRequest {
+  AutoBitRateCalculatorProto calculator = 1;
+}
+message SetVideoAutoBitRateCalculatorReply {}
+
+// ========================================================================
+// FFStream: Extended - Monitor
+// ========================================================================
+
+message FFMonitorRequest {}
+message FFMonitorEvent {
+  string event_type = 1;
+  string node_id = 2;
+  int64 timestamp = 3;
+}
+
+// ========================================================================
+// FFStream: Extended - Inputs
+// ========================================================================
+
+message InputInfoProto {
+  string id = 1;
+  uint32 priority = 2;
+  string url = 3;
+  bool is_active = 4;
+  bool is_suppressed = 5;
+}
+
+message GetInputsInfoRequest {}
+message GetInputsInfoReply {
+  repeated InputInfoProto inputs = 1;
+}
+
+message CustomOptionProto {
+  string key = 1;
+  string value = 2;
+}
+
+message SetInputCustomOptionRequest {
+  string input_id = 1;
+  CustomOptionProto option = 2;
+}
+message SetInputCustomOptionReply {}
+
+message SetStopInputRequest {
+  string input_id = 1;
+  bool stop = 2;
+}
+message SetStopInputReply {}
+
+// ========================================================================
+// Diagnostics
+// ========================================================================
+
+message TemperatureProto {
+  string type = 1;
+  float temp = 2;
+}
+
+message DiagnosticsProto {
+  optional int32 latency_pre_sending = 1;
+  optional int32 latency_sending = 2;
+  optional int32 fps_input = 3;
+  optional int32 fps_output = 4;
+  optional int64 bitrate_video = 5;
+  optional int32 player_lag_min = 6;
+  optional int32 player_lag_max = 7;
+  optional int32 ping_rtt = 8;
+  optional string wifi_ssid = 9;
+  optional string wifi_bssid = 10;
+  optional int32 wifi_rssi = 11;
+  repeated int32 channels = 12;
+  optional int32 viewers_youtube = 13;
+  optional int32 viewers_twitch = 14;
+  optional int32 viewers_kick = 15;
+  optional int32 signal = 16;
+  optional int32 stream_time = 17;
+  optional float cpu_utilization = 18;
+  optional float memory_utilization = 19;
+  repeated TemperatureProto temperatures = 20;
+}
+
+message InjectDiagnosticsRequest {
+  DiagnosticsProto diagnostics = 1;
+}
+message InjectDiagnosticsReply {}
+
+// ========================================================================
+// Backend Addresses
+// ========================================================================
+
+message SetBackendAddressesRequest {
+  string ffstream_addr = 1;
+  string streamd_addr = 2;
+}
+message SetBackendAddressesReply {}
+
+message GetBackendAddressesRequest {}
+message GetBackendAddressesReply {
+  string ffstream_addr = 1;
+  string streamd_addr = 2;
+}
