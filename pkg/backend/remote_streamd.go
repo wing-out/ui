@@ -329,6 +329,33 @@ func (r *RemoteStreamD) PlayerGetLag(ctx context.Context, playerID string) (floa
 	return float64(resp.GetLagU()) / 1e6, nil
 }
 
+// convertStreamDChatMessage converts a streamd gRPC ChatMessage to the backend ChatMessage type.
+func convertStreamDChatMessage(msg *sdgrpc.ChatMessage) ChatMessage {
+	cm := ChatMessage{
+		Platform: msg.GetPlatID(),
+	}
+	if content := msg.GetContent(); content != nil {
+		cm.EventType = content.GetEventType().String()
+		if nanos := content.GetCreatedAtUNIXNano(); nanos > 0 {
+			cm.Timestamp = int64(nanos / 1_000_000_000)
+		}
+		if user := content.GetUser(); user != nil {
+			cm.UserName = user.GetName()
+			cm.User = ChatUser{
+				ID:   user.GetId(),
+				Name: user.GetName(),
+			}
+		}
+		if mc := content.GetMessage(); mc != nil {
+			cm.Message = mc.GetContent()
+			cm.MessageContent = ChatMessageContent{
+				Content: mc.GetContent(),
+			}
+		}
+	}
+	return cm
+}
+
 func (r *RemoteStreamD) SubscribeToChatMessages(ctx context.Context, since int64, limit int32) (<-chan ChatMessage, error) {
 	stream, err := r.client.SubscribeToChatMessages(ctx, &sdgrpc.SubscribeToChatMessagesRequest{})
 	if err != nil {
@@ -342,27 +369,8 @@ func (r *RemoteStreamD) SubscribeToChatMessages(ctx context.Context, since int64
 			if err != nil {
 				return
 			}
-			cm := ChatMessage{
-				Platform: msg.GetPlatID(),
-			}
-			if content := msg.GetContent(); content != nil {
-				cm.EventType = content.GetEventType().String()
-				if user := content.GetUser(); user != nil {
-					cm.UserName = user.GetName()
-					cm.User = ChatUser{
-						ID:   user.GetId(),
-						Name: user.GetName(),
-					}
-				}
-				if mc := content.GetMessage(); mc != nil {
-					cm.Message = mc.GetContent()
-					cm.MessageContent = ChatMessageContent{
-						Content: mc.GetContent(),
-					}
-				}
-			}
 			select {
-			case ch <- cm:
+			case ch <- convertStreamDChatMessage(msg):
 			case <-ctx.Done():
 				return
 			}

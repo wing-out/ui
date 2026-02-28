@@ -485,10 +485,11 @@ func TestService_GetBackendMode(t *testing.T) {
 
 func TestService_SubscribeToChatMessages(t *testing.T) {
 	sd := backend.NewMockStreamD()
+	ts := time.Now().Unix()
 	sd.SubscribeToChatMessagesFunc = func(ctx context.Context, since int64, limit int32) (<-chan backend.ChatMessage, error) {
 		ch := make(chan backend.ChatMessage, 3)
-		ch <- backend.ChatMessage{ID: "1", Platform: "twitch", UserName: "user1", Message: "hello"}
-		ch <- backend.ChatMessage{ID: "2", Platform: "youtube", UserName: "user2", Message: "hi"}
+		ch <- backend.ChatMessage{ID: "1", Platform: "twitch", UserName: "user1", Message: "hello", Timestamp: ts}
+		ch <- backend.ChatMessage{ID: "2", Platform: "youtube", UserName: "user2", Message: "hi", Timestamp: ts + 60}
 		close(ch)
 		return ch, nil
 	}
@@ -506,10 +507,12 @@ func TestService_SubscribeToChatMessages(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "twitch", msg1.GetPlatform())
 	require.Equal(t, "hello", msg1.GetMessage())
+	require.Equal(t, ts, msg1.GetTimestamp(), "chat message timestamp must be propagated")
 
 	msg2, err := stream.Recv()
 	require.NoError(t, err)
 	require.Equal(t, "youtube", msg2.GetPlatform())
+	require.Equal(t, ts+60, msg2.GetTimestamp(), "chat message timestamp must be propagated")
 }
 
 // --- StreamD: Logging ---
