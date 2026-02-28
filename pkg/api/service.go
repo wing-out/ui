@@ -28,6 +28,8 @@ type wingOutService struct {
 
 	onSetBackendAddresses SetBackendAddressesHandler
 	onGetBackendAddresses GetBackendAddressesHandler
+
+	channelQualities []*ChannelQualityEntry
 }
 
 func (s *wingOutService) getFFStream() backend.FFStreamBackend {
@@ -66,6 +68,23 @@ func (s *wingOutService) requireStreamD() error {
 		return fmt.Errorf("streamd backend is not available")
 	}
 	return nil
+}
+
+// SetChannelQuality stores channel quality values in-memory.
+func (s *wingOutService) SetChannelQuality(_ context.Context, req *SetChannelQualityRequest) (*SetChannelQualityReply, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.channelQualities = req.GetChannels()
+	return &SetChannelQualityReply{}, nil
+}
+
+// GetChannelQuality returns the current channel quality values.
+func (s *wingOutService) GetChannelQuality(_ context.Context, _ *GetChannelQualityRequest) (*GetChannelQualityReply, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return &GetChannelQualityReply{
+		Channels: s.channelQualities,
+	}, nil
 }
 
 // SetBackendAddresses handles the RPC to reconfigure backend addresses at runtime.

@@ -2037,6 +2037,53 @@ void WingOutController::setStopInput(const QString &inputId, bool stop,
 }
 
 // =========================================================================
+// Channel Quality
+// =========================================================================
+
+void WingOutController::setChannelQuality(const QVariantList &channels,
+                                            QJSValue callback, QJSValue errorCallback)
+{
+    GRPC_CHECK_CLIENT();
+
+    wingout::SetChannelQualityRequest req;
+    QList<wingout::ChannelQualityEntry> entries;
+    for (const auto &ch : channels) {
+        auto map = ch.toMap();
+        wingout::ChannelQualityEntry entry;
+        entry.setLabel(map[QStringLiteral("label")].toString());
+        entry.setQuality(map[QStringLiteral("quality")].toInt());
+        entries.append(entry);
+    }
+    req.setChannels(entries);
+
+    auto reply = std::shared_ptr<QGrpcCallReply>(m_client->SetChannelQuality(req));
+    GRPC_CONNECT_REPLY(reply, {
+        if (cb.isCallable())
+            cb.call();
+    });
+}
+
+void WingOutController::getChannelQuality(QJSValue callback, QJSValue errorCallback)
+{
+    GRPC_CHECK_CLIENT();
+
+    auto reply = std::shared_ptr<QGrpcCallReply>(m_client->GetChannelQuality(wingout::GetChannelQualityRequest{}));
+    GRPC_CONNECT_REPLY(reply, {
+        if (auto resp = reply->read<wingout::GetChannelQualityReply>()) {
+            QVariantList list;
+            for (const auto &entry : resp->channels()) {
+                QVariantMap item;
+                item[QStringLiteral("label")] = entry.label();
+                item[QStringLiteral("quality")] = static_cast<int>(entry.quality());
+                list.append(item);
+            }
+            if (cb.isCallable())
+                cb.call(QJSValueList{qjsEngine(this)->toScriptValue(list)});
+        }
+    });
+}
+
+// =========================================================================
 // Diagnostics
 // =========================================================================
 
@@ -2084,6 +2131,12 @@ void WingOutController::injectDiagnostics(const QVariantMap &diagnostics,
         diag.setCpuUtilization(diagnostics[QStringLiteral("cpuUtilization")].toFloat());
     if (diagnostics.contains(QStringLiteral("memoryUtilization")))
         diag.setMemoryUtilization(diagnostics[QStringLiteral("memoryUtilization")].toFloat());
+    if (diagnostics.contains(QStringLiteral("channels"))) {
+        QtProtobuf::int32List chList;
+        for (const auto &v : diagnostics[QStringLiteral("channels")].toList())
+            chList.append(QtProtobuf::int32(v.toInt()));
+        diag.setChannels(chList);
+    }
     req.setDiagnostics(diag);
     auto reply = std::shared_ptr<QGrpcCallReply>(m_client->InjectDiagnostics(req));
     GRPC_CONNECT_REPLY(reply, {

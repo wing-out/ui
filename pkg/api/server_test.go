@@ -3017,6 +3017,51 @@ func TestService_InjectDiagnostics_NoFFStream(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestService_ChannelQuality(t *testing.T) {
+	client, cleanup := testServer(t, nil, nil)
+	defer cleanup()
+
+	// Initially empty
+	resp, err := client.GetChannelQuality(context.Background(), &GetChannelQualityRequest{})
+	require.NoError(t, err)
+	require.Empty(t, resp.GetChannels())
+
+	// Set channel qualities
+	_, err = client.SetChannelQuality(context.Background(), &SetChannelQualityRequest{
+		Channels: []*ChannelQualityEntry{
+			{Label: "S", Quality: -5},
+			{Label: "P", Quality: 0},
+			{Label: "W", Quality: 5},
+		},
+	})
+	require.NoError(t, err)
+
+	// Get should return what we set
+	resp, err = client.GetChannelQuality(context.Background(), &GetChannelQualityRequest{})
+	require.NoError(t, err)
+	require.Len(t, resp.GetChannels(), 3)
+	require.Equal(t, "S", resp.GetChannels()[0].GetLabel())
+	require.Equal(t, int32(-5), resp.GetChannels()[0].GetQuality())
+	require.Equal(t, "P", resp.GetChannels()[1].GetLabel())
+	require.Equal(t, int32(0), resp.GetChannels()[1].GetQuality())
+	require.Equal(t, "W", resp.GetChannels()[2].GetLabel())
+	require.Equal(t, int32(5), resp.GetChannels()[2].GetQuality())
+
+	// Overwrite with different count
+	_, err = client.SetChannelQuality(context.Background(), &SetChannelQualityRequest{
+		Channels: []*ChannelQualityEntry{
+			{Label: "X", Quality: 10},
+		},
+	})
+	require.NoError(t, err)
+
+	resp, err = client.GetChannelQuality(context.Background(), &GetChannelQualityRequest{})
+	require.NoError(t, err)
+	require.Len(t, resp.GetChannels(), 1)
+	require.Equal(t, "X", resp.GetChannels()[0].GetLabel())
+	require.Equal(t, int32(10), resp.GetChannels()[0].GetQuality())
+}
+
 // --- Streaming RPC tests ---
 
 func TestService_SubscribeToStreamsChanges(t *testing.T) {

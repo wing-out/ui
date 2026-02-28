@@ -37,7 +37,7 @@ Item {
     property int wifiRssi: -32768
 
     // Channel quality
-    property var channelQualities: [-32768, -32768, -32768]
+    property var channelQualities: []
 
     // Diagnostics injection state
     property var lastDiagnostics: ({})
@@ -271,12 +271,12 @@ Item {
     }
 
     function updateChannelQualityInfo() {
-        var channelsQualityInfo = platformInstance.getChannelsQualityInfo()
-        var qualities = [-32768, -32768, -32768]
-        for (var i = 0; i < channelsQualityInfo.length && i < 3; i++) {
-            qualities[i] = channelsQualityInfo[i].quality
-        }
-        root.channelQualities = qualities
+        controller.getChannelQuality(
+            function(channels) {
+                root.channelQualities = channels || []
+            },
+            function(err) {}
+        )
     }
 
     function formatDurationMs(durationMS) {
@@ -311,7 +311,7 @@ Item {
             "wifiSsid": root.wifiSsid,
             "wifiBssid": root.wifiBssid,
             "wifiRssi": root.wifiRssi,
-            "channels": root.channelQualities,
+            "channels": root.channelQualities.map(function(ch) { return ch.quality || 0 }),
             "viewersYoutube": root.viewersYoutube,
             "viewersTwitch": root.viewersTwitch,
             "viewersKick": root.viewersKick,
@@ -680,29 +680,20 @@ Item {
                 font.weight: Font.Medium
                 color: Theme.textPrimary
                 topPadding: Theme.spacingSmall
-                visible: root.channelQualities[0] > -32768
-                         || root.channelQualities[1] > -32768
-                         || root.channelQualities[2] > -32768
+                visible: root.channelQualities.length > 0
             }
 
             Row {
                 spacing: Theme.spacingSmall
-                visible: root.channelQualities[0] > -32768
-                         || root.channelQualities[1] > -32768
-                         || root.channelQualities[2] > -32768
+                visible: root.channelQualities.length > 0
 
                 Repeater {
-                    model: [
-                        { label: "SRT", quality: root.channelQualities[0] },
-                        { label: "Primary", quality: root.channelQualities[1] },
-                        { label: "WiFi", quality: root.channelQualities[2] }
-                    ]
+                    model: root.channelQualities
                     delegate: Components.GlassCard {
                         required property var modelData
                         required property int index
-                        width: (mainColumn.width - Theme.spacingSmall * 2) / 3
+                        width: Math.max(80, (mainColumn.width - Theme.spacingSmall * (root.channelQualities.length - 1)) / root.channelQualities.length)
                         implicitHeight: chQualCol.implicitHeight + Theme.spacingMedium * 2
-                        visible: modelData.quality > -32768
 
                         Column {
                             id: chQualCol
@@ -711,15 +702,15 @@ Item {
                             spacing: Theme.spacingTiny
 
                             Text {
-                                text: modelData.label
+                                text: modelData.label || "?"
                                 font.pixelSize: Theme.fontSmall
                                 color: Theme.textSecondary
                             }
                             Text {
-                                text: modelData.quality.toString()
+                                text: (modelData.quality || 0).toString()
                                 font.pixelSize: Theme.fontHuge
                                 font.weight: Font.Bold
-                                color: root.channelQualityColor(modelData.quality)
+                                color: root.channelQualityColor(modelData.quality || 0)
                             }
                         }
                     }

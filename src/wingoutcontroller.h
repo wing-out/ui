@@ -328,6 +328,13 @@ public:
                                    QJSValue callback, QJSValue errorCallback);
 
     // =====================================================================
+    // Channel Quality
+    // =====================================================================
+    Q_INVOKABLE void setChannelQuality(const QVariantList &channels,
+                                        QJSValue callback, QJSValue errorCallback);
+    Q_INVOKABLE void getChannelQuality(QJSValue callback, QJSValue errorCallback);
+
+    // =====================================================================
     // Diagnostics
     // =====================================================================
     Q_INVOKABLE void injectDiagnostics(const QVariantMap &diagnostics,

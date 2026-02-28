@@ -138,6 +138,8 @@ const (
 	WingOutService_SetInputCustomOption_FullMethodName                 = "/wingout.WingOutService/SetInputCustomOption"
 	WingOutService_SetStopInput_FullMethodName                         = "/wingout.WingOutService/SetStopInput"
 	WingOutService_InjectDiagnostics_FullMethodName                    = "/wingout.WingOutService/InjectDiagnostics"
+	WingOutService_SetChannelQuality_FullMethodName                    = "/wingout.WingOutService/SetChannelQuality"
+	WingOutService_GetChannelQuality_FullMethodName                    = "/wingout.WingOutService/GetChannelQuality"
 	WingOutService_SetBackendAddresses_FullMethodName                  = "/wingout.WingOutService/SetBackendAddresses"
 	WingOutService_GetBackendAddresses_FullMethodName                  = "/wingout.WingOutService/GetBackendAddresses"
 )
@@ -295,6 +297,9 @@ type WingOutServiceClient interface {
 	SetStopInput(ctx context.Context, in *SetStopInputRequest, opts ...grpc.CallOption) (*SetStopInputReply, error)
 	// Diagnostics
 	InjectDiagnostics(ctx context.Context, in *InjectDiagnosticsRequest, opts ...grpc.CallOption) (*InjectDiagnosticsReply, error)
+	// Channel Quality
+	SetChannelQuality(ctx context.Context, in *SetChannelQualityRequest, opts ...grpc.CallOption) (*SetChannelQualityReply, error)
+	GetChannelQuality(ctx context.Context, in *GetChannelQualityRequest, opts ...grpc.CallOption) (*GetChannelQualityReply, error)
 	// Backend Addresses
 	SetBackendAddresses(ctx context.Context, in *SetBackendAddressesRequest, opts ...grpc.CallOption) (*SetBackendAddressesReply, error)
 	GetBackendAddresses(ctx context.Context, in *GetBackendAddressesRequest, opts ...grpc.CallOption) (*GetBackendAddressesReply, error)
@@ -1615,6 +1620,26 @@ func (c *wingOutServiceClient) InjectDiagnostics(ctx context.Context, in *Inject
 	return out, nil
 }
 
+func (c *wingOutServiceClient) SetChannelQuality(ctx context.Context, in *SetChannelQualityRequest, opts ...grpc.CallOption) (*SetChannelQualityReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetChannelQualityReply)
+	err := c.cc.Invoke(ctx, WingOutService_SetChannelQuality_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *wingOutServiceClient) GetChannelQuality(ctx context.Context, in *GetChannelQualityRequest, opts ...grpc.CallOption) (*GetChannelQualityReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetChannelQualityReply)
+	err := c.cc.Invoke(ctx, WingOutService_GetChannelQuality_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *wingOutServiceClient) SetBackendAddresses(ctx context.Context, in *SetBackendAddressesRequest, opts ...grpc.CallOption) (*SetBackendAddressesReply, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SetBackendAddressesReply)
@@ -1788,6 +1813,9 @@ type WingOutServiceServer interface {
 	SetStopInput(context.Context, *SetStopInputRequest) (*SetStopInputReply, error)
 	// Diagnostics
 	InjectDiagnostics(context.Context, *InjectDiagnosticsRequest) (*InjectDiagnosticsReply, error)
+	// Channel Quality
+	SetChannelQuality(context.Context, *SetChannelQualityRequest) (*SetChannelQualityReply, error)
+	GetChannelQuality(context.Context, *GetChannelQualityRequest) (*GetChannelQualityReply, error)
 	// Backend Addresses
 	SetBackendAddresses(context.Context, *SetBackendAddressesRequest) (*SetBackendAddressesReply, error)
 	GetBackendAddresses(context.Context, *GetBackendAddressesRequest) (*GetBackendAddressesReply, error)
@@ -2157,6 +2185,12 @@ func (UnimplementedWingOutServiceServer) SetStopInput(context.Context, *SetStopI
 }
 func (UnimplementedWingOutServiceServer) InjectDiagnostics(context.Context, *InjectDiagnosticsRequest) (*InjectDiagnosticsReply, error) {
 	return nil, status.Error(codes.Unimplemented, "method InjectDiagnostics not implemented")
+}
+func (UnimplementedWingOutServiceServer) SetChannelQuality(context.Context, *SetChannelQualityRequest) (*SetChannelQualityReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetChannelQuality not implemented")
+}
+func (UnimplementedWingOutServiceServer) GetChannelQuality(context.Context, *GetChannelQualityRequest) (*GetChannelQualityReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetChannelQuality not implemented")
 }
 func (UnimplementedWingOutServiceServer) SetBackendAddresses(context.Context, *SetBackendAddressesRequest) (*SetBackendAddressesReply, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetBackendAddresses not implemented")
@@ -4236,6 +4270,42 @@ func _WingOutService_InjectDiagnostics_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WingOutService_SetChannelQuality_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetChannelQualityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WingOutServiceServer).SetChannelQuality(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WingOutService_SetChannelQuality_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WingOutServiceServer).SetChannelQuality(ctx, req.(*SetChannelQualityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WingOutService_GetChannelQuality_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChannelQualityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WingOutServiceServer).GetChannelQuality(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WingOutService_GetChannelQuality_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WingOutServiceServer).GetChannelQuality(ctx, req.(*GetChannelQualityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _WingOutService_SetBackendAddresses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetBackendAddressesRequest)
 	if err := dec(in); err != nil {
@@ -4702,6 +4772,14 @@ var WingOutService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "InjectDiagnostics",
 			Handler:    _WingOutService_InjectDiagnostics_Handler,
+		},
+		{
+			MethodName: "SetChannelQuality",
+			Handler:    _WingOutService_SetChannelQuality_Handler,
+		},
+		{
+			MethodName: "GetChannelQuality",
+			Handler:    _WingOutService_GetChannelQuality_Handler,
 		},
 		{
 			MethodName: "SetBackendAddresses",

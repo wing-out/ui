@@ -227,15 +227,19 @@ Item {
         }
     }
 
-    // Channel quality polling
+    // Channel quality polling (from gRPC)
     Timer {
         id: channelQualityTicker
         interval: 2000
         running: true
         repeat: true
         onTriggered: {
-            var info = platformInstance.getChannelsQualityInfo()
-            root.channelQualities = info || []
+            controller.getChannelQuality(
+                function(channels) {
+                    root.channelQualities = channels || []
+                },
+                function(err) {}
+            )
         }
     }
 
@@ -269,6 +273,12 @@ Item {
                 diag.playerLagMin = Math.round(root.playerLagMs)
                 diag.playerLagMax = Math.round(root.playerLagMs)
             }
+            if (root.channelQualities.length > 0) {
+                var chs = []
+                for (var i = 0; i < root.channelQualities.length; i++)
+                    chs.push(root.channelQualities[i].quality || 0)
+                diag.channels = chs
+            }
             controller.injectDiagnostics(diag,
                 function() {},
                 function(err) {}
@@ -294,9 +304,24 @@ Item {
                 "platform": platform,
                 "userName": userName,
                 "displayName": displayName,
-                "message": text
+                "message": text,
+                "timestamp": message.timestamp || 0
             })
         }
+    }
+
+    function formatTimestamp(ts) {
+        if (!ts) return ""
+        var d = new Date(ts * 1000)
+        if (isNaN(d.getTime())) return ""
+        var fmt = root.settings.chatTimestampFormat
+        var hh = String(d.getHours()).padStart(2, '0')
+        var mm = String(d.getMinutes()).padStart(2, '0')
+        var ss = String(d.getSeconds()).padStart(2, '0')
+        if (fmt === "hh:mm:ss") return hh + ":" + mm + ":" + ss
+        if (fmt === "hh:mm") return hh + ":" + mm
+        if (fmt === "none") return ""
+        return mm
     }
 
     function usernameColor(name) {
@@ -362,17 +387,19 @@ Item {
             Layout.fillWidth: true
             spacing: Theme.spacingSmall
 
-            // Channel quality indicator dots
+            // Channel quality labeled circles (dynamic from gRPC)
             Repeater {
                 model: root.channelQualities
-                delegate: Row {
+                delegate: Rectangle {
                     required property var modelData
-                    required property int index
-                    spacing: 1
-                    Rectangle {
-                        width: 10; height: 10; radius: 5
-                        color: Theme.channelQualityColor(modelData.signal || 0)
-                        anchors.verticalCenter: parent.verticalCenter
+                    width: 14; height: 14; radius: 7
+                    color: Theme.channelQualityColor(modelData.quality || 0)
+                    Text {
+                        anchors.centerIn: parent
+                        text: (modelData.label || "?").charAt(0)
+                        font.pixelSize: 8
+                        font.weight: Font.Bold
+                        color: "#FFFFFF"
                     }
                 }
             }
@@ -386,34 +413,28 @@ Item {
             }
 
             // CPU indicator
-            Row {
-                spacing: 2
-                Rectangle {
-                    width: 10; height: 10; radius: 5
-                    color: Theme.cpuColor(platformInstance.cpuUtilization)
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+            Rectangle {
+                width: 14; height: 14; radius: 7
+                color: Theme.cpuColor(platformInstance.cpuUtilization)
                 Text {
-                    text: "C" + platformInstance.cpuUtilization.toFixed(0)
-                    font.pixelSize: Theme.fontTiny
+                    anchors.centerIn: parent
+                    text: "C"
+                    font.pixelSize: 8
                     font.weight: Font.Bold
-                    color: Theme.cpuColor(platformInstance.cpuUtilization)
+                    color: "#FFFFFF"
                 }
             }
 
             // Memory indicator
-            Row {
-                spacing: 2
-                Rectangle {
-                    width: 10; height: 10; radius: 5
-                    color: Theme.memColor(platformInstance.memoryUtilization)
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+            Rectangle {
+                width: 14; height: 14; radius: 7
+                color: Theme.memColor(platformInstance.memoryUtilization)
                 Text {
-                    text: "M" + platformInstance.memoryUtilization.toFixed(0)
-                    font.pixelSize: Theme.fontTiny
+                    anchors.centerIn: parent
+                    text: "M"
+                    font.pixelSize: 8
                     font.weight: Font.Bold
-                    color: Theme.memColor(platformInstance.memoryUtilization)
+                    color: "#FFFFFF"
                 }
             }
 
@@ -451,12 +472,18 @@ Item {
                     required property var modelData
                     spacing: 2
                     Rectangle {
-                        width: 10; height: 10; radius: 5
+                        width: 14; height: 14; radius: 7
                         color: Theme.temperatureColor(modelData.temp, modelData.sensor)
-                        anchors.verticalCenter: parent.verticalCenter
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData.label
+                            font.pixelSize: 8
+                            font.weight: Font.Bold
+                            color: "#FFFFFF"
+                        }
                     }
                     Text {
-                        text: modelData.label + ":" + Math.round(modelData.temp) + "\u00B0"
+                        text: Math.round(modelData.temp) + "\u00B0"
                         font.pixelSize: Theme.fontTiny
                         font.weight: Font.Bold
                         color: Theme.temperatureColor(modelData.temp, modelData.sensor)
@@ -606,6 +633,20 @@ Item {
                     id: msgRow
                     width: parent.width
                     spacing: Theme.spacingSmall
+
+                    Text {
+                        property string ts: root.formatTimestamp(model.timestamp)
+                        visible: ts !== ""
+                        text: ts
+                        font.pixelSize: Theme.fontTiny
+                        color: {
+                            if (model.platform === "twitch") return Theme.twitch
+                            if (model.platform === "youtube") return Theme.youtube
+                            if (model.platform === "kick") return Theme.kick
+                            return Theme.textTertiary
+                        }
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
 
                     Rectangle {
                         width: 8; height: 8; radius: 4
