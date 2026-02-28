@@ -15,10 +15,7 @@ Item {
 
     property var messages: ListModel {}
     property string platformFilter: ""
-    property bool ttsEnabled: false
-    property bool ttsUsernames: false
-    property bool vibrateEnabled: false
-    property bool soundEnabled: true
+    // TTS / vibration / sound state from persistent settings
 
     // Bot usernames to filter out from notifications
     property var botUsernames: ["savedggbot", "botrix", "botrixoficial", "nightbot", "streamelements"]
@@ -99,18 +96,18 @@ Item {
             var cleanText = text.replace(/<[^>]*>/g, "");
             cleanText = cleanText.replace(/https?:\/\/[^\s]+/g, "<HTTP-link>");
 
-            if (root.ttsEnabled && tts.state !== TextToSpeech.Error) {
+            if (root.settings.ttsEnabled && tts.state !== TextToSpeech.Error) {
                 var ttsText = cleanText;
-                if (root.ttsUsernames) {
+                if (root.settings.ttsUsernames) {
                     var speakName = displayName || userName;
                     ttsText = "from " + speakName + ": " + ttsText;
                 }
                 tts.enqueue(ttsText);
-            } else if (root.soundEnabled) {
+            } else if (root.settings.soundEnabled) {
                 chatSound.play();
             }
 
-            if (root.vibrateEnabled) {
+            if (root.settings.vibrateEnabled) {
                 platformInstance.vibrate(500, true);
             }
         }
@@ -162,12 +159,12 @@ Item {
 
             Components.GlassButton {
                 objectName: "ttsToggle"
-                text: root.ttsEnabled ? "TTS ON" : "TTS OFF"
-                filled: root.ttsEnabled
+                text: root.settings.ttsEnabled ? "TTS ON" : "TTS OFF"
+                filled: root.settings.ttsEnabled
                 accentColor: Theme.accentSecondary
                 onClicked: {
-                    root.ttsEnabled = !root.ttsEnabled;
-                    if (!root.ttsEnabled) {
+                    root.settings.ttsEnabled = !root.settings.ttsEnabled;
+                    if (!root.settings.ttsEnabled) {
                         tts.stop();
                     }
                 }
@@ -175,25 +172,25 @@ Item {
 
             Components.GlassButton {
                 objectName: "ttsUsernamesToggle"
-                text: root.ttsUsernames ? "TTS:name ON" : "TTS:name OFF"
-                filled: root.ttsUsernames
-                enabled: root.ttsEnabled
+                text: root.settings.ttsUsernames ? "TTS:name ON" : "TTS:name OFF"
+                filled: root.settings.ttsUsernames
+                enabled: root.settings.ttsEnabled
                 accentColor: Theme.accentSecondary
-                onClicked: root.ttsUsernames = !root.ttsUsernames
+                onClicked: root.settings.ttsUsernames = !root.settings.ttsUsernames
             }
 
             Components.GlassButton {
                 objectName: "vibrateToggle"
-                text: root.vibrateEnabled ? "Vibrate ON" : "Vibrate OFF"
-                filled: root.vibrateEnabled
-                onClicked: root.vibrateEnabled = !root.vibrateEnabled
+                text: root.settings.vibrateEnabled ? "Vibrate ON" : "Vibrate OFF"
+                filled: root.settings.vibrateEnabled
+                onClicked: root.settings.vibrateEnabled = !root.settings.vibrateEnabled
             }
 
             Components.GlassButton {
                 objectName: "soundToggle"
-                text: root.soundEnabled ? "Sound ON" : "Sound OFF"
-                filled: root.soundEnabled
-                onClicked: root.soundEnabled = !root.soundEnabled
+                text: root.settings.soundEnabled ? "Sound ON" : "Sound OFF"
+                filled: root.settings.soundEnabled
+                onClicked: root.settings.soundEnabled = !root.settings.soundEnabled
             }
         }
 

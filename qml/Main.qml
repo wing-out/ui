@@ -32,6 +32,10 @@ ApplicationWindow {
         property string manualInputFPS: ""
         property string colorTheme: "dark"
         property string chatTimestampFormat: "mm"
+        property bool ttsEnabled: false
+        property bool ttsUsernames: false
+        property bool vibrateEnabled: false
+        property bool soundEnabled: true
     }
 
     // Start embedded daemon and/or connect to backend

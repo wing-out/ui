@@ -11,12 +11,22 @@ TestCase {
     width: 600
     height: 800
 
+    QtObject {
+        id: mockSettings
+        property bool ttsEnabled: false
+        property bool ttsUsernames: false
+        property bool vibrateEnabled: false
+        property bool soundEnabled: true
+        property string chatTimestampFormat: "mm"
+    }
+
     Component {
         id: chatComponent
         Pages.ChatPage {
             width: 600
             height: 800
             controller: mockBackend
+            settings: mockSettings
         }
     }
 
@@ -152,65 +162,65 @@ TestCase {
 
     function test_tts_default_off() {
         var page = createTemporaryObject(chatComponent, testCase)
-        compare(page.ttsEnabled, false, "TTS should be off by default")
+        compare(page.settings.ttsEnabled, false, "TTS should be off by default")
     }
 
     function test_tts_toggle_on() {
         var page = createTemporaryObject(chatComponent, testCase)
-        page.ttsEnabled = true
-        compare(page.ttsEnabled, true)
+        page.settings.ttsEnabled = true
+        compare(page.settings.ttsEnabled, true)
     }
 
     function test_tts_toggle_off_again() {
         var page = createTemporaryObject(chatComponent, testCase)
-        page.ttsEnabled = true
-        compare(page.ttsEnabled, true)
-        page.ttsEnabled = false
-        compare(page.ttsEnabled, false)
+        page.settings.ttsEnabled = true
+        compare(page.settings.ttsEnabled, true)
+        page.settings.ttsEnabled = false
+        compare(page.settings.ttsEnabled, false)
     }
 
     // --- Vibrate toggle state management ---
 
     function test_vibrate_default_off() {
         var page = createTemporaryObject(chatComponent, testCase)
-        compare(page.vibrateEnabled, false, "Vibrate should be off by default")
+        compare(page.settings.vibrateEnabled, false, "Vibrate should be off by default")
     }
 
     function test_vibrate_toggle_on() {
         var page = createTemporaryObject(chatComponent, testCase)
-        page.vibrateEnabled = true
-        compare(page.vibrateEnabled, true)
+        page.settings.vibrateEnabled = true
+        compare(page.settings.vibrateEnabled, true)
     }
 
     function test_vibrate_toggle_cycle() {
         var page = createTemporaryObject(chatComponent, testCase)
-        compare(page.vibrateEnabled, false)
-        page.vibrateEnabled = true
-        compare(page.vibrateEnabled, true)
-        page.vibrateEnabled = false
-        compare(page.vibrateEnabled, false)
+        compare(page.settings.vibrateEnabled, false)
+        page.settings.vibrateEnabled = true
+        compare(page.settings.vibrateEnabled, true)
+        page.settings.vibrateEnabled = false
+        compare(page.settings.vibrateEnabled, false)
     }
 
     // --- Sound toggle state management ---
 
     function test_sound_default_on() {
         var page = createTemporaryObject(chatComponent, testCase)
-        compare(page.soundEnabled, true, "Sound should be on by default")
+        compare(page.settings.soundEnabled, true, "Sound should be on by default")
     }
 
     function test_sound_toggle_off() {
         var page = createTemporaryObject(chatComponent, testCase)
-        page.soundEnabled = false
-        compare(page.soundEnabled, false)
+        page.settings.soundEnabled = false
+        compare(page.settings.soundEnabled, false)
     }
 
     function test_sound_toggle_cycle() {
         var page = createTemporaryObject(chatComponent, testCase)
-        compare(page.soundEnabled, true)
-        page.soundEnabled = false
-        compare(page.soundEnabled, false)
-        page.soundEnabled = true
-        compare(page.soundEnabled, true)
+        compare(page.settings.soundEnabled, true)
+        page.settings.soundEnabled = false
+        compare(page.settings.soundEnabled, false)
+        page.settings.soundEnabled = true
+        compare(page.settings.soundEnabled, true)
     }
 
     // --- All toggles independent ---
@@ -218,22 +228,22 @@ TestCase {
     function test_toggles_independent() {
         var page = createTemporaryObject(chatComponent, testCase)
         // Toggle TTS on without affecting others
-        page.ttsEnabled = true
-        compare(page.ttsEnabled, true)
-        compare(page.vibrateEnabled, false)
-        compare(page.soundEnabled, true)
+        page.settings.ttsEnabled = true
+        compare(page.settings.ttsEnabled, true)
+        compare(page.settings.vibrateEnabled, false)
+        compare(page.settings.soundEnabled, true)
 
         // Toggle vibrate on without affecting others
-        page.vibrateEnabled = true
-        compare(page.ttsEnabled, true)
-        compare(page.vibrateEnabled, true)
-        compare(page.soundEnabled, true)
+        page.settings.vibrateEnabled = true
+        compare(page.settings.ttsEnabled, true)
+        compare(page.settings.vibrateEnabled, true)
+        compare(page.settings.soundEnabled, true)
 
         // Toggle sound off without affecting others
-        page.soundEnabled = false
-        compare(page.ttsEnabled, true)
-        compare(page.vibrateEnabled, true)
-        compare(page.soundEnabled, false)
+        page.settings.soundEnabled = false
+        compare(page.settings.ttsEnabled, true)
+        compare(page.settings.vibrateEnabled, true)
+        compare(page.settings.soundEnabled, false)
     }
 
     // --- Message sending input field state ---

@@ -47,11 +47,7 @@ Item {
     property bool sendYoutube: true
     property bool sendKick: true
 
-    // TTS / vibration / sound
-    property bool ttsEnabled: false
-    property bool ttsUsernames: false
-    property bool vibrateEnabled: false
-    property bool soundEnabled: true
+    // TTS / vibration / sound (persisted via settings)
     property var botUsernames: ["savedggbot", "botrix", "botrixoficial", "nightbot", "streamelements"]
 
     function isBot(userName) {
@@ -330,18 +326,18 @@ Item {
             var cleanText = text.replace(/<[^>]*>/g, "")
             cleanText = cleanText.replace(/https?:\/\/[^\s]+/g, "<HTTP-link>")
 
-            if (root.ttsEnabled && tts.state !== TextToSpeech.Error) {
+            if (root.settings.ttsEnabled && tts.state !== TextToSpeech.Error) {
                 var ttsText = cleanText
-                if (root.ttsUsernames) {
+                if (root.settings.ttsUsernames) {
                     var speakName = displayName || userName
                     ttsText = "from " + speakName + ": " + ttsText
                 }
                 tts.enqueue(ttsText)
-            } else if (root.soundEnabled) {
+            } else if (root.settings.soundEnabled) {
                 chatSound.play()
             }
 
-            if (root.vibrateEnabled)
+            if (root.settings.vibrateEnabled)
                 platformInstance.vibrate(500, true)
         }
     }
@@ -690,12 +686,12 @@ Item {
                 delegate: Rectangle {
                     required property var modelData
                     property bool active: {
-                        if (modelData.key === "tts") return root.ttsEnabled
-                        if (modelData.key === "ttsName") return root.ttsUsernames
-                        if (modelData.key === "vibrate") return root.vibrateEnabled
-                        return root.soundEnabled
+                        if (modelData.key === "tts") return root.settings.ttsEnabled
+                        if (modelData.key === "ttsName") return root.settings.ttsUsernames
+                        if (modelData.key === "vibrate") return root.settings.vibrateEnabled
+                        return root.settings.soundEnabled
                     }
-                    property bool allowed: modelData.key !== "ttsName" || root.ttsEnabled
+                    property bool allowed: modelData.key !== "ttsName" || root.settings.ttsEnabled
                     objectName: "dashboard" + modelData.tip.replace(":", "") + "Toggle"
                     width: 24; height: 24; radius: 12
                     color: active ? Theme.accentSecondary : "transparent"
@@ -715,14 +711,14 @@ Item {
                         enabled: parent.allowed
                         onClicked: {
                             if (modelData.key === "tts") {
-                                root.ttsEnabled = !root.ttsEnabled
-                                if (!root.ttsEnabled) tts.stop()
+                                root.settings.ttsEnabled = !root.settings.ttsEnabled
+                                if (!root.settings.ttsEnabled) tts.stop()
                             } else if (modelData.key === "ttsName") {
-                                root.ttsUsernames = !root.ttsUsernames
+                                root.settings.ttsUsernames = !root.settings.ttsUsernames
                             } else if (modelData.key === "vibrate") {
-                                root.vibrateEnabled = !root.vibrateEnabled
+                                root.settings.vibrateEnabled = !root.settings.vibrateEnabled
                             } else {
-                                root.soundEnabled = !root.soundEnabled
+                                root.settings.soundEnabled = !root.settings.soundEnabled
                             }
                         }
                     }
