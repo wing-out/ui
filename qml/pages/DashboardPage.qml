@@ -774,10 +774,10 @@ Item {
 
             delegate: Item {
                 width: chatList.width
-                implicitHeight: msgFlow.implicitHeight + Theme.spacingTiny
+                implicitHeight: msgRow.implicitHeight + Theme.spacingTiny
 
-                Flow {
-                    id: msgFlow
+                Row {
+                    id: msgRow
                     width: parent.width
                     spacing: Theme.spacingSmall
 
@@ -793,6 +793,7 @@ Item {
                             if (model.platform === "kick") return Theme.kick
                             return Theme.textTertiary
                         }
+                        anchors.baseline: msgText.baseline
                     }
 
                     Rectangle {
@@ -804,21 +805,25 @@ Item {
                             if (model.platform === "kick") return Theme.kick
                             return Theme.textTertiary
                         }
+                        anchors.verticalCenter: parent.verticalCenter
                     }
 
                     Text {
+                        id: userText
                         text: model.userName || "Anonymous"
                         font.pixelSize: root.settings.chatFontSize
                         font.weight: Font.Bold
                         color: root.usernameColor(model.userName || "Anonymous")
+                        anchors.baseline: msgText.baseline
                     }
 
                     Text {
+                        id: msgText
                         text: model.message || ""
                         font.pixelSize: root.settings.chatFontSize
                         color: Theme.textPrimary
                         wrapMode: Text.Wrap
-                        width: msgFlow.width
+                        width: msgRow.width - x
                     }
                 }
             }
