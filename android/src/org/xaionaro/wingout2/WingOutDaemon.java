@@ -138,15 +138,23 @@ public class WingOutDaemon {
         }
     }
 
+    private static final int STOP_TIMEOUT_SECONDS = 3;
+
     /**
      * Stops the wingoutd daemon.
+     * Uses destroyForcibly() + bounded waitFor() to avoid blocking the caller
+     * indefinitely (e.g. if called from the Android main thread).
      */
     public synchronized void stop() {
         Log.i(TAG, "stop() called, process=" + process + " thread=" + Thread.currentThread().getName());
         if (process != null) {
-            process.destroy();
+            process.destroyForcibly();
             try {
-                process.waitFor();
+                boolean exited = process.waitFor(STOP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                if (!exited) {
+                    Log.w(TAG, "wingoutd did not exit within " + STOP_TIMEOUT_SECONDS
+                        + "s after destroyForcibly");
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
