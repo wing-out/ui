@@ -61,6 +61,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         Theme.applyTheme(appSettings.colorTheme)
+        platformInstance.startMonitoringSignalStrength()
         connectBackend()
     }
 

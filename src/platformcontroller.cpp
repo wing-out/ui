@@ -627,6 +627,20 @@ void PlatformController::startMonitoringSignalStrength()
     if (m_signalMonitorTimer)
         return;
 
+    // Request location permissions needed for WiFi SSID visibility
+    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() {
+        QJniObject activity = getAndroidContext();
+        if (!activity.isValid())
+            return;
+
+        if (QJniObject::isClassAvailable(JAVA_WIFI_CLASS)) {
+            QJniObject::callStaticMethod<void>(
+                JAVA_WIFI_CLASS, "requestWiFiPermissions",
+                "(Landroid/content/Context;)V",
+                activity.object<jobject>());
+        }
+    });
+
     // Initialize the Java-side signal listener on the Android main thread
     QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() {
         QJniObject activity = getAndroidContext();

@@ -86,6 +86,34 @@ public final class WiFiHelper {
         }
     }
 
+    public static void requestWiFiPermissions(Context context) {
+        try {
+            if (!(context instanceof android.app.Activity)) return;
+            android.app.Activity activity = (android.app.Activity) context;
+            java.util.ArrayList<String> needed = new java.util.ArrayList<>();
+
+            if (context.checkSelfPermission(
+                    android.Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                needed.add(android.Manifest.permission.ACCESS_FINE_LOCATION);
+            }
+            if (android.os.Build.VERSION.SDK_INT >= 33
+                    && context.checkSelfPermission(
+                        android.Manifest.permission.NEARBY_WIFI_DEVICES)
+                    != PackageManager.PERMISSION_GRANTED) {
+                needed.add(android.Manifest.permission.NEARBY_WIFI_DEVICES);
+            }
+
+            if (!needed.isEmpty()) {
+                Log.i(TAG, "Requesting WiFi permissions: " + needed);
+                activity.requestPermissions(
+                        needed.toArray(new String[0]), 1002);
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to request WiFi permissions", t);
+        }
+    }
+
     // ========================================================================
     // WiFi scanning
     // ========================================================================
