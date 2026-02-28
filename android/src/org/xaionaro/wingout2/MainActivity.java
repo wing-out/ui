@@ -29,14 +29,26 @@ public class MainActivity extends QtActivity {
 
     @Override
     public void onDestroy() {
+        // Wait briefly for qtMainLoopThread to finish processing the
+        // ApplicationSuspended state change that onStop() triggered via
+        // QtNative.setApplicationState(). Without this, super.onDestroy() calls
+        // QtNative.terminateQt() which destroys Qt window objects while
+        // qtMainLoopThread is still iterating them in applicationStateChanged
+        // → use-after-free → SIGILL crash in libQt6Gui at setApplicationState.
+        //
+        // The race: onStop() posts ApplicationSuspended to qtMainLoopThread,
+        // then onDestroy() runs immediately on the same (main) thread and calls
+        // terminateQt() before qtMainLoopThread has processed the event.
+        try {
+            Thread.sleep(150);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         if (stopDaemonOnClose && daemon != null) {
-            // Run on a background thread to avoid blocking the main thread.
-            // stop() uses destroyForcibly() + bounded waitFor(3s), but we still
-            // don't want to risk any delay on the main thread during Activity teardown.
-            new Thread(() -> {
-                Log.i(TAG, "onDestroy: stopping daemon on background thread");
-                daemon.stop();
-            }, "daemon-stop").start();
+            Log.i(TAG, "onDestroy: stopping daemon");
+            daemon.stop();
+            Log.i(TAG, "onDestroy: daemon stopped");
         } else {
             Log.i(TAG, "onDestroy: keeping daemon alive (stopDaemonOnClose="
                 + stopDaemonOnClose + ")");
