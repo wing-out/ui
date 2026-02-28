@@ -424,26 +424,42 @@ Item {
                 color: Theme.textTertiary
             }
 
-            // Temperature indicator dots
+            // Temperature indicators (CPU, Battery, Case — max of each category)
             Repeater {
-                model: platformInstance.temperatures || []
+                model: {
+                    var all = platformInstance.temperatures || []
+                    var cpuMax = -999, batMax = -999, caseMax = -999
+                    for (var i = 0; i < all.length; i++) {
+                        var t = (all[i].type || "").toLowerCase()
+                        var v = all[i].temp || 0
+                        if (t.indexOf("cpu") >= 0 || t.indexOf("tsens") >= 0) {
+                            if (v > cpuMax) cpuMax = v
+                        } else if (t.indexOf("batt") >= 0) {
+                            if (v > batMax) batMax = v
+                        } else if (t.indexOf("skin") >= 0 || t.indexOf("case") >= 0
+                                   || t.indexOf("ambient") >= 0 || t.indexOf("therm") >= 0) {
+                            if (v > caseMax) caseMax = v
+                        }
+                    }
+                    var result = []
+                    if (cpuMax > -999) result.push({ label: "C", temp: cpuMax, sensor: "cpu" })
+                    if (batMax > -999) result.push({ label: "B", temp: batMax, sensor: "battery" })
+                    if (caseMax > -999) result.push({ label: "O", temp: caseMax, sensor: "skin" })
+                    return result
+                }
                 delegate: Row {
                     required property var modelData
                     spacing: 2
                     Rectangle {
                         width: 10; height: 10; radius: 5
-                        color: Theme.temperatureColor(modelData.temp || 0, modelData.type || "")
+                        color: Theme.temperatureColor(modelData.temp, modelData.sensor)
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     Text {
-                        text: {
-                            var t = modelData.type || ""
-                            var label = t === "cpu" ? "C" : t === "battery" ? "B" : "O"
-                            return label + ":" + Math.round(modelData.temp || 0) + "\u00B0"
-                        }
+                        text: modelData.label + ":" + Math.round(modelData.temp) + "\u00B0"
                         font.pixelSize: Theme.fontTiny
                         font.weight: Font.Bold
-                        color: Theme.temperatureColor(modelData.temp || 0, modelData.type || "")
+                        color: Theme.temperatureColor(modelData.temp, modelData.sensor)
                     }
                 }
             }
