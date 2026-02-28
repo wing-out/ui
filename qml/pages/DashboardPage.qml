@@ -482,47 +482,56 @@ Item {
                 model: {
                     var all = platformInstance.temperatures || []
 
+                    // Categorize thermal zones by vendor-specific patterns:
+                    // CPU: cpu, gpu, g3d, tpu, soc, tsens (Qualcomm), npu
+                    // Battery: batt, bms
+                    // Skin: skin, quiet-therm (Qualcomm board), mtktsap (MediaTek board)
+                    // Excluded: xo-therm, msm-therm, pa-therm (SoC-internal, misleadingly hot)
+                    function isCpu(t) {
+                        return t.indexOf("cpu") !== -1 || t.indexOf("gpu") !== -1
+                            || t.indexOf("g3d") !== -1 || t.indexOf("tpu") !== -1
+                            || t.indexOf("npu") !== -1 || t.indexOf("soc") !== -1
+                            || t.indexOf("tsens") !== -1
+                    }
+                    function isBattery(t) {
+                        return t.indexOf("batt") !== -1 || t.indexOf("bms") !== -1
+                    }
+                    function isSkin(t) {
+                        return t.indexOf("skin") !== -1 || t.indexOf("case") !== -1
+                            || t.indexOf("ambient") !== -1
+                            || t.indexOf("quiet-therm") !== -1 || t.indexOf("quiet_therm") !== -1
+                            || t.indexOf("mtktsap") !== -1
+                    }
+
                     function getWeight(temp, type) {
                         var low = 40, high = 90
-                        if (!type) type = ""
-                        var t = type.toLowerCase()
-                        if (t.indexOf("batt") !== -1 || t.indexOf("bms") !== -1) {
-                            low = 35; high = 48
-                        } else if (t.indexOf("cpu") !== -1 || t.indexOf("gpu") !== -1
-                                   || t.indexOf("g3d") !== -1 || t.indexOf("tpu") !== -1
-                                   || t.indexOf("soc") !== -1) {
-                            low = 50; high = 100
-                        } else if (t.indexOf("skin") !== -1 || t.indexOf("ext_") !== -1
-                                   || t.indexOf("usb") !== -1 || t.indexOf("charger") !== -1) {
-                            low = 45; high = 70
-                        }
+                        if (isBattery(type)) { low = 35; high = 48 }
+                        else if (isCpu(type)) { low = 50; high = 100 }
+                        else if (isSkin(type)) { low = 30; high = 45 }
                         return (temp - low) / (high - low)
                     }
 
                     var cpu  = { temp: -1337, type: "", weight: -Infinity }
                     var batt = { temp: -1337, type: "", weight: -Infinity }
-                    var other = { temp: -1337, type: "", weight: -Infinity }
+                    var skin = { temp: -1337, type: "", weight: -Infinity }
 
                     for (var i = 0; i < all.length; i++) {
                         var typeStr = (all[i].type || "").toLowerCase()
                         var w = getWeight(all[i].temp, typeStr)
 
-                        if (typeStr.indexOf("cpu") !== -1 || typeStr.indexOf("gpu") !== -1
-                            || typeStr.indexOf("g3d") !== -1 || typeStr.indexOf("tpu") !== -1
-                            || typeStr.indexOf("soc") !== -1) {
+                        if (isCpu(typeStr)) {
                             if (w > cpu.weight) { cpu.temp = all[i].temp; cpu.type = all[i].type; cpu.weight = w }
-                        } else if (typeStr.indexOf("batt") !== -1 || typeStr.indexOf("bms") !== -1) {
+                        } else if (isBattery(typeStr)) {
                             if (w > batt.weight) { batt.temp = all[i].temp; batt.type = all[i].type; batt.weight = w }
-                        } else if (typeStr.indexOf("skin") !== -1 || typeStr.indexOf("case") !== -1
-                            || typeStr.indexOf("ambient") !== -1 || typeStr.indexOf("therm") !== -1) {
-                            if (w > other.weight) { other.temp = all[i].temp; other.type = all[i].type; other.weight = w }
+                        } else if (isSkin(typeStr)) {
+                            if (w > skin.weight) { skin.temp = all[i].temp; skin.type = all[i].type; skin.weight = w }
                         }
                     }
 
                     var result = []
                     if (cpu.temp > -1337) result.push({ label: "C", temp: cpu.temp, sensor: "cpu" })
                     if (batt.temp > -1337) result.push({ label: "B", temp: batt.temp, sensor: "battery" })
-                    if (other.temp > -1337) result.push({ label: "O", temp: other.temp, sensor: "skin" })
+                    if (skin.temp > -1337) result.push({ label: "S", temp: skin.temp, sensor: "skin" })
                     return result
                 }
                 delegate: Row {

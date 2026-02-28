@@ -315,7 +315,7 @@ QtObject {
         } else if (sensorType === "cpu") {
             warnThresh = 70; critThresh = 90
         } else if (sensorType === "skin") {
-            warnThresh = 38; critThresh = 45
+            warnThresh = 35; critThresh = 42
         } else {
             warnThresh = 50; critThresh = 70
         }
