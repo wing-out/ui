@@ -517,7 +517,8 @@ Item {
                             if (w > cpu.weight) { cpu.temp = all[i].temp; cpu.type = all[i].type; cpu.weight = w }
                         } else if (typeStr.indexOf("batt") !== -1 || typeStr.indexOf("bms") !== -1) {
                             if (w > batt.weight) { batt.temp = all[i].temp; batt.type = all[i].type; batt.weight = w }
-                        } else {
+                        } else if (typeStr.indexOf("skin") !== -1 || typeStr.indexOf("case") !== -1
+                            || typeStr.indexOf("ambient") !== -1 || typeStr.indexOf("therm") !== -1) {
                             if (w > other.weight) { other.temp = all[i].temp; other.type = all[i].type; other.weight = w }
                         }
                     }
@@ -674,43 +675,58 @@ Item {
             }
         }
 
-        // TTS / vibration / sound toggles
-        Flow {
+        // TTS / vibration / sound toggles (compact circles)
+        Row {
             Layout.fillWidth: true
             spacing: Theme.spacingSmall
 
-            Components.GlassButton {
-                objectName: "dashboardTtsToggle"
-                text: root.ttsEnabled ? "TTS ON" : "TTS OFF"
-                filled: root.ttsEnabled
-                accentColor: Theme.accentSecondary
-                onClicked: {
-                    root.ttsEnabled = !root.ttsEnabled
-                    if (!root.ttsEnabled) tts.stop()
+            Repeater {
+                model: [
+                    { key: "tts",     letter: "T", tip: "TTS" },
+                    { key: "ttsName", letter: "N", tip: "TTS:name" },
+                    { key: "vibrate", letter: "V", tip: "Vibrate" },
+                    { key: "sound",   letter: "S", tip: "Sound" }
+                ]
+                delegate: Rectangle {
+                    required property var modelData
+                    property bool active: {
+                        if (modelData.key === "tts") return root.ttsEnabled
+                        if (modelData.key === "ttsName") return root.ttsUsernames
+                        if (modelData.key === "vibrate") return root.vibrateEnabled
+                        return root.soundEnabled
+                    }
+                    property bool allowed: modelData.key !== "ttsName" || root.ttsEnabled
+                    objectName: "dashboard" + modelData.tip.replace(":", "") + "Toggle"
+                    width: 24; height: 24; radius: 12
+                    color: active ? Theme.accentSecondary : "transparent"
+                    border.width: active ? 0 : 1
+                    border.color: active ? "transparent" : Theme.textTertiary
+                    opacity: allowed ? 1.0 : 0.3
+                    Text {
+                        anchors.centerIn: parent
+                        text: modelData.letter
+                        font.pixelSize: Theme.fontSmall
+                        font.weight: Font.Bold
+                        color: parent.active ? "#FFFFFF" : Theme.textSecondary
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        enabled: parent.allowed
+                        onClicked: {
+                            if (modelData.key === "tts") {
+                                root.ttsEnabled = !root.ttsEnabled
+                                if (!root.ttsEnabled) tts.stop()
+                            } else if (modelData.key === "ttsName") {
+                                root.ttsUsernames = !root.ttsUsernames
+                            } else if (modelData.key === "vibrate") {
+                                root.vibrateEnabled = !root.vibrateEnabled
+                            } else {
+                                root.soundEnabled = !root.soundEnabled
+                            }
+                        }
+                    }
                 }
-            }
-
-            Components.GlassButton {
-                objectName: "dashboardTtsUsernamesToggle"
-                text: root.ttsUsernames ? "TTS:name ON" : "TTS:name OFF"
-                filled: root.ttsUsernames
-                enabled: root.ttsEnabled
-                accentColor: Theme.accentSecondary
-                onClicked: root.ttsUsernames = !root.ttsUsernames
-            }
-
-            Components.GlassButton {
-                objectName: "dashboardVibrateToggle"
-                text: root.vibrateEnabled ? "Vibrate ON" : "Vibrate OFF"
-                filled: root.vibrateEnabled
-                onClicked: root.vibrateEnabled = !root.vibrateEnabled
-            }
-
-            Components.GlassButton {
-                objectName: "dashboardSoundToggle"
-                text: root.soundEnabled ? "Sound ON" : "Sound OFF"
-                filled: root.soundEnabled
-                onClicked: root.soundEnabled = !root.soundEnabled
             }
         }
 
@@ -735,6 +751,7 @@ Item {
                     spacing: Theme.spacingSmall
 
                     Text {
+                        id: tsText
                         property string ts: root.formatTimestamp(model.timestamp)
                         visible: ts !== ""
                         text: ts
@@ -750,6 +767,7 @@ Item {
 
                     Rectangle {
                         width: 8; height: 8; radius: 4
+                        visible: !tsText.visible
                         color: {
                             if (model.platform === "twitch") return Theme.twitch
                             if (model.platform === "youtube") return Theme.youtube
