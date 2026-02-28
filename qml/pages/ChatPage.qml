@@ -8,6 +8,7 @@ import WingOut
 Item {
     id: root
     required property var controller
+    required property var settings
 
     Accessible.name: "chatPage"
     Accessible.role: Accessible.Pane
@@ -34,6 +35,27 @@ Item {
     function isBot(userName) {
         if (!userName) return false;
         return botUsernames.indexOf(userName.toLowerCase()) >= 0;
+    }
+
+    function platformColor(platform) {
+        if (platform === "twitch") return Theme.twitch
+        if (platform === "youtube") return Theme.youtube
+        if (platform === "kick") return Theme.kick
+        return Theme.textTertiary
+    }
+
+    function formatTimestamp(ts) {
+        if (!ts) return ""
+        var d = new Date(ts * 1000)
+        if (isNaN(d.getTime())) return ""
+        var fmt = root.settings.chatTimestampFormat
+        var hh = String(d.getHours()).padStart(2, '0')
+        var mm = String(d.getMinutes()).padStart(2, '0')
+        var ss = String(d.getSeconds()).padStart(2, '0')
+        if (fmt === "hh:mm:ss") return hh + ":" + mm + ":" + ss
+        if (fmt === "hh:mm") return hh + ":" + mm
+        if (fmt === "none") return ""
+        return mm
     }
 
     TextToSpeech {
@@ -214,6 +236,15 @@ Item {
                             font.pixelSize: Theme.fontSmall
                             font.weight: Font.Bold
                             color: root.usernameColor(model.userName || "Anonymous")
+                        }
+
+                        Text {
+                            property string ts: root.formatTimestamp(model.timestamp)
+                            visible: ts !== ""
+                            text: ts
+                            font.pixelSize: Theme.fontTiny
+                            color: root.platformColor(model.platform)
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
 

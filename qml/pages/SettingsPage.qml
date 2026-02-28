@@ -380,6 +380,35 @@ Item {
                 onTextChanged: root.settings.manualInputFPS = text
             }
 
+            Text { text: "Chat Timestamp Format"; Accessible.name: "Chat Timestamp Format"; font.pixelSize: Theme.fontSmall; color: Theme.textSecondary }
+            Row {
+                spacing: Theme.spacingSmall
+                Components.GlassButton {
+                    objectName: "chatTsFmtMm"
+                    text: "mm"
+                    filled: root.settings.chatTimestampFormat === "mm"
+                    onClicked: root.settings.chatTimestampFormat = "mm"
+                }
+                Components.GlassButton {
+                    objectName: "chatTsFmtHhMm"
+                    text: "hh:mm"
+                    filled: root.settings.chatTimestampFormat === "hh:mm"
+                    onClicked: root.settings.chatTimestampFormat = "hh:mm"
+                }
+                Components.GlassButton {
+                    objectName: "chatTsFmtHhMmSs"
+                    text: "hh:mm:ss"
+                    filled: root.settings.chatTimestampFormat === "hh:mm:ss"
+                    onClicked: root.settings.chatTimestampFormat = "hh:mm:ss"
+                }
+                Components.GlassButton {
+                    objectName: "chatTsFmtNone"
+                    text: "None"
+                    filled: root.settings.chatTimestampFormat === "none"
+                    onClicked: root.settings.chatTimestampFormat = "none"
+                }
+            }
+
             // App info
             Text {
                 text: "About"

@@ -31,6 +31,7 @@ ApplicationWindow {
         property string previewRTMPPort: "1945"
         property string manualInputFPS: ""
         property string colorTheme: "dark"
+        property string chatTimestampFormat: "mm"
     }
 
     // Start embedded daemon and/or connect to backend
@@ -394,6 +395,7 @@ ApplicationWindow {
             Pages.ChatPage {
                 objectName: "chatPage"
                 controller: backendController
+                settings: appSettings
             }
             Pages.PlayersPage {
                 objectName: "playersPage"
