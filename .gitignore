@@ -1,0 +1,21 @@
+# Build artifacts
+build/
+build-*/
+*.o
+*.so
+*.apk
+
+# Go binaries
+wingoutd
+cmd/wingoutd/wingoutd
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
