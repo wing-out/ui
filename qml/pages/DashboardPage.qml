@@ -386,6 +386,27 @@ Item {
         return Qt.hsla(h / 360.0, 0.7, 0.6, 1.0)
     }
 
+    function platformColor(platform) {
+        if (platform === "twitch") return Theme.twitch
+        if (platform === "youtube") return Theme.youtube
+        if (platform === "kick") return Theme.kick
+        return Theme.textTertiary
+    }
+
+    function colorToHex(c) {
+        var r = Math.round(c.r * 255).toString(16)
+        var g = Math.round(c.g * 255).toString(16)
+        var b = Math.round(c.b * 255).toString(16)
+        if (r.length < 2) r = "0" + r
+        if (g.length < 2) g = "0" + g
+        if (b.length < 2) b = "0" + b
+        return "#" + r + g + b
+    }
+
+    function escapeHtml(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Theme.spacingMedium
@@ -757,73 +778,94 @@ Item {
         }
 
         // Chat view (fills remaining space)
-        ListView {
-            id: chatList
-            objectName: "dashboardChat"
+        Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            model: root.messages
-            clip: true
-            spacing: Theme.spacingTiny
-            verticalLayoutDirection: ListView.TopToBottom
 
-            // Auto-scroll to bottom when new messages arrive
-            onCountChanged: {
-                Qt.callLater(function() { chatList.positionViewAtEnd() })
-            }
+            ListView {
+                id: chatList
+                objectName: "dashboardChat"
+                anchors.fill: parent
+                model: root.messages
+                clip: true
+                spacing: Theme.spacingTiny
+                verticalLayoutDirection: ListView.TopToBottom
+                boundsBehavior: Flickable.StopAtBounds
+                flickDeceleration: 100000
+                maximumFlickVelocity: 100000
 
-            delegate: Item {
-                width: chatList.width
-                implicitHeight: msgRow.implicitHeight + Theme.spacingTiny
+                property bool userScrolledUp: false
 
-                Row {
-                    id: msgRow
-                    width: parent.width
-                    spacing: Theme.spacingSmall
+                onMovingVerticallyChanged: {
+                    if (!movingVertically) {
+                        userScrolledUp = !atYEnd
+                    }
+                }
+
+                onAtYEndChanged: {
+                    if (atYEnd) userScrolledUp = false
+                }
+
+                onCountChanged: {
+                    if (!userScrolledUp) {
+                        Qt.callLater(function() { chatList.positionViewAtEnd() })
+                    }
+                }
+
+                delegate: Item {
+                    width: chatList.width
+                    implicitHeight: msgLine.implicitHeight + Theme.spacingTiny
 
                     Text {
-                        id: tsText
-                        property string ts: root.formatTimestamp(model.timestamp)
-                        visible: ts !== ""
-                        text: ts
-                        font.pixelSize: root.settings.chatFontSize - 4
-                        color: {
-                            if (model.platform === "twitch") return Theme.twitch
-                            if (model.platform === "youtube") return Theme.youtube
-                            if (model.platform === "kick") return Theme.kick
-                            return Theme.textTertiary
-                        }
-                        anchors.baseline: msgText.baseline
-                    }
-
-                    Rectangle {
-                        width: 8; height: 8; radius: 4
-                        visible: !tsText.visible
-                        color: {
-                            if (model.platform === "twitch") return Theme.twitch
-                            if (model.platform === "youtube") return Theme.youtube
-                            if (model.platform === "kick") return Theme.kick
-                            return Theme.textTertiary
-                        }
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Text {
-                        id: userText
-                        text: model.userName || "Anonymous"
-                        font.pixelSize: root.settings.chatFontSize
-                        font.weight: Font.Bold
-                        color: root.usernameColor(model.userName || "Anonymous")
-                        anchors.baseline: msgText.baseline
-                    }
-
-                    Text {
-                        id: msgText
-                        text: model.message || ""
+                        id: msgLine
+                        width: parent.width
+                        wrapMode: Text.Wrap
+                        textFormat: Text.StyledText
                         font.pixelSize: root.settings.chatFontSize
                         color: Theme.textPrimary
-                        wrapMode: Text.Wrap
-                        width: msgRow.width - x
+                        text: {
+                            var platColor = root.platformColor(model.platform)
+                            var hex = root.colorToHex(platColor)
+                            var ts = root.formatTimestamp(model.timestamp)
+                            var prefix = ""
+                            if (ts !== "") {
+                                prefix = "<font color=\"" + hex + "\" size=\"2\">" + ts + "</font> "
+                            } else {
+                                prefix = "<font color=\"" + hex + "\">&#x25CF;</font> "
+                            }
+                            var name = model.userName || "Anonymous"
+                            var nameHex = root.colorToHex(root.usernameColor(name))
+                            var nameHtml = "<font color=\"" + nameHex + "\"><b>" + root.escapeHtml(name) + "</b></font> "
+                            return prefix + nameHtml + root.escapeHtml(model.message || "")
+                        }
+                    }
+                }
+            }
+
+            // Scroll-to-bottom button
+            Rectangle {
+                visible: chatList.userScrolledUp
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                anchors.bottomMargin: Theme.spacingSmall
+                anchors.rightMargin: Theme.spacingSmall
+                width: 48; height: 48; radius: 24
+                color: Theme.accentPrimary
+                opacity: 0.9
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "\u25BC"
+                    font.pixelSize: 22
+                    color: "#FFFFFF"
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        chatList.positionViewAtEnd()
+                        chatList.userScrolledUp = false
                     }
                 }
             }
