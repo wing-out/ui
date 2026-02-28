@@ -33,7 +33,9 @@ public class WingOutDaemon {
      * @return the gRPC listen address (e.g. "127.0.0.1:3595")
      */
     public synchronized String start(Context context, String streamdAddr, String ffstreamAddr) {
+        Log.i(TAG, "start() called, process=" + process + " thread=" + Thread.currentThread().getName());
         if (process != null) {
+            Log.i(TAG, "start() returning existing listenAddr=" + listenAddr);
             return listenAddr;
         }
 
@@ -63,7 +65,9 @@ public class WingOutDaemon {
             }
 
             pb.redirectErrorStream(false);
+            Log.i(TAG, "Starting process: " + pb.command());
             process = pb.start();
+            Log.i(TAG, "Process started, pid=" + process);
 
             // Start draining stderr BEFORE reading stdout to prevent pipe deadlock.
             // If the daemon writes enough to stderr to fill the OS pipe buffer (~64KB)
@@ -98,6 +102,7 @@ public class WingOutDaemon {
             }, "wingoutd-handshake");
             readerThread.start();
 
+            Log.i(TAG, "Waiting for handshake (timeout=" + HANDSHAKE_TIMEOUT_SECONDS + "s)...");
             boolean received = latch.await(HANDSHAKE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!received) {
                 Log.e(TAG, "Timed out waiting for wingoutd handshake after "
@@ -107,6 +112,7 @@ public class WingOutDaemon {
             }
 
             String handshake = handshakeRef.get();
+            Log.i(TAG, "Handshake received: " + handshake);
             if (handshake != null && handshake.contains("grpc_addr")) {
                 // Parse grpc_addr from JSON: {"grpc_addr":"[::]:3595","version":"2.0.0"}
                 int idx = handshake.indexOf("grpc_addr");
@@ -136,6 +142,7 @@ public class WingOutDaemon {
      * Stops the wingoutd daemon.
      */
     public synchronized void stop() {
+        Log.i(TAG, "stop() called, process=" + process + " thread=" + Thread.currentThread().getName());
         if (process != null) {
             process.destroy();
             try {

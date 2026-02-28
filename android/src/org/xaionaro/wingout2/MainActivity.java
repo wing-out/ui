@@ -28,9 +28,12 @@ public class MainActivity extends QtActivity {
 
     @Override
     public void onDestroy() {
-        if (daemon != null) {
-            daemon.stop();
-        }
+        // Do NOT stop the daemon here. The daemon is static (process-scoped),
+        // not Activity-scoped. Stopping it on Activity destroy causes hangs when
+        // the user swipes away and relaunches: Qt can't reinitialize in the same
+        // process after the daemon is killed. The daemon will be cleaned up
+        // automatically when the process exits (child process gets SIGKILL).
+        // Use stopDaemon() from C++/Qt for explicit shutdown.
         super.onDestroy();
     }
 
@@ -62,14 +65,20 @@ public class MainActivity extends QtActivity {
      * Returns the gRPC listen address (e.g. "127.0.0.1:3595") or empty string on failure.
      */
     public static String startDaemon(String streamdAddr, String ffstreamAddr) {
+        Log.i(TAG, "startDaemon called, daemon=" + daemon + " appContext=" + appContext
+            + " thread=" + Thread.currentThread().getName());
         if (daemon == null || appContext == null) {
             Log.e(TAG, "startDaemon called before onCreate");
             return "";
         }
         if (daemon.isRunning()) {
-            return daemon.getListenAddr();
+            String addr = daemon.getListenAddr();
+            Log.i(TAG, "startDaemon: daemon already running at " + addr);
+            return addr;
         }
+        Log.i(TAG, "startDaemon: calling daemon.start()");
         String addr = daemon.start(appContext, streamdAddr, ffstreamAddr);
+        Log.i(TAG, "startDaemon: daemon.start() returned: " + addr);
         return addr != null ? addr : "";
     }
 
