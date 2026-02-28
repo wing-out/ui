@@ -346,6 +346,7 @@ public:
     Q_INVOKABLE QString startEmbeddedDaemon(const QString &streamdAddr, const QString &ffstreamAddr);
     Q_INVOKABLE void stopEmbeddedDaemon();
     Q_INVOKABLE bool isEmbeddedDaemonRunning();
+    Q_INVOKABLE void setStopDaemonOnClose(bool stop);
 
     // =====================================================================
     // Server-Streaming Subscriptions

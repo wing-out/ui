@@ -2588,5 +2588,19 @@ bool WingOutController::isEmbeddedDaemonRunning()
 #endif
 }
 
+void WingOutController::setStopDaemonOnClose(bool stop)
+{
+#ifdef Q_OS_ANDROID
+    QJniObject::callStaticMethod<void>(
+        "org/xaionaro/wingout2/MainActivity",
+        "setStopDaemonOnClose",
+        "(Z)V",
+        static_cast<jboolean>(stop));
+    qDebug() << "setStopDaemonOnClose:" << stop;
+#else
+    Q_UNUSED(stop);
+#endif
+}
+
 #undef GRPC_CONNECT_REPLY
 #undef GRPC_CHECK_CLIENT

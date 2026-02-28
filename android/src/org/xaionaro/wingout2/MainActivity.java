@@ -10,6 +10,7 @@ public class MainActivity extends QtActivity {
     private PowerManager.WakeLock wakeLock;
     private static WingOutDaemon daemon;
     private static Context appContext;
+    private static volatile boolean stopDaemonOnClose = true;
 
     @Override
     public void onCreate(android.os.Bundle savedInstanceState) {
@@ -28,12 +29,18 @@ public class MainActivity extends QtActivity {
 
     @Override
     public void onDestroy() {
-        // Do NOT stop the daemon here. The daemon is static (process-scoped),
-        // not Activity-scoped. Stopping it on Activity destroy causes hangs when
-        // the user swipes away and relaunches: Qt can't reinitialize in the same
-        // process after the daemon is killed. The daemon will be cleaned up
-        // automatically when the process exits (child process gets SIGKILL).
-        // Use stopDaemon() from C++/Qt for explicit shutdown.
+        if (stopDaemonOnClose && daemon != null) {
+            // Run on a background thread to avoid blocking the main thread.
+            // stop() uses destroyForcibly() + bounded waitFor(3s), but we still
+            // don't want to risk any delay on the main thread during Activity teardown.
+            new Thread(() -> {
+                Log.i(TAG, "onDestroy: stopping daemon on background thread");
+                daemon.stop();
+            }, "daemon-stop").start();
+        } else {
+            Log.i(TAG, "onDestroy: keeping daemon alive (stopDaemonOnClose="
+                + stopDaemonOnClose + ")");
+        }
         super.onDestroy();
     }
 
@@ -80,6 +87,14 @@ public class MainActivity extends QtActivity {
         String addr = daemon.start(appContext, streamdAddr, ffstreamAddr);
         Log.i(TAG, "startDaemon: daemon.start() returned: " + addr);
         return addr != null ? addr : "";
+    }
+
+    /**
+     * Called from C++/Qt to configure whether the daemon is stopped when the Activity is destroyed.
+     */
+    public static void setStopDaemonOnClose(boolean stop) {
+        Log.i(TAG, "setStopDaemonOnClose: " + stop);
+        stopDaemonOnClose = stop;
     }
 
     /**

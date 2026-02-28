@@ -37,6 +37,7 @@ ApplicationWindow {
         property bool vibrateEnabled: false
         property bool soundEnabled: true
         property int chatFontSize: 16
+        property bool stopDaemonOnClose: true
     }
 
     // Start embedded daemon and/or connect to backend
@@ -66,8 +67,16 @@ ApplicationWindow {
 
     Component.onCompleted: {
         Theme.applyTheme(appSettings.colorTheme)
+        backendController.setStopDaemonOnClose(appSettings.stopDaemonOnClose)
         platformInstance.startMonitoringSignalStrength()
         connectBackend()
+    }
+
+    Connections {
+        target: appSettings
+        function onStopDaemonOnCloseChanged() {
+            backendController.setStopDaemonOnClose(appSettings.stopDaemonOnClose)
+        }
     }
 
     // Periodic resource updates

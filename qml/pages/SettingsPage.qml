@@ -316,6 +316,13 @@ Item {
                 }
             }
 
+            Components.GlassButton {
+                objectName: "stopDaemonOnCloseToggle"
+                text: root.settings.stopDaemonOnClose ? "Stop Daemon on Close: ON" : "Stop Daemon on Close: OFF"
+                filled: root.settings.stopDaemonOnClose
+                onClicked: root.settings.stopDaemonOnClose = !root.settings.stopDaemonOnClose
+            }
+
             Text {
                 text: "Logging Level"
                 Accessible.name: "Logging Level"
