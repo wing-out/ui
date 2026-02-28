@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
+import QtMultimedia
+import QtTextToSpeech
 import "../components" as Components
 import WingOut
 
@@ -44,6 +46,21 @@ Item {
     property bool sendTwitch: true
     property bool sendYoutube: true
     property bool sendKick: true
+
+    // TTS / vibration / sound
+    property bool ttsEnabled: false
+    property bool ttsUsernames: false
+    property bool vibrateEnabled: false
+    property bool soundEnabled: true
+    property var botUsernames: ["savedggbot", "botrix", "botrixoficial", "nightbot", "streamelements"]
+
+    function isBot(userName) {
+        if (!userName) return false
+        return botUsernames.indexOf(userName.toLowerCase()) >= 0
+    }
+
+    TextToSpeech { id: tts }
+    SoundEffect { id: chatSound; source: "qrc:/audio/chat_message_add.wav" }
 
     Timer {
         id: uptimeTimer
@@ -307,6 +324,25 @@ Item {
                 "message": text,
                 "timestamp": message.timestamp || 0
             })
+
+            if (root.isBot(userName)) return
+
+            var cleanText = text.replace(/<[^>]*>/g, "")
+            cleanText = cleanText.replace(/https?:\/\/[^\s]+/g, "<HTTP-link>")
+
+            if (root.ttsEnabled && tts.state !== TextToSpeech.Error) {
+                var ttsText = cleanText
+                if (root.ttsUsernames) {
+                    var speakName = displayName || userName
+                    ttsText = "from " + speakName + ": " + ttsText
+                }
+                tts.enqueue(ttsText)
+            } else if (root.soundEnabled) {
+                chatSound.play()
+            }
+
+            if (root.vibrateEnabled)
+                platformInstance.vibrate(500, true)
         }
     }
 
@@ -445,27 +481,51 @@ Item {
                 color: Theme.textTertiary
             }
 
-            // Temperature indicators (CPU, Battery, Case — max of each category)
+            // Temperature indicators (CPU, Battery, Other — hottest in each category)
             Repeater {
                 model: {
                     var all = platformInstance.temperatures || []
-                    var cpuMax = -999, batMax = -999, caseMax = -999
+
+                    function getWeight(temp, type) {
+                        var low = 40, high = 90
+                        if (!type) type = ""
+                        var t = type.toLowerCase()
+                        if (t.indexOf("batt") !== -1 || t.indexOf("bms") !== -1) {
+                            low = 35; high = 48
+                        } else if (t.indexOf("cpu") !== -1 || t.indexOf("gpu") !== -1
+                                   || t.indexOf("g3d") !== -1 || t.indexOf("tpu") !== -1
+                                   || t.indexOf("soc") !== -1) {
+                            low = 50; high = 100
+                        } else if (t.indexOf("skin") !== -1 || t.indexOf("ext_") !== -1
+                                   || t.indexOf("usb") !== -1 || t.indexOf("charger") !== -1) {
+                            low = 45; high = 70
+                        }
+                        return (temp - low) / (high - low)
+                    }
+
+                    var cpu  = { temp: -1337, type: "", weight: -Infinity }
+                    var batt = { temp: -1337, type: "", weight: -Infinity }
+                    var other = { temp: -1337, type: "", weight: -Infinity }
+
                     for (var i = 0; i < all.length; i++) {
-                        var t = (all[i].type || "").toLowerCase()
-                        var v = all[i].temp || 0
-                        if (t.indexOf("cpu") >= 0 || t.indexOf("tsens") >= 0) {
-                            if (v > cpuMax) cpuMax = v
-                        } else if (t.indexOf("batt") >= 0) {
-                            if (v > batMax) batMax = v
-                        } else if (t.indexOf("skin") >= 0 || t.indexOf("case") >= 0
-                                   || t.indexOf("ambient") >= 0 || t.indexOf("therm") >= 0) {
-                            if (v > caseMax) caseMax = v
+                        var typeStr = (all[i].type || "").toLowerCase()
+                        var w = getWeight(all[i].temp, typeStr)
+
+                        if (typeStr.indexOf("cpu") !== -1 || typeStr.indexOf("gpu") !== -1
+                            || typeStr.indexOf("g3d") !== -1 || typeStr.indexOf("tpu") !== -1
+                            || typeStr.indexOf("soc") !== -1) {
+                            if (w > cpu.weight) { cpu.temp = all[i].temp; cpu.type = all[i].type; cpu.weight = w }
+                        } else if (typeStr.indexOf("batt") !== -1 || typeStr.indexOf("bms") !== -1) {
+                            if (w > batt.weight) { batt.temp = all[i].temp; batt.type = all[i].type; batt.weight = w }
+                        } else {
+                            if (w > other.weight) { other.temp = all[i].temp; other.type = all[i].type; other.weight = w }
                         }
                     }
+
                     var result = []
-                    if (cpuMax > -999) result.push({ label: "C", temp: cpuMax, sensor: "cpu" })
-                    if (batMax > -999) result.push({ label: "B", temp: batMax, sensor: "battery" })
-                    if (caseMax > -999) result.push({ label: "O", temp: caseMax, sensor: "skin" })
+                    if (cpu.temp > -1337) result.push({ label: "C", temp: cpu.temp, sensor: "cpu" })
+                    if (batt.temp > -1337) result.push({ label: "B", temp: batt.temp, sensor: "battery" })
+                    if (other.temp > -1337) result.push({ label: "O", temp: other.temp, sensor: "skin" })
                     return result
                 }
                 delegate: Row {
@@ -611,6 +671,46 @@ Item {
                 font.pixelSize: Theme.fontTiny
                 font.weight: Font.Medium
                 color: root.wifiSsid !== "" ? Theme.rssiColor(root.wifiRssi) : Theme.textTertiary
+            }
+        }
+
+        // TTS / vibration / sound toggles
+        Flow {
+            Layout.fillWidth: true
+            spacing: Theme.spacingSmall
+
+            Components.GlassButton {
+                objectName: "dashboardTtsToggle"
+                text: root.ttsEnabled ? "TTS ON" : "TTS OFF"
+                filled: root.ttsEnabled
+                accentColor: Theme.accentSecondary
+                onClicked: {
+                    root.ttsEnabled = !root.ttsEnabled
+                    if (!root.ttsEnabled) tts.stop()
+                }
+            }
+
+            Components.GlassButton {
+                objectName: "dashboardTtsUsernamesToggle"
+                text: root.ttsUsernames ? "TTS:name ON" : "TTS:name OFF"
+                filled: root.ttsUsernames
+                enabled: root.ttsEnabled
+                accentColor: Theme.accentSecondary
+                onClicked: root.ttsUsernames = !root.ttsUsernames
+            }
+
+            Components.GlassButton {
+                objectName: "dashboardVibrateToggle"
+                text: root.vibrateEnabled ? "Vibrate ON" : "Vibrate OFF"
+                filled: root.vibrateEnabled
+                onClicked: root.vibrateEnabled = !root.vibrateEnabled
+            }
+
+            Components.GlassButton {
+                objectName: "dashboardSoundToggle"
+                text: root.soundEnabled ? "Sound ON" : "Sound OFF"
+                filled: root.soundEnabled
+                onClicked: root.soundEnabled = !root.soundEnabled
             }
         }
 
