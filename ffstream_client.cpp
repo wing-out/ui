@@ -182,6 +182,14 @@ void Client::getBitRates(
   this->GetBitRates(arg, finishCallback, errorCallback, options);
 }
 
+void Client::getStats(
+    const QJSValue &finishCallback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  this->_reconnectIfNeeded();
+  ffstream_grpc::GetStatsRequest arg{};
+  this->GetStats(arg, finishCallback, errorCallback, options);
+}
+
 void Client::injectSubtitles(
     const QByteArray &data, quint64 durationNS, const QJSValue &finishCallback,
     const QJSValue &errorCallback,

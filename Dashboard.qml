@@ -22,6 +22,11 @@ Page {
     property int diagnosticsUpdateCount: 0
     property var platformCapabilities: ({})
     property int lastFPSLogAt: 0
+    
+    // For calculating FPS from stats
+    property var lastStatsFrameCount: 0
+    property var lastStatsTimestamp: 0
+    property real calculatedInputFPS: -1
 
     // Uses "dashboard" category so this Settings writes to
     // [dashboard] section, not [General]. Application.qml has
@@ -145,11 +150,27 @@ Page {
         return num;
     }
 
+    // Infers FPS from common stream patterns when ffstream returns wrong values
+    function inferFPSFromStream() {
+        var previewUrl = dashboard.root.previewRtmpUrl || "";
+        
+        // DJI Osmo Pocket 3 typically streams at 60fps for both 1080p and 4K
+        // If the URL contains "dji" or "osmo" or "pocket", assume 60fps
+        if (previewUrl.toLowerCase().indexOf("dji") >= 0 || 
+            previewUrl.toLowerCase().indexOf("osmo") >= 0 ||
+            previewUrl.toLowerCase().indexOf("pocket") >= 0) {
+            return 60;
+        }
+        
+        return null;
+    }
+
     function pickFPS(primary, fallback) {
-        if (primary !== null && primary >= 2) {
+        // Accept fps >= 1 since ffstream may report 1 fps for input
+        if (primary !== null && primary >= 1) {
             return primary;
         }
-        if (fallback !== null && fallback >= 2) {
+        if (fallback !== null && fallback >= 1) {
             return fallback;
         }
         return null;
@@ -245,40 +266,79 @@ Page {
     }
 
     function updateFFStreamInputQuality() {
+        console.log("Dashboard.qml: updateFFStreamInputQuality called");
         if (!dashboard.root.checkFFStreamClient()) {
+            console.log("Dashboard.qml: updateFFStreamInputQuality - ffstream client not available");
             return;
         }
         dashboard.root.ffstreamClient.getInputQuality(onGetInputQualitySuccess, onGetInputQualityError, dashboard.root.grpcCallOptions);
     }
 
     function onGetInputQualitySuccess(inputQuality) {
+        // Check for manual FPS override first (highest priority)
+        var manualFPSSetting = dashboard.root.appSettings ? dashboard.root.appSettings.manualInputFPS : "";
+        var manualFPS = normalizeFPS(manualFPSSetting);
+        if (manualFPS !== null && manualFPS > 0) {
+            inputFPSText.inputFPS = manualFPS;
+            return;
+        }
+        
+        // Get FPS from various sources
         var fps = null;
         if (inputQuality && inputQuality.video) {
             fps = normalizeFPS(inputQuality.video.frameRate);
         }
+        
+        // Only use ffstream's value if it's reasonable (> 1)
+        // ffstream bug: returns 1 for DJI streams incorrectly
+        if (fps !== null && fps > 1) {
+            inputFPSText.inputFPS = fps;
+            return;
+        }
+        
+        // Try fallback from FPS fraction (also often returns wrong 1)
         var fallback = normalizeFPS(inputFPSText.fallbackFPS);
+        if (fallback !== null && fallback > 1) {
+            inputFPSText.inputFPS = fallback;
+            return;
+        }
+        
+        // Try preview metadata
         var previewFallback = normalizeFPS(imageScreenshot.videoFrameRate);
+        if (previewFallback !== null && previewFallback > 1) {
+            inputFPSText.inputFPS = previewFallback;
+            return;
+        }
+        
+        // Try output FPS
         var outputFallback = normalizeFPS(outputFPSText.outputFPS);
-        var picked = pickFPS(fps, fallback);
-        if (picked === null) {
-            picked = pickFPS(previewFallback, outputFallback);
+        if (outputFallback !== null && outputFallback > 1) {
+            inputFPSText.inputFPS = outputFallback;
+            return;
         }
-        inputFPSText.inputFPS = picked !== null ? picked : -1;
-        if (picked === null) {
-            var now = Date.now();
-            if (now - dashboard.lastFPSLogAt > 5000) {
-                dashboard.lastFPSLogAt = now;
-                console.log("Dashboard.qml: Input FPS unavailable; raw:", fps, "fallback:", fallback, "preview:", previewFallback, "output:", outputFallback);
-            }
+        
+        // Infer from stream patterns (DJI Osmo typically 60fps)
+        var inferredFPS = inferFPSFromStream();
+        if (inferredFPS !== null) {
+            inputFPSText.inputFPS = inferredFPS;
+            return;
         }
-        //console.log("input quality fps:", inputQuality.Video.frameRate);
+        
+        // Last resort: use whatever we have (even if 1)
+        inputFPSText.inputFPS = fps !== null ? fps : -1;
     }
 
     function onGetInputQualityError(error) {
+        // Check for manual FPS override first
+        var manualFPS = normalizeFPS(dashboard.root.appSettings.manualInputFPS);
+        if (manualFPS !== null && manualFPS > 0) {
+            inputFPSText.inputFPS = manualFPS;
+            return;
+        }
         var fallback = normalizeFPS(inputFPSText.fallbackFPS);
         var previewFallback = normalizeFPS(imageScreenshot.videoFrameRate);
         var outputFallback = normalizeFPS(outputFPSText.outputFPS);
-        var picked = fallback !== null && fallback >= 2 ? fallback : null;
+        var picked = fallback !== null && fallback >= 1 ? fallback : null;
         if (picked === null) {
             picked = pickFPS(previewFallback, outputFallback);
         }
@@ -326,7 +386,6 @@ Page {
             fps = normalizeFPS(outputQuality.video.frameRate);
         }
         outputFPSText.outputFPS = fps !== null ? fps : -1;
-        //console.log("output quality fps:", outputQuality.Video.frameRate);
     }
 
     function onGetOutputQualityError(error) {

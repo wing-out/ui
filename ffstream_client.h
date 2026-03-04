@@ -44,6 +44,9 @@ public:
   getBitRates(const QJSValue &finishCallback, const QJSValue &errorCallback,
               const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
   Q_INVOKABLE void
+  getStats(const QJSValue &finishCallback, const QJSValue &errorCallback,
+            const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);
+  Q_INVOKABLE void
   injectSubtitles(const QByteArray &data, quint64 durationNS,
                   const QJSValue &finishCallback, const QJSValue &errorCallback,
                   const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options);

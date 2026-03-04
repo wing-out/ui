@@ -127,12 +127,19 @@ Rectangle {
             videoFrameRate = -1;
             return;
         }
-        var fps = Number(meta.videoFrameRate);
-        if (!isFinite(fps) || fps <= 0) {
-            videoFrameRate = -1;
-            return;
+        // Try various possible keys that might contain frame rate
+        var fpsKeys = ['videoFrameRate', 'framerate', 'VideoFrameRate', 'frameRate', 'nominalFrameRate'];
+        for (var i = 0; i < fpsKeys.length; i++) {
+            var key = fpsKeys[i];
+            if (meta[key] !== undefined) {
+                var fps = Number(meta[key]);
+                if (isFinite(fps) && fps > 0) {
+                    videoFrameRate = fps;
+                    return;
+                }
+            }
         }
-        videoFrameRate = fps;
+        videoFrameRate = -1;
     }
 
     Timer {
