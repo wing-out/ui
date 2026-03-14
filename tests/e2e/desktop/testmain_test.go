@@ -50,7 +50,7 @@ func TestMain(m *testing.M) {
 	setupMockFFStream(mockFF)
 	setupMockStreamD(mockSD)
 
-	srv := api.NewServer(mockFF, mockSD)
+	srv := api.NewServer(mockFF, mockSD, nil)
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "listen: %v\n", err)

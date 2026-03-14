@@ -142,6 +142,11 @@ const (
 	WingOutService_GetChannelQuality_FullMethodName                    = "/wingout.WingOutService/GetChannelQuality"
 	WingOutService_SetBackendAddresses_FullMethodName                  = "/wingout.WingOutService/SetBackendAddresses"
 	WingOutService_GetBackendAddresses_FullMethodName                  = "/wingout.WingOutService/GetBackendAddresses"
+	WingOutService_AVDListRoutes_FullMethodName                        = "/wingout.WingOutService/AVDListRoutes"
+	WingOutService_AVDGetPrivacyBlur_FullMethodName                    = "/wingout.WingOutService/AVDGetPrivacyBlur"
+	WingOutService_AVDSetPrivacyBlur_FullMethodName                    = "/wingout.WingOutService/AVDSetPrivacyBlur"
+	WingOutService_AVDGetDeblemish_FullMethodName                      = "/wingout.WingOutService/AVDGetDeblemish"
+	WingOutService_AVDSetDeblemish_FullMethodName                      = "/wingout.WingOutService/AVDSetDeblemish"
 )
 
 // WingOutServiceClient is the client API for WingOutService service.
@@ -303,6 +308,12 @@ type WingOutServiceClient interface {
 	// Backend Addresses
 	SetBackendAddresses(ctx context.Context, in *SetBackendAddressesRequest, opts ...grpc.CallOption) (*SetBackendAddressesReply, error)
 	GetBackendAddresses(ctx context.Context, in *GetBackendAddressesRequest, opts ...grpc.CallOption) (*GetBackendAddressesReply, error)
+	// AVD Management
+	AVDListRoutes(ctx context.Context, in *AVDListRoutesRequest, opts ...grpc.CallOption) (*AVDListRoutesReply, error)
+	AVDGetPrivacyBlur(ctx context.Context, in *AVDGetPrivacyBlurRequest, opts ...grpc.CallOption) (*AVDGetPrivacyBlurReply, error)
+	AVDSetPrivacyBlur(ctx context.Context, in *AVDSetPrivacyBlurRequest, opts ...grpc.CallOption) (*AVDSetPrivacyBlurReply, error)
+	AVDGetDeblemish(ctx context.Context, in *AVDGetDeblemishRequest, opts ...grpc.CallOption) (*AVDGetDeblemishReply, error)
+	AVDSetDeblemish(ctx context.Context, in *AVDSetDeblemishRequest, opts ...grpc.CallOption) (*AVDSetDeblemishReply, error)
 }
 
 type wingOutServiceClient struct {
@@ -1660,6 +1671,56 @@ func (c *wingOutServiceClient) GetBackendAddresses(ctx context.Context, in *GetB
 	return out, nil
 }
 
+func (c *wingOutServiceClient) AVDListRoutes(ctx context.Context, in *AVDListRoutesRequest, opts ...grpc.CallOption) (*AVDListRoutesReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AVDListRoutesReply)
+	err := c.cc.Invoke(ctx, WingOutService_AVDListRoutes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *wingOutServiceClient) AVDGetPrivacyBlur(ctx context.Context, in *AVDGetPrivacyBlurRequest, opts ...grpc.CallOption) (*AVDGetPrivacyBlurReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AVDGetPrivacyBlurReply)
+	err := c.cc.Invoke(ctx, WingOutService_AVDGetPrivacyBlur_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *wingOutServiceClient) AVDSetPrivacyBlur(ctx context.Context, in *AVDSetPrivacyBlurRequest, opts ...grpc.CallOption) (*AVDSetPrivacyBlurReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AVDSetPrivacyBlurReply)
+	err := c.cc.Invoke(ctx, WingOutService_AVDSetPrivacyBlur_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *wingOutServiceClient) AVDGetDeblemish(ctx context.Context, in *AVDGetDeblemishRequest, opts ...grpc.CallOption) (*AVDGetDeblemishReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AVDGetDeblemishReply)
+	err := c.cc.Invoke(ctx, WingOutService_AVDGetDeblemish_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *wingOutServiceClient) AVDSetDeblemish(ctx context.Context, in *AVDSetDeblemishRequest, opts ...grpc.CallOption) (*AVDSetDeblemishReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AVDSetDeblemishReply)
+	err := c.cc.Invoke(ctx, WingOutService_AVDSetDeblemish_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WingOutServiceServer is the server API for WingOutService service.
 // All implementations must embed UnimplementedWingOutServiceServer
 // for forward compatibility.
@@ -1819,6 +1880,12 @@ type WingOutServiceServer interface {
 	// Backend Addresses
 	SetBackendAddresses(context.Context, *SetBackendAddressesRequest) (*SetBackendAddressesReply, error)
 	GetBackendAddresses(context.Context, *GetBackendAddressesRequest) (*GetBackendAddressesReply, error)
+	// AVD Management
+	AVDListRoutes(context.Context, *AVDListRoutesRequest) (*AVDListRoutesReply, error)
+	AVDGetPrivacyBlur(context.Context, *AVDGetPrivacyBlurRequest) (*AVDGetPrivacyBlurReply, error)
+	AVDSetPrivacyBlur(context.Context, *AVDSetPrivacyBlurRequest) (*AVDSetPrivacyBlurReply, error)
+	AVDGetDeblemish(context.Context, *AVDGetDeblemishRequest) (*AVDGetDeblemishReply, error)
+	AVDSetDeblemish(context.Context, *AVDSetDeblemishRequest) (*AVDSetDeblemishReply, error)
 	mustEmbedUnimplementedWingOutServiceServer()
 }
 
@@ -2197,6 +2264,21 @@ func (UnimplementedWingOutServiceServer) SetBackendAddresses(context.Context, *S
 }
 func (UnimplementedWingOutServiceServer) GetBackendAddresses(context.Context, *GetBackendAddressesRequest) (*GetBackendAddressesReply, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBackendAddresses not implemented")
+}
+func (UnimplementedWingOutServiceServer) AVDListRoutes(context.Context, *AVDListRoutesRequest) (*AVDListRoutesReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method AVDListRoutes not implemented")
+}
+func (UnimplementedWingOutServiceServer) AVDGetPrivacyBlur(context.Context, *AVDGetPrivacyBlurRequest) (*AVDGetPrivacyBlurReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method AVDGetPrivacyBlur not implemented")
+}
+func (UnimplementedWingOutServiceServer) AVDSetPrivacyBlur(context.Context, *AVDSetPrivacyBlurRequest) (*AVDSetPrivacyBlurReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method AVDSetPrivacyBlur not implemented")
+}
+func (UnimplementedWingOutServiceServer) AVDGetDeblemish(context.Context, *AVDGetDeblemishRequest) (*AVDGetDeblemishReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method AVDGetDeblemish not implemented")
+}
+func (UnimplementedWingOutServiceServer) AVDSetDeblemish(context.Context, *AVDSetDeblemishRequest) (*AVDSetDeblemishReply, error) {
+	return nil, status.Error(codes.Unimplemented, "method AVDSetDeblemish not implemented")
 }
 func (UnimplementedWingOutServiceServer) mustEmbedUnimplementedWingOutServiceServer() {}
 func (UnimplementedWingOutServiceServer) testEmbeddedByValue()                        {}
@@ -4342,6 +4424,96 @@ func _WingOutService_GetBackendAddresses_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WingOutService_AVDListRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AVDListRoutesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WingOutServiceServer).AVDListRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WingOutService_AVDListRoutes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WingOutServiceServer).AVDListRoutes(ctx, req.(*AVDListRoutesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WingOutService_AVDGetPrivacyBlur_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AVDGetPrivacyBlurRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WingOutServiceServer).AVDGetPrivacyBlur(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WingOutService_AVDGetPrivacyBlur_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WingOutServiceServer).AVDGetPrivacyBlur(ctx, req.(*AVDGetPrivacyBlurRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WingOutService_AVDSetPrivacyBlur_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AVDSetPrivacyBlurRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WingOutServiceServer).AVDSetPrivacyBlur(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WingOutService_AVDSetPrivacyBlur_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WingOutServiceServer).AVDSetPrivacyBlur(ctx, req.(*AVDSetPrivacyBlurRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WingOutService_AVDGetDeblemish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AVDGetDeblemishRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WingOutServiceServer).AVDGetDeblemish(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WingOutService_AVDGetDeblemish_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WingOutServiceServer).AVDGetDeblemish(ctx, req.(*AVDGetDeblemishRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WingOutService_AVDSetDeblemish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AVDSetDeblemishRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WingOutServiceServer).AVDSetDeblemish(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WingOutService_AVDSetDeblemish_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WingOutServiceServer).AVDSetDeblemish(ctx, req.(*AVDSetDeblemishRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WingOutService_ServiceDesc is the grpc.ServiceDesc for WingOutService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -4788,6 +4960,26 @@ var WingOutService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBackendAddresses",
 			Handler:    _WingOutService_GetBackendAddresses_Handler,
+		},
+		{
+			MethodName: "AVDListRoutes",
+			Handler:    _WingOutService_AVDListRoutes_Handler,
+		},
+		{
+			MethodName: "AVDGetPrivacyBlur",
+			Handler:    _WingOutService_AVDGetPrivacyBlur_Handler,
+		},
+		{
+			MethodName: "AVDSetPrivacyBlur",
+			Handler:    _WingOutService_AVDSetPrivacyBlur_Handler,
+		},
+		{
+			MethodName: "AVDGetDeblemish",
+			Handler:    _WingOutService_AVDGetDeblemish_Handler,
+		},
+		{
+			MethodName: "AVDSetDeblemish",
+			Handler:    _WingOutService_AVDSetDeblemish_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

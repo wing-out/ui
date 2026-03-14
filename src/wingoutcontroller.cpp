@@ -463,6 +463,7 @@ void WingOutController::getBackendMode(QJSValue callback, QJSValue errorCallback
 }
 
 void WingOutController::setBackendAddresses(const QString &ffstreamAddr, const QString &streamdAddr,
+                                              const QString &avdAddr,
                                               QJSValue callback, QJSValue errorCallback)
 {
     GRPC_CHECK_CLIENT();
@@ -470,6 +471,7 @@ void WingOutController::setBackendAddresses(const QString &ffstreamAddr, const Q
     wingout::SetBackendAddressesRequest req;
     req.setFfstreamAddr(ffstreamAddr);
     req.setStreamdAddr(streamdAddr);
+    req.setAvdAddr(avdAddr);
 
     auto reply = std::shared_ptr<QGrpcCallReply>(m_client->SetBackendAddresses(req));
     GRPC_CONNECT_REPLY(reply, {
@@ -488,6 +490,7 @@ void WingOutController::getBackendAddresses(QJSValue callback, QJSValue errorCal
             QVariantMap result;
             result[QStringLiteral("ffstreamAddr")] = resp->ffstreamAddr();
             result[QStringLiteral("streamdAddr")] = resp->streamdAddr();
+            result[QStringLiteral("avdAddr")] = resp->avdAddr();
             if (cb.isCallable())
                 cb.call(QJSValueList{qjsEngine(this)->toScriptValue(result)});
         }
@@ -2080,6 +2083,134 @@ void WingOutController::getChannelQuality(QJSValue callback, QJSValue errorCallb
             if (cb.isCallable())
                 cb.call(QJSValueList{qjsEngine(this)->toScriptValue(list)});
         }
+    });
+}
+
+// =========================================================================
+// AVD Management
+// =========================================================================
+
+void WingOutController::avdListRoutes(QJSValue callback, QJSValue errorCallback)
+{
+    GRPC_CHECK_CLIENT();
+
+    auto reply = std::shared_ptr<QGrpcCallReply>(m_client->AVDListRoutes(wingout::AVDListRoutesRequest{}));
+    GRPC_CONNECT_REPLY(reply, {
+        if (auto resp = reply->read<wingout::AVDListRoutesReply>()) {
+            QVariantList routesList;
+            for (const auto &route : resp->routes()) {
+                QVariantMap routeMap;
+                routeMap[QStringLiteral("path")] = route.path();
+                routeMap[QStringLiteral("description")] = route.description();
+                routeMap[QStringLiteral("isServing")] = route.isServing();
+
+                QVariantList fwdList;
+                for (const auto &fwd : route.forwardings()) {
+                    QVariantMap fwdMap;
+                    fwdMap[QStringLiteral("index")] = static_cast<int>(fwd.index());
+                    fwdMap[QStringLiteral("hasPrivacyBlur")] = fwd.hasPrivacyBlur();
+                    fwdMap[QStringLiteral("hasDeblemish")] = fwd.hasDeblemish();
+                    fwdList.append(fwdMap);
+                }
+                routeMap[QStringLiteral("forwardings")] = fwdList;
+                routesList.append(routeMap);
+            }
+            if (cb.isCallable())
+                cb.call(QJSValueList{qjsEngine(this)->toScriptValue(routesList)});
+        }
+    });
+}
+
+void WingOutController::avdGetPrivacyBlur(const QString &routePath, qint32 forwardingIndex,
+                                            QJSValue callback, QJSValue errorCallback)
+{
+    GRPC_CHECK_CLIENT();
+
+    wingout::AVDGetPrivacyBlurRequest req;
+    req.setRoutePath(routePath);
+    req.setForwardingIndex(forwardingIndex);
+
+    auto reply = std::shared_ptr<QGrpcCallReply>(m_client->AVDGetPrivacyBlur(req));
+    GRPC_CONNECT_REPLY(reply, {
+        if (auto resp = reply->read<wingout::AVDGetPrivacyBlurReply>()) {
+            QVariantMap result;
+            result[QStringLiteral("enabled")] = resp->enabled();
+            result[QStringLiteral("blurRadius")] = resp->blurRadius();
+            result[QStringLiteral("pixelateBlockSize")] = static_cast<qint64>(resp->pixelateBlockSize());
+            if (cb.isCallable())
+                cb.call(QJSValueList{qjsEngine(this)->toScriptValue(result)});
+        }
+    });
+}
+
+void WingOutController::avdSetPrivacyBlur(const QString &routePath, qint32 forwardingIndex,
+                                            const QVariantMap &params,
+                                            QJSValue callback, QJSValue errorCallback)
+{
+    GRPC_CHECK_CLIENT();
+
+    wingout::AVDSetPrivacyBlurRequest req;
+    req.setRoutePath(routePath);
+    req.setForwardingIndex(forwardingIndex);
+    if (params.contains(QStringLiteral("enabled")))
+        req.setEnabled(params[QStringLiteral("enabled")].toBool());
+    if (params.contains(QStringLiteral("blurRadius")))
+        req.setBlurRadius(params[QStringLiteral("blurRadius")].toDouble());
+    if (params.contains(QStringLiteral("pixelateBlockSize")))
+        req.setPixelateBlockSize(params[QStringLiteral("pixelateBlockSize")].toLongLong());
+
+    auto reply = std::shared_ptr<QGrpcCallReply>(m_client->AVDSetPrivacyBlur(req));
+    GRPC_CONNECT_REPLY(reply, {
+        if (cb.isCallable())
+            cb.call();
+    });
+}
+
+void WingOutController::avdGetDeblemish(const QString &routePath, qint32 forwardingIndex,
+                                          QJSValue callback, QJSValue errorCallback)
+{
+    GRPC_CHECK_CLIENT();
+
+    wingout::AVDGetDeblemishRequest req;
+    req.setRoutePath(routePath);
+    req.setForwardingIndex(forwardingIndex);
+
+    auto reply = std::shared_ptr<QGrpcCallReply>(m_client->AVDGetDeblemish(req));
+    GRPC_CONNECT_REPLY(reply, {
+        if (auto resp = reply->read<wingout::AVDGetDeblemishReply>()) {
+            QVariantMap result;
+            result[QStringLiteral("enabled")] = resp->enabled();
+            result[QStringLiteral("sigmaS")] = resp->sigmaS();
+            result[QStringLiteral("sigmaR")] = resp->sigmaR();
+            result[QStringLiteral("diameter")] = static_cast<qint64>(resp->diameter());
+            if (cb.isCallable())
+                cb.call(QJSValueList{qjsEngine(this)->toScriptValue(result)});
+        }
+    });
+}
+
+void WingOutController::avdSetDeblemish(const QString &routePath, qint32 forwardingIndex,
+                                          const QVariantMap &params,
+                                          QJSValue callback, QJSValue errorCallback)
+{
+    GRPC_CHECK_CLIENT();
+
+    wingout::AVDSetDeblemishRequest req;
+    req.setRoutePath(routePath);
+    req.setForwardingIndex(forwardingIndex);
+    if (params.contains(QStringLiteral("enabled")))
+        req.setEnabled(params[QStringLiteral("enabled")].toBool());
+    if (params.contains(QStringLiteral("sigmaS")))
+        req.setSigmaS(params[QStringLiteral("sigmaS")].toDouble());
+    if (params.contains(QStringLiteral("sigmaR")))
+        req.setSigmaR(params[QStringLiteral("sigmaR")].toDouble());
+    if (params.contains(QStringLiteral("diameter")))
+        req.setDiameter(params[QStringLiteral("diameter")].toLongLong());
+
+    auto reply = std::shared_ptr<QGrpcCallReply>(m_client->AVDSetDeblemish(req));
+    GRPC_CONNECT_REPLY(reply, {
+        if (cb.isCallable())
+            cb.call();
     });
 }
 

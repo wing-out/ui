@@ -13,10 +13,10 @@ import (
 
 // SetBackendAddressesHandler is called when SetBackendAddresses RPC is received.
 // It receives the new addresses and should create/swap remote backends.
-type SetBackendAddressesHandler func(ctx context.Context, ffstreamAddr, streamdAddr string) error
+type SetBackendAddressesHandler func(ctx context.Context, ffstreamAddr, streamdAddr, avdAddr string) error
 
 // GetBackendAddressesHandler is called when GetBackendAddresses RPC is received.
-type GetBackendAddressesHandler func(ctx context.Context) (ffstreamAddr, streamdAddr string, err error)
+type GetBackendAddressesHandler func(ctx context.Context) (ffstreamAddr, streamdAddr, avdAddr string, err error)
 
 // wingOutService implements the unified gRPC service.
 type wingOutService struct {
@@ -25,6 +25,7 @@ type wingOutService struct {
 	mu       sync.RWMutex
 	ffstream backend.FFStreamBackend
 	streamd  backend.StreamDBackend
+	avd      backend.AVDBackend
 
 	onSetBackendAddresses SetBackendAddressesHandler
 	onGetBackendAddresses GetBackendAddressesHandler
@@ -92,7 +93,7 @@ func (s *wingOutService) SetBackendAddresses(ctx context.Context, req *SetBacken
 	if s.onSetBackendAddresses == nil {
 		return nil, fmt.Errorf("backend address reconfiguration is not supported")
 	}
-	if err := s.onSetBackendAddresses(ctx, req.GetFfstreamAddr(), req.GetStreamdAddr()); err != nil {
+	if err := s.onSetBackendAddresses(ctx, req.GetFfstreamAddr(), req.GetStreamdAddr(), req.GetAvdAddr()); err != nil {
 		return nil, err
 	}
 	return &SetBackendAddressesReply{}, nil
@@ -103,13 +104,14 @@ func (s *wingOutService) GetBackendAddresses(ctx context.Context, req *GetBacken
 	if s.onGetBackendAddresses == nil {
 		return nil, fmt.Errorf("backend address query is not supported")
 	}
-	ffAddr, sdAddr, err := s.onGetBackendAddresses(ctx)
+	ffAddr, sdAddr, avdAddr, err := s.onGetBackendAddresses(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return &GetBackendAddressesReply{
 		FfstreamAddr: ffAddr,
 		StreamdAddr:  sdAddr,
+		AvdAddr:      avdAddr,
 	}, nil
 }
 

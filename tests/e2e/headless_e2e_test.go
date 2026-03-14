@@ -15,7 +15,7 @@ import (
 
 func startTestServer(t *testing.T, ff backend.FFStreamBackend, sd backend.StreamDBackend) (api.WingOutServiceClient, func()) {
 	t.Helper()
-	srv := api.NewServer(ff, sd)
+	srv := api.NewServer(ff, sd, nil)
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 

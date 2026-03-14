@@ -137,6 +137,23 @@ Item {
                         onTextChanged: root.settings.remoteStreamDAddr = text
                     }
 
+                    Text {
+                        text: "AVD Address"
+                        Accessible.name: "AVD Address"
+                        font.pixelSize: Theme.fontSmall
+                        color: Theme.textSecondary
+                        topPadding: Theme.spacingSmall
+                    }
+
+                    Components.SearchField {
+                        id: avdAddrField
+                        objectName: "avdAddrField"
+                        width: parent.width
+                        text: root.settings.remoteAVDAddr
+                        placeholder: "e.g. 127.0.0.1:3596"
+                        onTextChanged: root.settings.remoteAVDAddr = text
+                    }
+
                     Components.GlassButton {
                         objectName: "applyBackendAddresses"
                         text: "Apply Backend Addresses"
@@ -144,6 +161,7 @@ Item {
                         onClicked: {
                             controller.setBackendAddresses(
                                 ffstreamAddrField.text, streamdAddrField.text,
+                                avdAddrField.text,
                                 function() { console.log("Backend addresses updated") },
                                 function(err) { console.warn("setBackendAddresses error:", err) }
                             )

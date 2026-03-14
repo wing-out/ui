@@ -27,6 +27,7 @@ ApplicationWindow {
         property string backendMode: "remote"
         property string remoteFFStreamAddr: ""
         property string remoteStreamDAddr: ""
+        property string remoteAVDAddr: ""
         property string previewRTMPUrl: ""
         property string previewRTMPPort: "1945"
         property string manualInputFPS: ""
@@ -56,9 +57,10 @@ ApplicationWindow {
         if (appSettings.backendHost !== "") {
             backendController.serverUri = appSettings.backendHost
         }
-        if (appSettings.remoteFFStreamAddr !== "" || appSettings.remoteStreamDAddr !== "") {
+        if (appSettings.remoteFFStreamAddr !== "" || appSettings.remoteStreamDAddr !== "" || appSettings.remoteAVDAddr !== "") {
             backendController.setBackendAddresses(
                 appSettings.remoteFFStreamAddr, appSettings.remoteStreamDAddr,
+                appSettings.remoteAVDAddr,
                 function() { console.log("Backend addresses configured") },
                 function(err) { appLogModel.addLog("setBackendAddresses error: " + err, true) }
             )
@@ -205,7 +207,7 @@ ApplicationWindow {
                 }
                 if (ffstreamAddr !== "" || streamdAddr !== "") {
                     backendController.setBackendAddresses(
-                        ffstreamAddr, streamdAddr,
+                        ffstreamAddr, streamdAddr, "",
                         function() { console.log("Backend addresses configured") },
                         function(err) { appLogModel.addLog("setBackendAddresses error: " + err, true) }
                     )
@@ -289,7 +291,7 @@ ApplicationWindow {
                     Accessible.name: "pageTitle: " + pageTitleText.text
                     text: {
                         var titles = ["Dashboard", "Status", "Cameras", "DJI Control", "Chat",
-                                      "Players", "Restreams", "Monitor", "Profiles", "Logs", "Settings"]
+                                      "Players", "Restreams", "Monitor", "Profiles", "Logs", "Settings", "AVD Filters"]
                         return titles[pageStack.currentIndex] || "WingOut"
                     }
                     font.pixelSize: Theme.fontLarge
@@ -437,6 +439,10 @@ ApplicationWindow {
                 objectName: "settingsPage"
                 controller: backendController
                 settings: appSettings
+            }
+            Pages.AVDPage {
+                objectName: "avdPage"
+                controller: backendController
             }
         }
 

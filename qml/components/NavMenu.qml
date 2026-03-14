@@ -31,6 +31,7 @@ Rectangle {
         ListElement { menuIcon: "\ue853"; label: "Profiles" }
         ListElement { menuIcon: "\ue868"; label: "Logs" }
         ListElement { menuIcon: "\ue8b8"; label: "Settings" }
+        ListElement { menuIcon: "\ue429"; label: "AVD Filters" }
     }
 
     Column {

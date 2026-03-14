@@ -13987,6 +13987,7 @@ type SetBackendAddressesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FfstreamAddr  string                 `protobuf:"bytes,1,opt,name=ffstream_addr,json=ffstreamAddr,proto3" json:"ffstream_addr,omitempty"`
 	StreamdAddr   string                 `protobuf:"bytes,2,opt,name=streamd_addr,json=streamdAddr,proto3" json:"streamd_addr,omitempty"`
+	AvdAddr       string                 `protobuf:"bytes,3,opt,name=avd_addr,json=avdAddr,proto3" json:"avd_addr,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14031,6 +14032,13 @@ func (x *SetBackendAddressesRequest) GetFfstreamAddr() string {
 func (x *SetBackendAddressesRequest) GetStreamdAddr() string {
 	if x != nil {
 		return x.StreamdAddr
+	}
+	return ""
+}
+
+func (x *SetBackendAddressesRequest) GetAvdAddr() string {
+	if x != nil {
+		return x.AvdAddr
 	}
 	return ""
 }
@@ -14111,6 +14119,7 @@ type GetBackendAddressesReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FfstreamAddr  string                 `protobuf:"bytes,1,opt,name=ffstream_addr,json=ffstreamAddr,proto3" json:"ffstream_addr,omitempty"`
 	StreamdAddr   string                 `protobuf:"bytes,2,opt,name=streamd_addr,json=streamdAddr,proto3" json:"streamd_addr,omitempty"`
+	AvdAddr       string                 `protobuf:"bytes,3,opt,name=avd_addr,json=avdAddr,proto3" json:"avd_addr,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14157,6 +14166,685 @@ func (x *GetBackendAddressesReply) GetStreamdAddr() string {
 		return x.StreamdAddr
 	}
 	return ""
+}
+
+func (x *GetBackendAddressesReply) GetAvdAddr() string {
+	if x != nil {
+		return x.AvdAddr
+	}
+	return ""
+}
+
+type AVDForwardingInfo struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Index          int32                  `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	HasPrivacyBlur bool                   `protobuf:"varint,2,opt,name=has_privacy_blur,json=hasPrivacyBlur,proto3" json:"has_privacy_blur,omitempty"`
+	HasDeblemish   bool                   `protobuf:"varint,3,opt,name=has_deblemish,json=hasDeblemish,proto3" json:"has_deblemish,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AVDForwardingInfo) Reset() {
+	*x = AVDForwardingInfo{}
+	mi := &file_wingout_proto_msgTypes[284]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDForwardingInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDForwardingInfo) ProtoMessage() {}
+
+func (x *AVDForwardingInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[284]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDForwardingInfo.ProtoReflect.Descriptor instead.
+func (*AVDForwardingInfo) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{284}
+}
+
+func (x *AVDForwardingInfo) GetIndex() int32 {
+	if x != nil {
+		return x.Index
+	}
+	return 0
+}
+
+func (x *AVDForwardingInfo) GetHasPrivacyBlur() bool {
+	if x != nil {
+		return x.HasPrivacyBlur
+	}
+	return false
+}
+
+func (x *AVDForwardingInfo) GetHasDeblemish() bool {
+	if x != nil {
+		return x.HasDeblemish
+	}
+	return false
+}
+
+type AVDRouteInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	IsServing     bool                   `protobuf:"varint,3,opt,name=is_serving,json=isServing,proto3" json:"is_serving,omitempty"`
+	Forwardings   []*AVDForwardingInfo   `protobuf:"bytes,4,rep,name=forwardings,proto3" json:"forwardings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AVDRouteInfo) Reset() {
+	*x = AVDRouteInfo{}
+	mi := &file_wingout_proto_msgTypes[285]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDRouteInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDRouteInfo) ProtoMessage() {}
+
+func (x *AVDRouteInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[285]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDRouteInfo.ProtoReflect.Descriptor instead.
+func (*AVDRouteInfo) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{285}
+}
+
+func (x *AVDRouteInfo) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *AVDRouteInfo) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *AVDRouteInfo) GetIsServing() bool {
+	if x != nil {
+		return x.IsServing
+	}
+	return false
+}
+
+func (x *AVDRouteInfo) GetForwardings() []*AVDForwardingInfo {
+	if x != nil {
+		return x.Forwardings
+	}
+	return nil
+}
+
+type AVDListRoutesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AVDListRoutesRequest) Reset() {
+	*x = AVDListRoutesRequest{}
+	mi := &file_wingout_proto_msgTypes[286]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDListRoutesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDListRoutesRequest) ProtoMessage() {}
+
+func (x *AVDListRoutesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[286]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDListRoutesRequest.ProtoReflect.Descriptor instead.
+func (*AVDListRoutesRequest) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{286}
+}
+
+type AVDListRoutesReply struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Routes        []*AVDRouteInfo        `protobuf:"bytes,1,rep,name=routes,proto3" json:"routes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AVDListRoutesReply) Reset() {
+	*x = AVDListRoutesReply{}
+	mi := &file_wingout_proto_msgTypes[287]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDListRoutesReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDListRoutesReply) ProtoMessage() {}
+
+func (x *AVDListRoutesReply) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[287]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDListRoutesReply.ProtoReflect.Descriptor instead.
+func (*AVDListRoutesReply) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{287}
+}
+
+func (x *AVDListRoutesReply) GetRoutes() []*AVDRouteInfo {
+	if x != nil {
+		return x.Routes
+	}
+	return nil
+}
+
+type AVDGetPrivacyBlurRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	RoutePath       string                 `protobuf:"bytes,1,opt,name=route_path,json=routePath,proto3" json:"route_path,omitempty"`
+	ForwardingIndex int32                  `protobuf:"varint,2,opt,name=forwarding_index,json=forwardingIndex,proto3" json:"forwarding_index,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *AVDGetPrivacyBlurRequest) Reset() {
+	*x = AVDGetPrivacyBlurRequest{}
+	mi := &file_wingout_proto_msgTypes[288]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDGetPrivacyBlurRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDGetPrivacyBlurRequest) ProtoMessage() {}
+
+func (x *AVDGetPrivacyBlurRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[288]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDGetPrivacyBlurRequest.ProtoReflect.Descriptor instead.
+func (*AVDGetPrivacyBlurRequest) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{288}
+}
+
+func (x *AVDGetPrivacyBlurRequest) GetRoutePath() string {
+	if x != nil {
+		return x.RoutePath
+	}
+	return ""
+}
+
+func (x *AVDGetPrivacyBlurRequest) GetForwardingIndex() int32 {
+	if x != nil {
+		return x.ForwardingIndex
+	}
+	return 0
+}
+
+type AVDGetPrivacyBlurReply struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Enabled           bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	BlurRadius        float64                `protobuf:"fixed64,2,opt,name=blur_radius,json=blurRadius,proto3" json:"blur_radius,omitempty"`
+	PixelateBlockSize int64                  `protobuf:"varint,3,opt,name=pixelate_block_size,json=pixelateBlockSize,proto3" json:"pixelate_block_size,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *AVDGetPrivacyBlurReply) Reset() {
+	*x = AVDGetPrivacyBlurReply{}
+	mi := &file_wingout_proto_msgTypes[289]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDGetPrivacyBlurReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDGetPrivacyBlurReply) ProtoMessage() {}
+
+func (x *AVDGetPrivacyBlurReply) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[289]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDGetPrivacyBlurReply.ProtoReflect.Descriptor instead.
+func (*AVDGetPrivacyBlurReply) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{289}
+}
+
+func (x *AVDGetPrivacyBlurReply) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *AVDGetPrivacyBlurReply) GetBlurRadius() float64 {
+	if x != nil {
+		return x.BlurRadius
+	}
+	return 0
+}
+
+func (x *AVDGetPrivacyBlurReply) GetPixelateBlockSize() int64 {
+	if x != nil {
+		return x.PixelateBlockSize
+	}
+	return 0
+}
+
+type AVDSetPrivacyBlurRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	RoutePath         string                 `protobuf:"bytes,1,opt,name=route_path,json=routePath,proto3" json:"route_path,omitempty"`
+	ForwardingIndex   int32                  `protobuf:"varint,2,opt,name=forwarding_index,json=forwardingIndex,proto3" json:"forwarding_index,omitempty"`
+	Enabled           *bool                  `protobuf:"varint,3,opt,name=enabled,proto3,oneof" json:"enabled,omitempty"`
+	BlurRadius        *float64               `protobuf:"fixed64,4,opt,name=blur_radius,json=blurRadius,proto3,oneof" json:"blur_radius,omitempty"`
+	PixelateBlockSize *int64                 `protobuf:"varint,5,opt,name=pixelate_block_size,json=pixelateBlockSize,proto3,oneof" json:"pixelate_block_size,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *AVDSetPrivacyBlurRequest) Reset() {
+	*x = AVDSetPrivacyBlurRequest{}
+	mi := &file_wingout_proto_msgTypes[290]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDSetPrivacyBlurRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDSetPrivacyBlurRequest) ProtoMessage() {}
+
+func (x *AVDSetPrivacyBlurRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[290]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDSetPrivacyBlurRequest.ProtoReflect.Descriptor instead.
+func (*AVDSetPrivacyBlurRequest) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{290}
+}
+
+func (x *AVDSetPrivacyBlurRequest) GetRoutePath() string {
+	if x != nil {
+		return x.RoutePath
+	}
+	return ""
+}
+
+func (x *AVDSetPrivacyBlurRequest) GetForwardingIndex() int32 {
+	if x != nil {
+		return x.ForwardingIndex
+	}
+	return 0
+}
+
+func (x *AVDSetPrivacyBlurRequest) GetEnabled() bool {
+	if x != nil && x.Enabled != nil {
+		return *x.Enabled
+	}
+	return false
+}
+
+func (x *AVDSetPrivacyBlurRequest) GetBlurRadius() float64 {
+	if x != nil && x.BlurRadius != nil {
+		return *x.BlurRadius
+	}
+	return 0
+}
+
+func (x *AVDSetPrivacyBlurRequest) GetPixelateBlockSize() int64 {
+	if x != nil && x.PixelateBlockSize != nil {
+		return *x.PixelateBlockSize
+	}
+	return 0
+}
+
+type AVDSetPrivacyBlurReply struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AVDSetPrivacyBlurReply) Reset() {
+	*x = AVDSetPrivacyBlurReply{}
+	mi := &file_wingout_proto_msgTypes[291]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDSetPrivacyBlurReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDSetPrivacyBlurReply) ProtoMessage() {}
+
+func (x *AVDSetPrivacyBlurReply) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[291]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDSetPrivacyBlurReply.ProtoReflect.Descriptor instead.
+func (*AVDSetPrivacyBlurReply) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{291}
+}
+
+type AVDGetDeblemishRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	RoutePath       string                 `protobuf:"bytes,1,opt,name=route_path,json=routePath,proto3" json:"route_path,omitempty"`
+	ForwardingIndex int32                  `protobuf:"varint,2,opt,name=forwarding_index,json=forwardingIndex,proto3" json:"forwarding_index,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *AVDGetDeblemishRequest) Reset() {
+	*x = AVDGetDeblemishRequest{}
+	mi := &file_wingout_proto_msgTypes[292]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDGetDeblemishRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDGetDeblemishRequest) ProtoMessage() {}
+
+func (x *AVDGetDeblemishRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[292]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDGetDeblemishRequest.ProtoReflect.Descriptor instead.
+func (*AVDGetDeblemishRequest) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{292}
+}
+
+func (x *AVDGetDeblemishRequest) GetRoutePath() string {
+	if x != nil {
+		return x.RoutePath
+	}
+	return ""
+}
+
+func (x *AVDGetDeblemishRequest) GetForwardingIndex() int32 {
+	if x != nil {
+		return x.ForwardingIndex
+	}
+	return 0
+}
+
+type AVDGetDeblemishReply struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	SigmaS        float64                `protobuf:"fixed64,2,opt,name=sigma_s,json=sigmaS,proto3" json:"sigma_s,omitempty"`
+	SigmaR        float64                `protobuf:"fixed64,3,opt,name=sigma_r,json=sigmaR,proto3" json:"sigma_r,omitempty"`
+	Diameter      int64                  `protobuf:"varint,4,opt,name=diameter,proto3" json:"diameter,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AVDGetDeblemishReply) Reset() {
+	*x = AVDGetDeblemishReply{}
+	mi := &file_wingout_proto_msgTypes[293]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDGetDeblemishReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDGetDeblemishReply) ProtoMessage() {}
+
+func (x *AVDGetDeblemishReply) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[293]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDGetDeblemishReply.ProtoReflect.Descriptor instead.
+func (*AVDGetDeblemishReply) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{293}
+}
+
+func (x *AVDGetDeblemishReply) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *AVDGetDeblemishReply) GetSigmaS() float64 {
+	if x != nil {
+		return x.SigmaS
+	}
+	return 0
+}
+
+func (x *AVDGetDeblemishReply) GetSigmaR() float64 {
+	if x != nil {
+		return x.SigmaR
+	}
+	return 0
+}
+
+func (x *AVDGetDeblemishReply) GetDiameter() int64 {
+	if x != nil {
+		return x.Diameter
+	}
+	return 0
+}
+
+type AVDSetDeblemishRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	RoutePath       string                 `protobuf:"bytes,1,opt,name=route_path,json=routePath,proto3" json:"route_path,omitempty"`
+	ForwardingIndex int32                  `protobuf:"varint,2,opt,name=forwarding_index,json=forwardingIndex,proto3" json:"forwarding_index,omitempty"`
+	Enabled         *bool                  `protobuf:"varint,3,opt,name=enabled,proto3,oneof" json:"enabled,omitempty"`
+	SigmaS          *float64               `protobuf:"fixed64,4,opt,name=sigma_s,json=sigmaS,proto3,oneof" json:"sigma_s,omitempty"`
+	SigmaR          *float64               `protobuf:"fixed64,5,opt,name=sigma_r,json=sigmaR,proto3,oneof" json:"sigma_r,omitempty"`
+	Diameter        *int64                 `protobuf:"varint,6,opt,name=diameter,proto3,oneof" json:"diameter,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *AVDSetDeblemishRequest) Reset() {
+	*x = AVDSetDeblemishRequest{}
+	mi := &file_wingout_proto_msgTypes[294]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDSetDeblemishRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDSetDeblemishRequest) ProtoMessage() {}
+
+func (x *AVDSetDeblemishRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[294]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDSetDeblemishRequest.ProtoReflect.Descriptor instead.
+func (*AVDSetDeblemishRequest) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{294}
+}
+
+func (x *AVDSetDeblemishRequest) GetRoutePath() string {
+	if x != nil {
+		return x.RoutePath
+	}
+	return ""
+}
+
+func (x *AVDSetDeblemishRequest) GetForwardingIndex() int32 {
+	if x != nil {
+		return x.ForwardingIndex
+	}
+	return 0
+}
+
+func (x *AVDSetDeblemishRequest) GetEnabled() bool {
+	if x != nil && x.Enabled != nil {
+		return *x.Enabled
+	}
+	return false
+}
+
+func (x *AVDSetDeblemishRequest) GetSigmaS() float64 {
+	if x != nil && x.SigmaS != nil {
+		return *x.SigmaS
+	}
+	return 0
+}
+
+func (x *AVDSetDeblemishRequest) GetSigmaR() float64 {
+	if x != nil && x.SigmaR != nil {
+		return *x.SigmaR
+	}
+	return 0
+}
+
+func (x *AVDSetDeblemishRequest) GetDiameter() int64 {
+	if x != nil && x.Diameter != nil {
+		return *x.Diameter
+	}
+	return 0
+}
+
+type AVDSetDeblemishReply struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AVDSetDeblemishReply) Reset() {
+	*x = AVDSetDeblemishReply{}
+	mi := &file_wingout_proto_msgTypes[295]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AVDSetDeblemishReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AVDSetDeblemishReply) ProtoMessage() {}
+
+func (x *AVDSetDeblemishReply) ProtoReflect() protoreflect.Message {
+	mi := &file_wingout_proto_msgTypes[295]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AVDSetDeblemishReply.ProtoReflect.Descriptor instead.
+func (*AVDSetDeblemishReply) Descriptor() ([]byte, []int) {
+	return file_wingout_proto_rawDescGZIP(), []int{295}
 }
 
 var File_wingout_proto protoreflect.FileDescriptor
@@ -14933,15 +15621,77 @@ const file_wingout_proto_rawDesc = "" +
 	"\x16SetChannelQualityReply\"\x1a\n" +
 	"\x18GetChannelQualityRequest\"R\n" +
 	"\x16GetChannelQualityReply\x128\n" +
-	"\bchannels\x18\x01 \x03(\v2\x1c.wingout.ChannelQualityEntryR\bchannels\"d\n" +
+	"\bchannels\x18\x01 \x03(\v2\x1c.wingout.ChannelQualityEntryR\bchannels\"\x7f\n" +
 	"\x1aSetBackendAddressesRequest\x12#\n" +
 	"\rffstream_addr\x18\x01 \x01(\tR\fffstreamAddr\x12!\n" +
-	"\fstreamd_addr\x18\x02 \x01(\tR\vstreamdAddr\"\x1a\n" +
+	"\fstreamd_addr\x18\x02 \x01(\tR\vstreamdAddr\x12\x19\n" +
+	"\bavd_addr\x18\x03 \x01(\tR\aavdAddr\"\x1a\n" +
 	"\x18SetBackendAddressesReply\"\x1c\n" +
-	"\x1aGetBackendAddressesRequest\"b\n" +
+	"\x1aGetBackendAddressesRequest\"}\n" +
 	"\x18GetBackendAddressesReply\x12#\n" +
 	"\rffstream_addr\x18\x01 \x01(\tR\fffstreamAddr\x12!\n" +
-	"\fstreamd_addr\x18\x02 \x01(\tR\vstreamdAddr*\xd6\x01\n" +
+	"\fstreamd_addr\x18\x02 \x01(\tR\vstreamdAddr\x12\x19\n" +
+	"\bavd_addr\x18\x03 \x01(\tR\aavdAddr\"x\n" +
+	"\x11AVDForwardingInfo\x12\x14\n" +
+	"\x05index\x18\x01 \x01(\x05R\x05index\x12(\n" +
+	"\x10has_privacy_blur\x18\x02 \x01(\bR\x0ehasPrivacyBlur\x12#\n" +
+	"\rhas_deblemish\x18\x03 \x01(\bR\fhasDeblemish\"\xa1\x01\n" +
+	"\fAVDRouteInfo\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
+	"\n" +
+	"is_serving\x18\x03 \x01(\bR\tisServing\x12<\n" +
+	"\vforwardings\x18\x04 \x03(\v2\x1a.wingout.AVDForwardingInfoR\vforwardings\"\x16\n" +
+	"\x14AVDListRoutesRequest\"C\n" +
+	"\x12AVDListRoutesReply\x12-\n" +
+	"\x06routes\x18\x01 \x03(\v2\x15.wingout.AVDRouteInfoR\x06routes\"d\n" +
+	"\x18AVDGetPrivacyBlurRequest\x12\x1d\n" +
+	"\n" +
+	"route_path\x18\x01 \x01(\tR\troutePath\x12)\n" +
+	"\x10forwarding_index\x18\x02 \x01(\x05R\x0fforwardingIndex\"\x83\x01\n" +
+	"\x16AVDGetPrivacyBlurReply\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1f\n" +
+	"\vblur_radius\x18\x02 \x01(\x01R\n" +
+	"blurRadius\x12.\n" +
+	"\x13pixelate_block_size\x18\x03 \x01(\x03R\x11pixelateBlockSize\"\x92\x02\n" +
+	"\x18AVDSetPrivacyBlurRequest\x12\x1d\n" +
+	"\n" +
+	"route_path\x18\x01 \x01(\tR\troutePath\x12)\n" +
+	"\x10forwarding_index\x18\x02 \x01(\x05R\x0fforwardingIndex\x12\x1d\n" +
+	"\aenabled\x18\x03 \x01(\bH\x00R\aenabled\x88\x01\x01\x12$\n" +
+	"\vblur_radius\x18\x04 \x01(\x01H\x01R\n" +
+	"blurRadius\x88\x01\x01\x123\n" +
+	"\x13pixelate_block_size\x18\x05 \x01(\x03H\x02R\x11pixelateBlockSize\x88\x01\x01B\n" +
+	"\n" +
+	"\b_enabledB\x0e\n" +
+	"\f_blur_radiusB\x16\n" +
+	"\x14_pixelate_block_size\"\x18\n" +
+	"\x16AVDSetPrivacyBlurReply\"b\n" +
+	"\x16AVDGetDeblemishRequest\x12\x1d\n" +
+	"\n" +
+	"route_path\x18\x01 \x01(\tR\troutePath\x12)\n" +
+	"\x10forwarding_index\x18\x02 \x01(\x05R\x0fforwardingIndex\"~\n" +
+	"\x14AVDGetDeblemishReply\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x17\n" +
+	"\asigma_s\x18\x02 \x01(\x01R\x06sigmaS\x12\x17\n" +
+	"\asigma_r\x18\x03 \x01(\x01R\x06sigmaR\x12\x1a\n" +
+	"\bdiameter\x18\x04 \x01(\x03R\bdiameter\"\x8f\x02\n" +
+	"\x16AVDSetDeblemishRequest\x12\x1d\n" +
+	"\n" +
+	"route_path\x18\x01 \x01(\tR\troutePath\x12)\n" +
+	"\x10forwarding_index\x18\x02 \x01(\x05R\x0fforwardingIndex\x12\x1d\n" +
+	"\aenabled\x18\x03 \x01(\bH\x00R\aenabled\x88\x01\x01\x12\x1c\n" +
+	"\asigma_s\x18\x04 \x01(\x01H\x01R\x06sigmaS\x88\x01\x01\x12\x1c\n" +
+	"\asigma_r\x18\x05 \x01(\x01H\x02R\x06sigmaR\x88\x01\x01\x12\x1f\n" +
+	"\bdiameter\x18\x06 \x01(\x03H\x03R\bdiameter\x88\x01\x01B\n" +
+	"\n" +
+	"\b_enabledB\n" +
+	"\n" +
+	"\b_sigma_sB\n" +
+	"\n" +
+	"\b_sigma_rB\v\n" +
+	"\t_diameter\"\x16\n" +
+	"\x14AVDSetDeblemishReply*\xd6\x01\n" +
 	"\fLoggingLevel\x12\x16\n" +
 	"\x12LOGGING_LEVEL_NONE\x10\x00\x12\x17\n" +
 	"\x13LOGGING_LEVEL_FATAL\x10\x01\x12\x17\n" +
@@ -15032,7 +15782,7 @@ const file_wingout_proto_rawDesc = "" +
 	"\fCURRENCY_GBP\x10\x03\x12\x10\n" +
 	"\fCURRENCY_JPY\x10\x04\x12\x18\n" +
 	"\x14CURRENCY_TWITCH_BITS\x10\x05\x12\x12\n" +
-	"\x0eCURRENCY_OTHER\x10\x062\xd0S\n" +
+	"\x0eCURRENCY_OTHER\x10\x062\xffV\n" +
 	"\x0eWingOutService\x122\n" +
 	"\x04Ping\x12\x14.wingout.PingRequest\x1a\x12.wingout.PingReply\"\x00\x12>\n" +
 	"\bGetStats\x12\x18.wingout.GetStatsRequest\x1a\x16.wingout.GetStatsReply\"\x00\x12G\n" +
@@ -15163,7 +15913,12 @@ const file_wingout_proto_rawDesc = "" +
 	"\x11SetChannelQuality\x12!.wingout.SetChannelQualityRequest\x1a\x1f.wingout.SetChannelQualityReply\"\x00\x12Y\n" +
 	"\x11GetChannelQuality\x12!.wingout.GetChannelQualityRequest\x1a\x1f.wingout.GetChannelQualityReply\"\x00\x12_\n" +
 	"\x13SetBackendAddresses\x12#.wingout.SetBackendAddressesRequest\x1a!.wingout.SetBackendAddressesReply\"\x00\x12_\n" +
-	"\x13GetBackendAddresses\x12#.wingout.GetBackendAddressesRequest\x1a!.wingout.GetBackendAddressesReply\"\x00B)Z'github.com/xaionaro-go/wingout2/pkg/apib\x06proto3"
+	"\x13GetBackendAddresses\x12#.wingout.GetBackendAddressesRequest\x1a!.wingout.GetBackendAddressesReply\"\x00\x12M\n" +
+	"\rAVDListRoutes\x12\x1d.wingout.AVDListRoutesRequest\x1a\x1b.wingout.AVDListRoutesReply\"\x00\x12Y\n" +
+	"\x11AVDGetPrivacyBlur\x12!.wingout.AVDGetPrivacyBlurRequest\x1a\x1f.wingout.AVDGetPrivacyBlurReply\"\x00\x12Y\n" +
+	"\x11AVDSetPrivacyBlur\x12!.wingout.AVDSetPrivacyBlurRequest\x1a\x1f.wingout.AVDSetPrivacyBlurReply\"\x00\x12S\n" +
+	"\x0fAVDGetDeblemish\x12\x1f.wingout.AVDGetDeblemishRequest\x1a\x1d.wingout.AVDGetDeblemishReply\"\x00\x12S\n" +
+	"\x0fAVDSetDeblemish\x12\x1f.wingout.AVDSetDeblemishRequest\x1a\x1d.wingout.AVDSetDeblemishReply\"\x00B)Z'github.com/xaionaro-go/wingout2/pkg/apib\x06proto3"
 
 var (
 	file_wingout_proto_rawDescOnce sync.Once
@@ -15178,7 +15933,7 @@ func file_wingout_proto_rawDescGZIP() []byte {
 }
 
 var file_wingout_proto_enumTypes = make([]protoimpl.EnumInfo, 14)
-var file_wingout_proto_msgTypes = make([]protoimpl.MessageInfo, 287)
+var file_wingout_proto_msgTypes = make([]protoimpl.MessageInfo, 299)
 var file_wingout_proto_goTypes = []any{
 	(LoggingLevel)(0),                               // 0: wingout.LoggingLevel
 	(Capability)(0),                                 // 1: wingout.Capability
@@ -15478,9 +16233,21 @@ var file_wingout_proto_goTypes = []any{
 	(*SetBackendAddressesReply)(nil),                // 295: wingout.SetBackendAddressesReply
 	(*GetBackendAddressesRequest)(nil),              // 296: wingout.GetBackendAddressesRequest
 	(*GetBackendAddressesReply)(nil),                // 297: wingout.GetBackendAddressesReply
-	nil,                                             // 298: wingout.ActionProto.ParamsEntry
-	nil,                                             // 299: wingout.CurrentOutputProto.PropsEntry
-	nil,                                             // 300: wingout.SwitchOutputByPropsRequest.PropsEntry
+	(*AVDForwardingInfo)(nil),                       // 298: wingout.AVDForwardingInfo
+	(*AVDRouteInfo)(nil),                            // 299: wingout.AVDRouteInfo
+	(*AVDListRoutesRequest)(nil),                    // 300: wingout.AVDListRoutesRequest
+	(*AVDListRoutesReply)(nil),                      // 301: wingout.AVDListRoutesReply
+	(*AVDGetPrivacyBlurRequest)(nil),                // 302: wingout.AVDGetPrivacyBlurRequest
+	(*AVDGetPrivacyBlurReply)(nil),                  // 303: wingout.AVDGetPrivacyBlurReply
+	(*AVDSetPrivacyBlurRequest)(nil),                // 304: wingout.AVDSetPrivacyBlurRequest
+	(*AVDSetPrivacyBlurReply)(nil),                  // 305: wingout.AVDSetPrivacyBlurReply
+	(*AVDGetDeblemishRequest)(nil),                  // 306: wingout.AVDGetDeblemishRequest
+	(*AVDGetDeblemishReply)(nil),                    // 307: wingout.AVDGetDeblemishReply
+	(*AVDSetDeblemishRequest)(nil),                  // 308: wingout.AVDSetDeblemishRequest
+	(*AVDSetDeblemishReply)(nil),                    // 309: wingout.AVDSetDeblemishReply
+	nil,                                             // 310: wingout.ActionProto.ParamsEntry
+	nil,                                             // 311: wingout.CurrentOutputProto.PropsEntry
+	nil,                                             // 312: wingout.SwitchOutputByPropsRequest.PropsEntry
 }
 var file_wingout_proto_depIdxs = []int32{
 	18,  // 0: wingout.GetBitRatesReply.input_bit_rate:type_name -> wingout.BitRateInfoProto
@@ -15507,7 +16274,7 @@ var file_wingout_proto_depIdxs = []int32{
 	3,   // 21: wingout.StreamForwardDetailProto.sink_type:type_name -> wingout.StreamSinkType
 	68,  // 22: wingout.StreamForwardDetailProto.quirks:type_name -> wingout.StreamForwardQuirksProto
 	71,  // 23: wingout.TimerProto.action:type_name -> wingout.ActionProto
-	298, // 24: wingout.ActionProto.params:type_name -> wingout.ActionProto.ParamsEntry
+	310, // 24: wingout.ActionProto.params:type_name -> wingout.ActionProto.ParamsEntry
 	73,  // 25: wingout.TriggerRuleProto.event_query:type_name -> wingout.EventQueryProto
 	71,  // 26: wingout.TriggerRuleProto.action:type_name -> wingout.ActionProto
 	7,   // 27: wingout.EventQueryProto.event_type:type_name -> wingout.EventType
@@ -15559,9 +16326,9 @@ var file_wingout_proto_depIdxs = []int32{
 	74,  // 73: wingout.SubmitEventRequest.event:type_name -> wingout.EventProto
 	75,  // 74: wingout.InjectPlatformEventRequest.event:type_name -> wingout.ChatEventProto
 	0,   // 75: wingout.FFSetLoggingLevelRequest.level:type_name -> wingout.LoggingLevel
-	299, // 76: wingout.CurrentOutputProto.props:type_name -> wingout.CurrentOutputProto.PropsEntry
+	311, // 76: wingout.CurrentOutputProto.props:type_name -> wingout.CurrentOutputProto.PropsEntry
 	245, // 77: wingout.GetCurrentOutputReply.output:type_name -> wingout.CurrentOutputProto
-	300, // 78: wingout.SwitchOutputByPropsRequest.props:type_name -> wingout.SwitchOutputByPropsRequest.PropsEntry
+	312, // 78: wingout.SwitchOutputByPropsRequest.props:type_name -> wingout.SwitchOutputByPropsRequest.PropsEntry
 	250, // 79: wingout.GetOutputSRTStatsReply.stats:type_name -> wingout.SRTStatsProto
 	10,  // 80: wingout.GetSRTFlagIntRequest.flag:type_name -> wingout.SRTFlagInt
 	10,  // 81: wingout.SetSRTFlagIntRequest.flag:type_name -> wingout.SRTFlagInt
@@ -15577,257 +16344,269 @@ var file_wingout_proto_depIdxs = []int32{
 	286, // 91: wingout.InjectDiagnosticsRequest.diagnostics:type_name -> wingout.DiagnosticsProto
 	289, // 92: wingout.SetChannelQualityRequest.channels:type_name -> wingout.ChannelQualityEntry
 	289, // 93: wingout.GetChannelQualityReply.channels:type_name -> wingout.ChannelQualityEntry
-	14,  // 94: wingout.WingOutService.Ping:input_type -> wingout.PingRequest
-	16,  // 95: wingout.WingOutService.GetStats:input_type -> wingout.GetStatsRequest
-	19,  // 96: wingout.WingOutService.GetBitRates:input_type -> wingout.GetBitRatesRequest
-	22,  // 97: wingout.WingOutService.GetLatencies:input_type -> wingout.GetLatenciesRequest
-	25,  // 98: wingout.WingOutService.GetInputQuality:input_type -> wingout.GetInputQualityRequest
-	27,  // 99: wingout.WingOutService.GetOutputQuality:input_type -> wingout.GetOutputQualityRequest
-	29,  // 100: wingout.WingOutService.GetFPSFraction:input_type -> wingout.GetFPSFractionRequest
-	31,  // 101: wingout.WingOutService.SetFPSFraction:input_type -> wingout.SetFPSFractionRequest
-	33,  // 102: wingout.WingOutService.InjectSubtitles:input_type -> wingout.InjectSubtitlesRequest
-	35,  // 103: wingout.WingOutService.InjectData:input_type -> wingout.InjectDataRequest
-	37,  // 104: wingout.WingOutService.GetConfig:input_type -> wingout.GetConfigRequest
-	39,  // 105: wingout.WingOutService.SetConfig:input_type -> wingout.SetConfigRequest
-	41,  // 106: wingout.WingOutService.SaveConfig:input_type -> wingout.SaveConfigRequest
-	95,  // 107: wingout.WingOutService.SubscribeToConfigChanges:input_type -> wingout.SubscribeToConfigChangesRequest
-	43,  // 108: wingout.WingOutService.GetStreamStatus:input_type -> wingout.GetStreamStatusRequest
-	46,  // 109: wingout.WingOutService.ListStreamForwards:input_type -> wingout.ListStreamForwardsRequest
-	49,  // 110: wingout.WingOutService.ListStreamServers:input_type -> wingout.ListStreamServersRequest
-	52,  // 111: wingout.WingOutService.ListStreamPlayers:input_type -> wingout.ListStreamPlayersRequest
-	55,  // 112: wingout.WingOutService.ListProfiles:input_type -> wingout.ListProfilesRequest
-	57,  // 113: wingout.WingOutService.SubscribeToChatMessages:input_type -> wingout.SubscribeToChatMessagesRequest
-	59,  // 114: wingout.WingOutService.GetBackendMode:input_type -> wingout.GetBackendModeRequest
-	91,  // 115: wingout.WingOutService.SetLoggingLevel:input_type -> wingout.SetLoggingLevelRequest
-	93,  // 116: wingout.WingOutService.GetLoggingLevel:input_type -> wingout.GetLoggingLevelRequest
-	96,  // 117: wingout.WingOutService.ResetCache:input_type -> wingout.ResetCacheRequest
-	98,  // 118: wingout.WingOutService.InitCache:input_type -> wingout.InitCacheRequest
-	100, // 119: wingout.WingOutService.SetStreamActive:input_type -> wingout.SetStreamActiveRequest
-	102, // 120: wingout.WingOutService.GetStreams:input_type -> wingout.GetStreamsRequest
-	104, // 121: wingout.WingOutService.CreateStream:input_type -> wingout.CreateStreamRequest
-	106, // 122: wingout.WingOutService.DeleteStream:input_type -> wingout.DeleteStreamRequest
-	108, // 123: wingout.WingOutService.GetActiveStreamIDs:input_type -> wingout.GetActiveStreamIDsRequest
-	110, // 124: wingout.WingOutService.StartStream:input_type -> wingout.StartStreamRequest
-	112, // 125: wingout.WingOutService.EndStream:input_type -> wingout.EndStreamRequest
-	114, // 126: wingout.WingOutService.SubscribeToStreamsChanges:input_type -> wingout.SubscribeToStreamsChangesRequest
-	115, // 127: wingout.WingOutService.GetAccounts:input_type -> wingout.GetAccountsRequest
-	117, // 128: wingout.WingOutService.IsBackendEnabled:input_type -> wingout.IsBackendEnabledRequest
-	119, // 129: wingout.WingOutService.GetBackendInfo:input_type -> wingout.GetBackendInfoRequest
-	121, // 130: wingout.WingOutService.GetPlatforms:input_type -> wingout.GetPlatformsRequest
-	123, // 131: wingout.WingOutService.SetTitle:input_type -> wingout.SetTitleRequest
-	125, // 132: wingout.WingOutService.SetDescription:input_type -> wingout.SetDescriptionRequest
-	127, // 133: wingout.WingOutService.ApplyProfile:input_type -> wingout.ApplyProfileRequest
-	129, // 134: wingout.WingOutService.GetVariable:input_type -> wingout.GetVariableRequest
-	131, // 135: wingout.WingOutService.GetVariableHash:input_type -> wingout.GetVariableHashRequest
-	133, // 136: wingout.WingOutService.SetVariable:input_type -> wingout.SetVariableRequest
-	135, // 137: wingout.WingOutService.SubscribeToVariable:input_type -> wingout.SubscribeToVariableRequest
-	136, // 138: wingout.WingOutService.SubscribeToOAuthRequests:input_type -> wingout.SubscribeToOAuthRequestsRequest
-	137, // 139: wingout.WingOutService.SubmitOAuthCode:input_type -> wingout.SubmitOAuthCodeRequest
-	139, // 140: wingout.WingOutService.StartStreamServer:input_type -> wingout.StartStreamServerRequest
-	141, // 141: wingout.WingOutService.StopStreamServer:input_type -> wingout.StopStreamServerRequest
-	143, // 142: wingout.WingOutService.SubscribeToStreamServersChanges:input_type -> wingout.SubscribeToStreamServersChangesRequest
-	144, // 143: wingout.WingOutService.ListStreamSources:input_type -> wingout.ListStreamSourcesRequest
-	146, // 144: wingout.WingOutService.AddStreamSource:input_type -> wingout.AddStreamSourceRequest
-	148, // 145: wingout.WingOutService.RemoveStreamSource:input_type -> wingout.RemoveStreamSourceRequest
-	150, // 146: wingout.WingOutService.SubscribeToStreamSourcesChanges:input_type -> wingout.SubscribeToStreamSourcesChangesRequest
-	151, // 147: wingout.WingOutService.ListStreamSinks:input_type -> wingout.ListStreamSinksRequest
-	153, // 148: wingout.WingOutService.AddStreamSink:input_type -> wingout.AddStreamSinkRequest
-	155, // 149: wingout.WingOutService.UpdateStreamSink:input_type -> wingout.UpdateStreamSinkRequest
-	157, // 150: wingout.WingOutService.GetStreamSinkConfig:input_type -> wingout.GetStreamSinkConfigRequest
-	159, // 151: wingout.WingOutService.RemoveStreamSink:input_type -> wingout.RemoveStreamSinkRequest
-	161, // 152: wingout.WingOutService.SubscribeToStreamSinksChanges:input_type -> wingout.SubscribeToStreamSinksChangesRequest
-	162, // 153: wingout.WingOutService.AddStreamForward:input_type -> wingout.AddStreamForwardRequest
-	164, // 154: wingout.WingOutService.UpdateStreamForward:input_type -> wingout.UpdateStreamForwardRequest
-	166, // 155: wingout.WingOutService.RemoveStreamForward:input_type -> wingout.RemoveStreamForwardRequest
-	168, // 156: wingout.WingOutService.SubscribeToStreamForwardsChanges:input_type -> wingout.SubscribeToStreamForwardsChangesRequest
-	169, // 157: wingout.WingOutService.WaitForStreamPublisher:input_type -> wingout.WaitForStreamPublisherRequest
-	171, // 158: wingout.WingOutService.AddStreamPlayer:input_type -> wingout.AddStreamPlayerRequest
-	173, // 159: wingout.WingOutService.RemoveStreamPlayer:input_type -> wingout.RemoveStreamPlayerRequest
-	175, // 160: wingout.WingOutService.UpdateStreamPlayer:input_type -> wingout.UpdateStreamPlayerRequest
-	177, // 161: wingout.WingOutService.GetStreamPlayer:input_type -> wingout.GetStreamPlayerRequest
-	179, // 162: wingout.WingOutService.SubscribeToStreamPlayersChanges:input_type -> wingout.SubscribeToStreamPlayersChangesRequest
-	180, // 163: wingout.WingOutService.StreamPlayerOpen:input_type -> wingout.StreamPlayerOpenRequest
-	182, // 164: wingout.WingOutService.StreamPlayerProcessTitle:input_type -> wingout.StreamPlayerProcessTitleRequest
-	184, // 165: wingout.WingOutService.StreamPlayerGetLink:input_type -> wingout.StreamPlayerGetLinkRequest
-	186, // 166: wingout.WingOutService.StreamPlayerEndChan:input_type -> wingout.StreamPlayerEndChanRequest
-	187, // 167: wingout.WingOutService.StreamPlayerIsEnded:input_type -> wingout.StreamPlayerIsEndedRequest
-	189, // 168: wingout.WingOutService.StreamPlayerGetPosition:input_type -> wingout.StreamPlayerGetPositionRequest
-	191, // 169: wingout.WingOutService.StreamPlayerGetLength:input_type -> wingout.StreamPlayerGetLengthRequest
-	193, // 170: wingout.WingOutService.StreamPlayerGetLag:input_type -> wingout.StreamPlayerGetLagRequest
-	195, // 171: wingout.WingOutService.StreamPlayerSetSpeed:input_type -> wingout.StreamPlayerSetSpeedRequest
-	197, // 172: wingout.WingOutService.StreamPlayerGetSpeed:input_type -> wingout.StreamPlayerGetSpeedRequest
-	199, // 173: wingout.WingOutService.StreamPlayerSetPause:input_type -> wingout.StreamPlayerSetPauseRequest
-	201, // 174: wingout.WingOutService.StreamPlayerStop:input_type -> wingout.StreamPlayerStopRequest
-	203, // 175: wingout.WingOutService.StreamPlayerClose:input_type -> wingout.StreamPlayerCloseRequest
-	205, // 176: wingout.WingOutService.AddTimer:input_type -> wingout.AddTimerRequest
-	207, // 177: wingout.WingOutService.RemoveTimer:input_type -> wingout.RemoveTimerRequest
-	209, // 178: wingout.WingOutService.ListTimers:input_type -> wingout.ListTimersRequest
-	211, // 179: wingout.WingOutService.ListTriggerRules:input_type -> wingout.ListTriggerRulesRequest
-	213, // 180: wingout.WingOutService.AddTriggerRule:input_type -> wingout.AddTriggerRuleRequest
-	215, // 181: wingout.WingOutService.RemoveTriggerRule:input_type -> wingout.RemoveTriggerRuleRequest
-	217, // 182: wingout.WingOutService.UpdateTriggerRule:input_type -> wingout.UpdateTriggerRuleRequest
-	219, // 183: wingout.WingOutService.SubmitEvent:input_type -> wingout.SubmitEventRequest
-	221, // 184: wingout.WingOutService.SendChatMessage:input_type -> wingout.SendChatMessageRequest
-	223, // 185: wingout.WingOutService.InjectPlatformEvent:input_type -> wingout.InjectPlatformEventRequest
-	225, // 186: wingout.WingOutService.RemoveChatMessage:input_type -> wingout.RemoveChatMessageRequest
-	227, // 187: wingout.WingOutService.BanUser:input_type -> wingout.BanUserRequest
-	229, // 188: wingout.WingOutService.Shoutout:input_type -> wingout.ShoutoutRequest
-	231, // 189: wingout.WingOutService.RaidTo:input_type -> wingout.RaidToRequest
-	233, // 190: wingout.WingOutService.GetPeerIDs:input_type -> wingout.GetPeerIDsRequest
-	235, // 191: wingout.WingOutService.LLMGenerate:input_type -> wingout.LLMGenerateRequest
-	237, // 192: wingout.WingOutService.Restart:input_type -> wingout.RestartRequest
-	239, // 193: wingout.WingOutService.EXPERIMENTAL_ReinitStreamControllers:input_type -> wingout.ReinitStreamControllersRequest
-	241, // 194: wingout.WingOutService.FFSetLoggingLevel:input_type -> wingout.FFSetLoggingLevelRequest
-	243, // 195: wingout.WingOutService.RemoveOutput:input_type -> wingout.RemoveOutputRequest
-	246, // 196: wingout.WingOutService.GetCurrentOutput:input_type -> wingout.GetCurrentOutputRequest
-	248, // 197: wingout.WingOutService.SwitchOutputByProps:input_type -> wingout.SwitchOutputByPropsRequest
-	251, // 198: wingout.WingOutService.GetOutputSRTStats:input_type -> wingout.GetOutputSRTStatsRequest
-	253, // 199: wingout.WingOutService.GetSRTFlagInt:input_type -> wingout.GetSRTFlagIntRequest
-	255, // 200: wingout.WingOutService.SetSRTFlagInt:input_type -> wingout.SetSRTFlagIntRequest
-	257, // 201: wingout.WingOutService.FFWaitChan:input_type -> wingout.FFWaitChanRequest
-	259, // 202: wingout.WingOutService.FFEnd:input_type -> wingout.FFEndRequest
-	263, // 203: wingout.WingOutService.GetPipelines:input_type -> wingout.GetPipelinesRequest
-	266, // 204: wingout.WingOutService.GetVideoAutoBitRateConfig:input_type -> wingout.GetVideoAutoBitRateConfigRequest
-	268, // 205: wingout.WingOutService.SetVideoAutoBitRateConfig:input_type -> wingout.SetVideoAutoBitRateConfigRequest
-	271, // 206: wingout.WingOutService.GetVideoAutoBitRateCalculator:input_type -> wingout.GetVideoAutoBitRateCalculatorRequest
-	273, // 207: wingout.WingOutService.SetVideoAutoBitRateCalculator:input_type -> wingout.SetVideoAutoBitRateCalculatorRequest
-	275, // 208: wingout.WingOutService.FFMonitor:input_type -> wingout.FFMonitorRequest
-	278, // 209: wingout.WingOutService.GetInputsInfo:input_type -> wingout.GetInputsInfoRequest
-	281, // 210: wingout.WingOutService.SetInputCustomOption:input_type -> wingout.SetInputCustomOptionRequest
-	283, // 211: wingout.WingOutService.SetStopInput:input_type -> wingout.SetStopInputRequest
-	287, // 212: wingout.WingOutService.InjectDiagnostics:input_type -> wingout.InjectDiagnosticsRequest
-	290, // 213: wingout.WingOutService.SetChannelQuality:input_type -> wingout.SetChannelQualityRequest
-	292, // 214: wingout.WingOutService.GetChannelQuality:input_type -> wingout.GetChannelQualityRequest
-	294, // 215: wingout.WingOutService.SetBackendAddresses:input_type -> wingout.SetBackendAddressesRequest
-	296, // 216: wingout.WingOutService.GetBackendAddresses:input_type -> wingout.GetBackendAddressesRequest
-	15,  // 217: wingout.WingOutService.Ping:output_type -> wingout.PingReply
-	17,  // 218: wingout.WingOutService.GetStats:output_type -> wingout.GetStatsReply
-	20,  // 219: wingout.WingOutService.GetBitRates:output_type -> wingout.GetBitRatesReply
-	23,  // 220: wingout.WingOutService.GetLatencies:output_type -> wingout.GetLatenciesReply
-	26,  // 221: wingout.WingOutService.GetInputQuality:output_type -> wingout.GetInputQualityReply
-	28,  // 222: wingout.WingOutService.GetOutputQuality:output_type -> wingout.GetOutputQualityReply
-	30,  // 223: wingout.WingOutService.GetFPSFraction:output_type -> wingout.GetFPSFractionReply
-	32,  // 224: wingout.WingOutService.SetFPSFraction:output_type -> wingout.SetFPSFractionReply
-	34,  // 225: wingout.WingOutService.InjectSubtitles:output_type -> wingout.InjectSubtitlesReply
-	36,  // 226: wingout.WingOutService.InjectData:output_type -> wingout.InjectDataReply
-	38,  // 227: wingout.WingOutService.GetConfig:output_type -> wingout.GetConfigReply
-	40,  // 228: wingout.WingOutService.SetConfig:output_type -> wingout.SetConfigReply
-	42,  // 229: wingout.WingOutService.SaveConfig:output_type -> wingout.SaveConfigReply
-	81,  // 230: wingout.WingOutService.SubscribeToConfigChanges:output_type -> wingout.ConfigChangeEvent
-	44,  // 231: wingout.WingOutService.GetStreamStatus:output_type -> wingout.GetStreamStatusReply
-	47,  // 232: wingout.WingOutService.ListStreamForwards:output_type -> wingout.ListStreamForwardsReply
-	50,  // 233: wingout.WingOutService.ListStreamServers:output_type -> wingout.ListStreamServersReply
-	53,  // 234: wingout.WingOutService.ListStreamPlayers:output_type -> wingout.ListStreamPlayersReply
-	56,  // 235: wingout.WingOutService.ListProfiles:output_type -> wingout.ListProfilesReply
-	58,  // 236: wingout.WingOutService.SubscribeToChatMessages:output_type -> wingout.ChatMessageProto
-	60,  // 237: wingout.WingOutService.GetBackendMode:output_type -> wingout.GetBackendModeReply
-	92,  // 238: wingout.WingOutService.SetLoggingLevel:output_type -> wingout.SetLoggingLevelReply
-	94,  // 239: wingout.WingOutService.GetLoggingLevel:output_type -> wingout.GetLoggingLevelReply
-	97,  // 240: wingout.WingOutService.ResetCache:output_type -> wingout.ResetCacheReply
-	99,  // 241: wingout.WingOutService.InitCache:output_type -> wingout.InitCacheReply
-	101, // 242: wingout.WingOutService.SetStreamActive:output_type -> wingout.SetStreamActiveReply
-	103, // 243: wingout.WingOutService.GetStreams:output_type -> wingout.GetStreamsReply
-	105, // 244: wingout.WingOutService.CreateStream:output_type -> wingout.CreateStreamReply
-	107, // 245: wingout.WingOutService.DeleteStream:output_type -> wingout.DeleteStreamReply
-	109, // 246: wingout.WingOutService.GetActiveStreamIDs:output_type -> wingout.GetActiveStreamIDsReply
-	111, // 247: wingout.WingOutService.StartStream:output_type -> wingout.StartStreamReply
-	113, // 248: wingout.WingOutService.EndStream:output_type -> wingout.EndStreamReply
-	82,  // 249: wingout.WingOutService.SubscribeToStreamsChanges:output_type -> wingout.StreamChangeEvent
-	116, // 250: wingout.WingOutService.GetAccounts:output_type -> wingout.GetAccountsReply
-	118, // 251: wingout.WingOutService.IsBackendEnabled:output_type -> wingout.IsBackendEnabledReply
-	120, // 252: wingout.WingOutService.GetBackendInfo:output_type -> wingout.GetBackendInfoReply
-	122, // 253: wingout.WingOutService.GetPlatforms:output_type -> wingout.GetPlatformsReply
-	124, // 254: wingout.WingOutService.SetTitle:output_type -> wingout.SetTitleReply
-	126, // 255: wingout.WingOutService.SetDescription:output_type -> wingout.SetDescriptionReply
-	128, // 256: wingout.WingOutService.ApplyProfile:output_type -> wingout.ApplyProfileReply
-	130, // 257: wingout.WingOutService.GetVariable:output_type -> wingout.GetVariableReply
-	132, // 258: wingout.WingOutService.GetVariableHash:output_type -> wingout.GetVariableHashReply
-	134, // 259: wingout.WingOutService.SetVariable:output_type -> wingout.SetVariableReply
-	89,  // 260: wingout.WingOutService.SubscribeToVariable:output_type -> wingout.VariableChangeEvent
-	90,  // 261: wingout.WingOutService.SubscribeToOAuthRequests:output_type -> wingout.OAuthRequestEvent
-	138, // 262: wingout.WingOutService.SubmitOAuthCode:output_type -> wingout.SubmitOAuthCodeReply
-	140, // 263: wingout.WingOutService.StartStreamServer:output_type -> wingout.StartStreamServerReply
-	142, // 264: wingout.WingOutService.StopStreamServer:output_type -> wingout.StopStreamServerReply
-	83,  // 265: wingout.WingOutService.SubscribeToStreamServersChanges:output_type -> wingout.StreamServerChangeEvent
-	145, // 266: wingout.WingOutService.ListStreamSources:output_type -> wingout.ListStreamSourcesReply
-	147, // 267: wingout.WingOutService.AddStreamSource:output_type -> wingout.AddStreamSourceReply
-	149, // 268: wingout.WingOutService.RemoveStreamSource:output_type -> wingout.RemoveStreamSourceReply
-	84,  // 269: wingout.WingOutService.SubscribeToStreamSourcesChanges:output_type -> wingout.StreamSourceChangeEvent
-	152, // 270: wingout.WingOutService.ListStreamSinks:output_type -> wingout.ListStreamSinksReply
-	154, // 271: wingout.WingOutService.AddStreamSink:output_type -> wingout.AddStreamSinkReply
-	156, // 272: wingout.WingOutService.UpdateStreamSink:output_type -> wingout.UpdateStreamSinkReply
-	158, // 273: wingout.WingOutService.GetStreamSinkConfig:output_type -> wingout.GetStreamSinkConfigReply
-	160, // 274: wingout.WingOutService.RemoveStreamSink:output_type -> wingout.RemoveStreamSinkReply
-	85,  // 275: wingout.WingOutService.SubscribeToStreamSinksChanges:output_type -> wingout.StreamSinkChangeEvent
-	163, // 276: wingout.WingOutService.AddStreamForward:output_type -> wingout.AddStreamForwardReply
-	165, // 277: wingout.WingOutService.UpdateStreamForward:output_type -> wingout.UpdateStreamForwardReply
-	167, // 278: wingout.WingOutService.RemoveStreamForward:output_type -> wingout.RemoveStreamForwardReply
-	86,  // 279: wingout.WingOutService.SubscribeToStreamForwardsChanges:output_type -> wingout.StreamForwardChangeEvent
-	170, // 280: wingout.WingOutService.WaitForStreamPublisher:output_type -> wingout.WaitForStreamPublisherReply
-	172, // 281: wingout.WingOutService.AddStreamPlayer:output_type -> wingout.AddStreamPlayerReply
-	174, // 282: wingout.WingOutService.RemoveStreamPlayer:output_type -> wingout.RemoveStreamPlayerReply
-	176, // 283: wingout.WingOutService.UpdateStreamPlayer:output_type -> wingout.UpdateStreamPlayerReply
-	178, // 284: wingout.WingOutService.GetStreamPlayer:output_type -> wingout.GetStreamPlayerReply
-	87,  // 285: wingout.WingOutService.SubscribeToStreamPlayersChanges:output_type -> wingout.StreamPlayerChangeEvent
-	181, // 286: wingout.WingOutService.StreamPlayerOpen:output_type -> wingout.StreamPlayerOpenReply
-	183, // 287: wingout.WingOutService.StreamPlayerProcessTitle:output_type -> wingout.StreamPlayerProcessTitleReply
-	185, // 288: wingout.WingOutService.StreamPlayerGetLink:output_type -> wingout.StreamPlayerGetLinkReply
-	88,  // 289: wingout.WingOutService.StreamPlayerEndChan:output_type -> wingout.StreamPlayerEndEvent
-	188, // 290: wingout.WingOutService.StreamPlayerIsEnded:output_type -> wingout.StreamPlayerIsEndedReply
-	190, // 291: wingout.WingOutService.StreamPlayerGetPosition:output_type -> wingout.StreamPlayerGetPositionReply
-	192, // 292: wingout.WingOutService.StreamPlayerGetLength:output_type -> wingout.StreamPlayerGetLengthReply
-	194, // 293: wingout.WingOutService.StreamPlayerGetLag:output_type -> wingout.StreamPlayerGetLagReply
-	196, // 294: wingout.WingOutService.StreamPlayerSetSpeed:output_type -> wingout.StreamPlayerSetSpeedReply
-	198, // 295: wingout.WingOutService.StreamPlayerGetSpeed:output_type -> wingout.StreamPlayerGetSpeedReply
-	200, // 296: wingout.WingOutService.StreamPlayerSetPause:output_type -> wingout.StreamPlayerSetPauseReply
-	202, // 297: wingout.WingOutService.StreamPlayerStop:output_type -> wingout.StreamPlayerStopReply
-	204, // 298: wingout.WingOutService.StreamPlayerClose:output_type -> wingout.StreamPlayerCloseReply
-	206, // 299: wingout.WingOutService.AddTimer:output_type -> wingout.AddTimerReply
-	208, // 300: wingout.WingOutService.RemoveTimer:output_type -> wingout.RemoveTimerReply
-	210, // 301: wingout.WingOutService.ListTimers:output_type -> wingout.ListTimersReply
-	212, // 302: wingout.WingOutService.ListTriggerRules:output_type -> wingout.ListTriggerRulesReply
-	214, // 303: wingout.WingOutService.AddTriggerRule:output_type -> wingout.AddTriggerRuleReply
-	216, // 304: wingout.WingOutService.RemoveTriggerRule:output_type -> wingout.RemoveTriggerRuleReply
-	218, // 305: wingout.WingOutService.UpdateTriggerRule:output_type -> wingout.UpdateTriggerRuleReply
-	220, // 306: wingout.WingOutService.SubmitEvent:output_type -> wingout.SubmitEventReply
-	222, // 307: wingout.WingOutService.SendChatMessage:output_type -> wingout.SendChatMessageReply
-	224, // 308: wingout.WingOutService.InjectPlatformEvent:output_type -> wingout.InjectPlatformEventReply
-	226, // 309: wingout.WingOutService.RemoveChatMessage:output_type -> wingout.RemoveChatMessageReply
-	228, // 310: wingout.WingOutService.BanUser:output_type -> wingout.BanUserReply
-	230, // 311: wingout.WingOutService.Shoutout:output_type -> wingout.ShoutoutReply
-	232, // 312: wingout.WingOutService.RaidTo:output_type -> wingout.RaidToReply
-	234, // 313: wingout.WingOutService.GetPeerIDs:output_type -> wingout.GetPeerIDsReply
-	236, // 314: wingout.WingOutService.LLMGenerate:output_type -> wingout.LLMGenerateReply
-	238, // 315: wingout.WingOutService.Restart:output_type -> wingout.RestartReply
-	240, // 316: wingout.WingOutService.EXPERIMENTAL_ReinitStreamControllers:output_type -> wingout.ReinitStreamControllersReply
-	242, // 317: wingout.WingOutService.FFSetLoggingLevel:output_type -> wingout.FFSetLoggingLevelReply
-	244, // 318: wingout.WingOutService.RemoveOutput:output_type -> wingout.RemoveOutputReply
-	247, // 319: wingout.WingOutService.GetCurrentOutput:output_type -> wingout.GetCurrentOutputReply
-	249, // 320: wingout.WingOutService.SwitchOutputByProps:output_type -> wingout.SwitchOutputByPropsReply
-	252, // 321: wingout.WingOutService.GetOutputSRTStats:output_type -> wingout.GetOutputSRTStatsReply
-	254, // 322: wingout.WingOutService.GetSRTFlagInt:output_type -> wingout.GetSRTFlagIntReply
-	256, // 323: wingout.WingOutService.SetSRTFlagInt:output_type -> wingout.SetSRTFlagIntReply
-	258, // 324: wingout.WingOutService.FFWaitChan:output_type -> wingout.FFWaitEvent
-	260, // 325: wingout.WingOutService.FFEnd:output_type -> wingout.FFEndReply
-	264, // 326: wingout.WingOutService.GetPipelines:output_type -> wingout.GetPipelinesReply
-	267, // 327: wingout.WingOutService.GetVideoAutoBitRateConfig:output_type -> wingout.GetVideoAutoBitRateConfigReply
-	269, // 328: wingout.WingOutService.SetVideoAutoBitRateConfig:output_type -> wingout.SetVideoAutoBitRateConfigReply
-	272, // 329: wingout.WingOutService.GetVideoAutoBitRateCalculator:output_type -> wingout.GetVideoAutoBitRateCalculatorReply
-	274, // 330: wingout.WingOutService.SetVideoAutoBitRateCalculator:output_type -> wingout.SetVideoAutoBitRateCalculatorReply
-	276, // 331: wingout.WingOutService.FFMonitor:output_type -> wingout.FFMonitorEvent
-	279, // 332: wingout.WingOutService.GetInputsInfo:output_type -> wingout.GetInputsInfoReply
-	282, // 333: wingout.WingOutService.SetInputCustomOption:output_type -> wingout.SetInputCustomOptionReply
-	284, // 334: wingout.WingOutService.SetStopInput:output_type -> wingout.SetStopInputReply
-	288, // 335: wingout.WingOutService.InjectDiagnostics:output_type -> wingout.InjectDiagnosticsReply
-	291, // 336: wingout.WingOutService.SetChannelQuality:output_type -> wingout.SetChannelQualityReply
-	293, // 337: wingout.WingOutService.GetChannelQuality:output_type -> wingout.GetChannelQualityReply
-	295, // 338: wingout.WingOutService.SetBackendAddresses:output_type -> wingout.SetBackendAddressesReply
-	297, // 339: wingout.WingOutService.GetBackendAddresses:output_type -> wingout.GetBackendAddressesReply
-	217, // [217:340] is the sub-list for method output_type
-	94,  // [94:217] is the sub-list for method input_type
-	94,  // [94:94] is the sub-list for extension type_name
-	94,  // [94:94] is the sub-list for extension extendee
-	0,   // [0:94] is the sub-list for field type_name
+	298, // 94: wingout.AVDRouteInfo.forwardings:type_name -> wingout.AVDForwardingInfo
+	299, // 95: wingout.AVDListRoutesReply.routes:type_name -> wingout.AVDRouteInfo
+	14,  // 96: wingout.WingOutService.Ping:input_type -> wingout.PingRequest
+	16,  // 97: wingout.WingOutService.GetStats:input_type -> wingout.GetStatsRequest
+	19,  // 98: wingout.WingOutService.GetBitRates:input_type -> wingout.GetBitRatesRequest
+	22,  // 99: wingout.WingOutService.GetLatencies:input_type -> wingout.GetLatenciesRequest
+	25,  // 100: wingout.WingOutService.GetInputQuality:input_type -> wingout.GetInputQualityRequest
+	27,  // 101: wingout.WingOutService.GetOutputQuality:input_type -> wingout.GetOutputQualityRequest
+	29,  // 102: wingout.WingOutService.GetFPSFraction:input_type -> wingout.GetFPSFractionRequest
+	31,  // 103: wingout.WingOutService.SetFPSFraction:input_type -> wingout.SetFPSFractionRequest
+	33,  // 104: wingout.WingOutService.InjectSubtitles:input_type -> wingout.InjectSubtitlesRequest
+	35,  // 105: wingout.WingOutService.InjectData:input_type -> wingout.InjectDataRequest
+	37,  // 106: wingout.WingOutService.GetConfig:input_type -> wingout.GetConfigRequest
+	39,  // 107: wingout.WingOutService.SetConfig:input_type -> wingout.SetConfigRequest
+	41,  // 108: wingout.WingOutService.SaveConfig:input_type -> wingout.SaveConfigRequest
+	95,  // 109: wingout.WingOutService.SubscribeToConfigChanges:input_type -> wingout.SubscribeToConfigChangesRequest
+	43,  // 110: wingout.WingOutService.GetStreamStatus:input_type -> wingout.GetStreamStatusRequest
+	46,  // 111: wingout.WingOutService.ListStreamForwards:input_type -> wingout.ListStreamForwardsRequest
+	49,  // 112: wingout.WingOutService.ListStreamServers:input_type -> wingout.ListStreamServersRequest
+	52,  // 113: wingout.WingOutService.ListStreamPlayers:input_type -> wingout.ListStreamPlayersRequest
+	55,  // 114: wingout.WingOutService.ListProfiles:input_type -> wingout.ListProfilesRequest
+	57,  // 115: wingout.WingOutService.SubscribeToChatMessages:input_type -> wingout.SubscribeToChatMessagesRequest
+	59,  // 116: wingout.WingOutService.GetBackendMode:input_type -> wingout.GetBackendModeRequest
+	91,  // 117: wingout.WingOutService.SetLoggingLevel:input_type -> wingout.SetLoggingLevelRequest
+	93,  // 118: wingout.WingOutService.GetLoggingLevel:input_type -> wingout.GetLoggingLevelRequest
+	96,  // 119: wingout.WingOutService.ResetCache:input_type -> wingout.ResetCacheRequest
+	98,  // 120: wingout.WingOutService.InitCache:input_type -> wingout.InitCacheRequest
+	100, // 121: wingout.WingOutService.SetStreamActive:input_type -> wingout.SetStreamActiveRequest
+	102, // 122: wingout.WingOutService.GetStreams:input_type -> wingout.GetStreamsRequest
+	104, // 123: wingout.WingOutService.CreateStream:input_type -> wingout.CreateStreamRequest
+	106, // 124: wingout.WingOutService.DeleteStream:input_type -> wingout.DeleteStreamRequest
+	108, // 125: wingout.WingOutService.GetActiveStreamIDs:input_type -> wingout.GetActiveStreamIDsRequest
+	110, // 126: wingout.WingOutService.StartStream:input_type -> wingout.StartStreamRequest
+	112, // 127: wingout.WingOutService.EndStream:input_type -> wingout.EndStreamRequest
+	114, // 128: wingout.WingOutService.SubscribeToStreamsChanges:input_type -> wingout.SubscribeToStreamsChangesRequest
+	115, // 129: wingout.WingOutService.GetAccounts:input_type -> wingout.GetAccountsRequest
+	117, // 130: wingout.WingOutService.IsBackendEnabled:input_type -> wingout.IsBackendEnabledRequest
+	119, // 131: wingout.WingOutService.GetBackendInfo:input_type -> wingout.GetBackendInfoRequest
+	121, // 132: wingout.WingOutService.GetPlatforms:input_type -> wingout.GetPlatformsRequest
+	123, // 133: wingout.WingOutService.SetTitle:input_type -> wingout.SetTitleRequest
+	125, // 134: wingout.WingOutService.SetDescription:input_type -> wingout.SetDescriptionRequest
+	127, // 135: wingout.WingOutService.ApplyProfile:input_type -> wingout.ApplyProfileRequest
+	129, // 136: wingout.WingOutService.GetVariable:input_type -> wingout.GetVariableRequest
+	131, // 137: wingout.WingOutService.GetVariableHash:input_type -> wingout.GetVariableHashRequest
+	133, // 138: wingout.WingOutService.SetVariable:input_type -> wingout.SetVariableRequest
+	135, // 139: wingout.WingOutService.SubscribeToVariable:input_type -> wingout.SubscribeToVariableRequest
+	136, // 140: wingout.WingOutService.SubscribeToOAuthRequests:input_type -> wingout.SubscribeToOAuthRequestsRequest
+	137, // 141: wingout.WingOutService.SubmitOAuthCode:input_type -> wingout.SubmitOAuthCodeRequest
+	139, // 142: wingout.WingOutService.StartStreamServer:input_type -> wingout.StartStreamServerRequest
+	141, // 143: wingout.WingOutService.StopStreamServer:input_type -> wingout.StopStreamServerRequest
+	143, // 144: wingout.WingOutService.SubscribeToStreamServersChanges:input_type -> wingout.SubscribeToStreamServersChangesRequest
+	144, // 145: wingout.WingOutService.ListStreamSources:input_type -> wingout.ListStreamSourcesRequest
+	146, // 146: wingout.WingOutService.AddStreamSource:input_type -> wingout.AddStreamSourceRequest
+	148, // 147: wingout.WingOutService.RemoveStreamSource:input_type -> wingout.RemoveStreamSourceRequest
+	150, // 148: wingout.WingOutService.SubscribeToStreamSourcesChanges:input_type -> wingout.SubscribeToStreamSourcesChangesRequest
+	151, // 149: wingout.WingOutService.ListStreamSinks:input_type -> wingout.ListStreamSinksRequest
+	153, // 150: wingout.WingOutService.AddStreamSink:input_type -> wingout.AddStreamSinkRequest
+	155, // 151: wingout.WingOutService.UpdateStreamSink:input_type -> wingout.UpdateStreamSinkRequest
+	157, // 152: wingout.WingOutService.GetStreamSinkConfig:input_type -> wingout.GetStreamSinkConfigRequest
+	159, // 153: wingout.WingOutService.RemoveStreamSink:input_type -> wingout.RemoveStreamSinkRequest
+	161, // 154: wingout.WingOutService.SubscribeToStreamSinksChanges:input_type -> wingout.SubscribeToStreamSinksChangesRequest
+	162, // 155: wingout.WingOutService.AddStreamForward:input_type -> wingout.AddStreamForwardRequest
+	164, // 156: wingout.WingOutService.UpdateStreamForward:input_type -> wingout.UpdateStreamForwardRequest
+	166, // 157: wingout.WingOutService.RemoveStreamForward:input_type -> wingout.RemoveStreamForwardRequest
+	168, // 158: wingout.WingOutService.SubscribeToStreamForwardsChanges:input_type -> wingout.SubscribeToStreamForwardsChangesRequest
+	169, // 159: wingout.WingOutService.WaitForStreamPublisher:input_type -> wingout.WaitForStreamPublisherRequest
+	171, // 160: wingout.WingOutService.AddStreamPlayer:input_type -> wingout.AddStreamPlayerRequest
+	173, // 161: wingout.WingOutService.RemoveStreamPlayer:input_type -> wingout.RemoveStreamPlayerRequest
+	175, // 162: wingout.WingOutService.UpdateStreamPlayer:input_type -> wingout.UpdateStreamPlayerRequest
+	177, // 163: wingout.WingOutService.GetStreamPlayer:input_type -> wingout.GetStreamPlayerRequest
+	179, // 164: wingout.WingOutService.SubscribeToStreamPlayersChanges:input_type -> wingout.SubscribeToStreamPlayersChangesRequest
+	180, // 165: wingout.WingOutService.StreamPlayerOpen:input_type -> wingout.StreamPlayerOpenRequest
+	182, // 166: wingout.WingOutService.StreamPlayerProcessTitle:input_type -> wingout.StreamPlayerProcessTitleRequest
+	184, // 167: wingout.WingOutService.StreamPlayerGetLink:input_type -> wingout.StreamPlayerGetLinkRequest
+	186, // 168: wingout.WingOutService.StreamPlayerEndChan:input_type -> wingout.StreamPlayerEndChanRequest
+	187, // 169: wingout.WingOutService.StreamPlayerIsEnded:input_type -> wingout.StreamPlayerIsEndedRequest
+	189, // 170: wingout.WingOutService.StreamPlayerGetPosition:input_type -> wingout.StreamPlayerGetPositionRequest
+	191, // 171: wingout.WingOutService.StreamPlayerGetLength:input_type -> wingout.StreamPlayerGetLengthRequest
+	193, // 172: wingout.WingOutService.StreamPlayerGetLag:input_type -> wingout.StreamPlayerGetLagRequest
+	195, // 173: wingout.WingOutService.StreamPlayerSetSpeed:input_type -> wingout.StreamPlayerSetSpeedRequest
+	197, // 174: wingout.WingOutService.StreamPlayerGetSpeed:input_type -> wingout.StreamPlayerGetSpeedRequest
+	199, // 175: wingout.WingOutService.StreamPlayerSetPause:input_type -> wingout.StreamPlayerSetPauseRequest
+	201, // 176: wingout.WingOutService.StreamPlayerStop:input_type -> wingout.StreamPlayerStopRequest
+	203, // 177: wingout.WingOutService.StreamPlayerClose:input_type -> wingout.StreamPlayerCloseRequest
+	205, // 178: wingout.WingOutService.AddTimer:input_type -> wingout.AddTimerRequest
+	207, // 179: wingout.WingOutService.RemoveTimer:input_type -> wingout.RemoveTimerRequest
+	209, // 180: wingout.WingOutService.ListTimers:input_type -> wingout.ListTimersRequest
+	211, // 181: wingout.WingOutService.ListTriggerRules:input_type -> wingout.ListTriggerRulesRequest
+	213, // 182: wingout.WingOutService.AddTriggerRule:input_type -> wingout.AddTriggerRuleRequest
+	215, // 183: wingout.WingOutService.RemoveTriggerRule:input_type -> wingout.RemoveTriggerRuleRequest
+	217, // 184: wingout.WingOutService.UpdateTriggerRule:input_type -> wingout.UpdateTriggerRuleRequest
+	219, // 185: wingout.WingOutService.SubmitEvent:input_type -> wingout.SubmitEventRequest
+	221, // 186: wingout.WingOutService.SendChatMessage:input_type -> wingout.SendChatMessageRequest
+	223, // 187: wingout.WingOutService.InjectPlatformEvent:input_type -> wingout.InjectPlatformEventRequest
+	225, // 188: wingout.WingOutService.RemoveChatMessage:input_type -> wingout.RemoveChatMessageRequest
+	227, // 189: wingout.WingOutService.BanUser:input_type -> wingout.BanUserRequest
+	229, // 190: wingout.WingOutService.Shoutout:input_type -> wingout.ShoutoutRequest
+	231, // 191: wingout.WingOutService.RaidTo:input_type -> wingout.RaidToRequest
+	233, // 192: wingout.WingOutService.GetPeerIDs:input_type -> wingout.GetPeerIDsRequest
+	235, // 193: wingout.WingOutService.LLMGenerate:input_type -> wingout.LLMGenerateRequest
+	237, // 194: wingout.WingOutService.Restart:input_type -> wingout.RestartRequest
+	239, // 195: wingout.WingOutService.EXPERIMENTAL_ReinitStreamControllers:input_type -> wingout.ReinitStreamControllersRequest
+	241, // 196: wingout.WingOutService.FFSetLoggingLevel:input_type -> wingout.FFSetLoggingLevelRequest
+	243, // 197: wingout.WingOutService.RemoveOutput:input_type -> wingout.RemoveOutputRequest
+	246, // 198: wingout.WingOutService.GetCurrentOutput:input_type -> wingout.GetCurrentOutputRequest
+	248, // 199: wingout.WingOutService.SwitchOutputByProps:input_type -> wingout.SwitchOutputByPropsRequest
+	251, // 200: wingout.WingOutService.GetOutputSRTStats:input_type -> wingout.GetOutputSRTStatsRequest
+	253, // 201: wingout.WingOutService.GetSRTFlagInt:input_type -> wingout.GetSRTFlagIntRequest
+	255, // 202: wingout.WingOutService.SetSRTFlagInt:input_type -> wingout.SetSRTFlagIntRequest
+	257, // 203: wingout.WingOutService.FFWaitChan:input_type -> wingout.FFWaitChanRequest
+	259, // 204: wingout.WingOutService.FFEnd:input_type -> wingout.FFEndRequest
+	263, // 205: wingout.WingOutService.GetPipelines:input_type -> wingout.GetPipelinesRequest
+	266, // 206: wingout.WingOutService.GetVideoAutoBitRateConfig:input_type -> wingout.GetVideoAutoBitRateConfigRequest
+	268, // 207: wingout.WingOutService.SetVideoAutoBitRateConfig:input_type -> wingout.SetVideoAutoBitRateConfigRequest
+	271, // 208: wingout.WingOutService.GetVideoAutoBitRateCalculator:input_type -> wingout.GetVideoAutoBitRateCalculatorRequest
+	273, // 209: wingout.WingOutService.SetVideoAutoBitRateCalculator:input_type -> wingout.SetVideoAutoBitRateCalculatorRequest
+	275, // 210: wingout.WingOutService.FFMonitor:input_type -> wingout.FFMonitorRequest
+	278, // 211: wingout.WingOutService.GetInputsInfo:input_type -> wingout.GetInputsInfoRequest
+	281, // 212: wingout.WingOutService.SetInputCustomOption:input_type -> wingout.SetInputCustomOptionRequest
+	283, // 213: wingout.WingOutService.SetStopInput:input_type -> wingout.SetStopInputRequest
+	287, // 214: wingout.WingOutService.InjectDiagnostics:input_type -> wingout.InjectDiagnosticsRequest
+	290, // 215: wingout.WingOutService.SetChannelQuality:input_type -> wingout.SetChannelQualityRequest
+	292, // 216: wingout.WingOutService.GetChannelQuality:input_type -> wingout.GetChannelQualityRequest
+	294, // 217: wingout.WingOutService.SetBackendAddresses:input_type -> wingout.SetBackendAddressesRequest
+	296, // 218: wingout.WingOutService.GetBackendAddresses:input_type -> wingout.GetBackendAddressesRequest
+	300, // 219: wingout.WingOutService.AVDListRoutes:input_type -> wingout.AVDListRoutesRequest
+	302, // 220: wingout.WingOutService.AVDGetPrivacyBlur:input_type -> wingout.AVDGetPrivacyBlurRequest
+	304, // 221: wingout.WingOutService.AVDSetPrivacyBlur:input_type -> wingout.AVDSetPrivacyBlurRequest
+	306, // 222: wingout.WingOutService.AVDGetDeblemish:input_type -> wingout.AVDGetDeblemishRequest
+	308, // 223: wingout.WingOutService.AVDSetDeblemish:input_type -> wingout.AVDSetDeblemishRequest
+	15,  // 224: wingout.WingOutService.Ping:output_type -> wingout.PingReply
+	17,  // 225: wingout.WingOutService.GetStats:output_type -> wingout.GetStatsReply
+	20,  // 226: wingout.WingOutService.GetBitRates:output_type -> wingout.GetBitRatesReply
+	23,  // 227: wingout.WingOutService.GetLatencies:output_type -> wingout.GetLatenciesReply
+	26,  // 228: wingout.WingOutService.GetInputQuality:output_type -> wingout.GetInputQualityReply
+	28,  // 229: wingout.WingOutService.GetOutputQuality:output_type -> wingout.GetOutputQualityReply
+	30,  // 230: wingout.WingOutService.GetFPSFraction:output_type -> wingout.GetFPSFractionReply
+	32,  // 231: wingout.WingOutService.SetFPSFraction:output_type -> wingout.SetFPSFractionReply
+	34,  // 232: wingout.WingOutService.InjectSubtitles:output_type -> wingout.InjectSubtitlesReply
+	36,  // 233: wingout.WingOutService.InjectData:output_type -> wingout.InjectDataReply
+	38,  // 234: wingout.WingOutService.GetConfig:output_type -> wingout.GetConfigReply
+	40,  // 235: wingout.WingOutService.SetConfig:output_type -> wingout.SetConfigReply
+	42,  // 236: wingout.WingOutService.SaveConfig:output_type -> wingout.SaveConfigReply
+	81,  // 237: wingout.WingOutService.SubscribeToConfigChanges:output_type -> wingout.ConfigChangeEvent
+	44,  // 238: wingout.WingOutService.GetStreamStatus:output_type -> wingout.GetStreamStatusReply
+	47,  // 239: wingout.WingOutService.ListStreamForwards:output_type -> wingout.ListStreamForwardsReply
+	50,  // 240: wingout.WingOutService.ListStreamServers:output_type -> wingout.ListStreamServersReply
+	53,  // 241: wingout.WingOutService.ListStreamPlayers:output_type -> wingout.ListStreamPlayersReply
+	56,  // 242: wingout.WingOutService.ListProfiles:output_type -> wingout.ListProfilesReply
+	58,  // 243: wingout.WingOutService.SubscribeToChatMessages:output_type -> wingout.ChatMessageProto
+	60,  // 244: wingout.WingOutService.GetBackendMode:output_type -> wingout.GetBackendModeReply
+	92,  // 245: wingout.WingOutService.SetLoggingLevel:output_type -> wingout.SetLoggingLevelReply
+	94,  // 246: wingout.WingOutService.GetLoggingLevel:output_type -> wingout.GetLoggingLevelReply
+	97,  // 247: wingout.WingOutService.ResetCache:output_type -> wingout.ResetCacheReply
+	99,  // 248: wingout.WingOutService.InitCache:output_type -> wingout.InitCacheReply
+	101, // 249: wingout.WingOutService.SetStreamActive:output_type -> wingout.SetStreamActiveReply
+	103, // 250: wingout.WingOutService.GetStreams:output_type -> wingout.GetStreamsReply
+	105, // 251: wingout.WingOutService.CreateStream:output_type -> wingout.CreateStreamReply
+	107, // 252: wingout.WingOutService.DeleteStream:output_type -> wingout.DeleteStreamReply
+	109, // 253: wingout.WingOutService.GetActiveStreamIDs:output_type -> wingout.GetActiveStreamIDsReply
+	111, // 254: wingout.WingOutService.StartStream:output_type -> wingout.StartStreamReply
+	113, // 255: wingout.WingOutService.EndStream:output_type -> wingout.EndStreamReply
+	82,  // 256: wingout.WingOutService.SubscribeToStreamsChanges:output_type -> wingout.StreamChangeEvent
+	116, // 257: wingout.WingOutService.GetAccounts:output_type -> wingout.GetAccountsReply
+	118, // 258: wingout.WingOutService.IsBackendEnabled:output_type -> wingout.IsBackendEnabledReply
+	120, // 259: wingout.WingOutService.GetBackendInfo:output_type -> wingout.GetBackendInfoReply
+	122, // 260: wingout.WingOutService.GetPlatforms:output_type -> wingout.GetPlatformsReply
+	124, // 261: wingout.WingOutService.SetTitle:output_type -> wingout.SetTitleReply
+	126, // 262: wingout.WingOutService.SetDescription:output_type -> wingout.SetDescriptionReply
+	128, // 263: wingout.WingOutService.ApplyProfile:output_type -> wingout.ApplyProfileReply
+	130, // 264: wingout.WingOutService.GetVariable:output_type -> wingout.GetVariableReply
+	132, // 265: wingout.WingOutService.GetVariableHash:output_type -> wingout.GetVariableHashReply
+	134, // 266: wingout.WingOutService.SetVariable:output_type -> wingout.SetVariableReply
+	89,  // 267: wingout.WingOutService.SubscribeToVariable:output_type -> wingout.VariableChangeEvent
+	90,  // 268: wingout.WingOutService.SubscribeToOAuthRequests:output_type -> wingout.OAuthRequestEvent
+	138, // 269: wingout.WingOutService.SubmitOAuthCode:output_type -> wingout.SubmitOAuthCodeReply
+	140, // 270: wingout.WingOutService.StartStreamServer:output_type -> wingout.StartStreamServerReply
+	142, // 271: wingout.WingOutService.StopStreamServer:output_type -> wingout.StopStreamServerReply
+	83,  // 272: wingout.WingOutService.SubscribeToStreamServersChanges:output_type -> wingout.StreamServerChangeEvent
+	145, // 273: wingout.WingOutService.ListStreamSources:output_type -> wingout.ListStreamSourcesReply
+	147, // 274: wingout.WingOutService.AddStreamSource:output_type -> wingout.AddStreamSourceReply
+	149, // 275: wingout.WingOutService.RemoveStreamSource:output_type -> wingout.RemoveStreamSourceReply
+	84,  // 276: wingout.WingOutService.SubscribeToStreamSourcesChanges:output_type -> wingout.StreamSourceChangeEvent
+	152, // 277: wingout.WingOutService.ListStreamSinks:output_type -> wingout.ListStreamSinksReply
+	154, // 278: wingout.WingOutService.AddStreamSink:output_type -> wingout.AddStreamSinkReply
+	156, // 279: wingout.WingOutService.UpdateStreamSink:output_type -> wingout.UpdateStreamSinkReply
+	158, // 280: wingout.WingOutService.GetStreamSinkConfig:output_type -> wingout.GetStreamSinkConfigReply
+	160, // 281: wingout.WingOutService.RemoveStreamSink:output_type -> wingout.RemoveStreamSinkReply
+	85,  // 282: wingout.WingOutService.SubscribeToStreamSinksChanges:output_type -> wingout.StreamSinkChangeEvent
+	163, // 283: wingout.WingOutService.AddStreamForward:output_type -> wingout.AddStreamForwardReply
+	165, // 284: wingout.WingOutService.UpdateStreamForward:output_type -> wingout.UpdateStreamForwardReply
+	167, // 285: wingout.WingOutService.RemoveStreamForward:output_type -> wingout.RemoveStreamForwardReply
+	86,  // 286: wingout.WingOutService.SubscribeToStreamForwardsChanges:output_type -> wingout.StreamForwardChangeEvent
+	170, // 287: wingout.WingOutService.WaitForStreamPublisher:output_type -> wingout.WaitForStreamPublisherReply
+	172, // 288: wingout.WingOutService.AddStreamPlayer:output_type -> wingout.AddStreamPlayerReply
+	174, // 289: wingout.WingOutService.RemoveStreamPlayer:output_type -> wingout.RemoveStreamPlayerReply
+	176, // 290: wingout.WingOutService.UpdateStreamPlayer:output_type -> wingout.UpdateStreamPlayerReply
+	178, // 291: wingout.WingOutService.GetStreamPlayer:output_type -> wingout.GetStreamPlayerReply
+	87,  // 292: wingout.WingOutService.SubscribeToStreamPlayersChanges:output_type -> wingout.StreamPlayerChangeEvent
+	181, // 293: wingout.WingOutService.StreamPlayerOpen:output_type -> wingout.StreamPlayerOpenReply
+	183, // 294: wingout.WingOutService.StreamPlayerProcessTitle:output_type -> wingout.StreamPlayerProcessTitleReply
+	185, // 295: wingout.WingOutService.StreamPlayerGetLink:output_type -> wingout.StreamPlayerGetLinkReply
+	88,  // 296: wingout.WingOutService.StreamPlayerEndChan:output_type -> wingout.StreamPlayerEndEvent
+	188, // 297: wingout.WingOutService.StreamPlayerIsEnded:output_type -> wingout.StreamPlayerIsEndedReply
+	190, // 298: wingout.WingOutService.StreamPlayerGetPosition:output_type -> wingout.StreamPlayerGetPositionReply
+	192, // 299: wingout.WingOutService.StreamPlayerGetLength:output_type -> wingout.StreamPlayerGetLengthReply
+	194, // 300: wingout.WingOutService.StreamPlayerGetLag:output_type -> wingout.StreamPlayerGetLagReply
+	196, // 301: wingout.WingOutService.StreamPlayerSetSpeed:output_type -> wingout.StreamPlayerSetSpeedReply
+	198, // 302: wingout.WingOutService.StreamPlayerGetSpeed:output_type -> wingout.StreamPlayerGetSpeedReply
+	200, // 303: wingout.WingOutService.StreamPlayerSetPause:output_type -> wingout.StreamPlayerSetPauseReply
+	202, // 304: wingout.WingOutService.StreamPlayerStop:output_type -> wingout.StreamPlayerStopReply
+	204, // 305: wingout.WingOutService.StreamPlayerClose:output_type -> wingout.StreamPlayerCloseReply
+	206, // 306: wingout.WingOutService.AddTimer:output_type -> wingout.AddTimerReply
+	208, // 307: wingout.WingOutService.RemoveTimer:output_type -> wingout.RemoveTimerReply
+	210, // 308: wingout.WingOutService.ListTimers:output_type -> wingout.ListTimersReply
+	212, // 309: wingout.WingOutService.ListTriggerRules:output_type -> wingout.ListTriggerRulesReply
+	214, // 310: wingout.WingOutService.AddTriggerRule:output_type -> wingout.AddTriggerRuleReply
+	216, // 311: wingout.WingOutService.RemoveTriggerRule:output_type -> wingout.RemoveTriggerRuleReply
+	218, // 312: wingout.WingOutService.UpdateTriggerRule:output_type -> wingout.UpdateTriggerRuleReply
+	220, // 313: wingout.WingOutService.SubmitEvent:output_type -> wingout.SubmitEventReply
+	222, // 314: wingout.WingOutService.SendChatMessage:output_type -> wingout.SendChatMessageReply
+	224, // 315: wingout.WingOutService.InjectPlatformEvent:output_type -> wingout.InjectPlatformEventReply
+	226, // 316: wingout.WingOutService.RemoveChatMessage:output_type -> wingout.RemoveChatMessageReply
+	228, // 317: wingout.WingOutService.BanUser:output_type -> wingout.BanUserReply
+	230, // 318: wingout.WingOutService.Shoutout:output_type -> wingout.ShoutoutReply
+	232, // 319: wingout.WingOutService.RaidTo:output_type -> wingout.RaidToReply
+	234, // 320: wingout.WingOutService.GetPeerIDs:output_type -> wingout.GetPeerIDsReply
+	236, // 321: wingout.WingOutService.LLMGenerate:output_type -> wingout.LLMGenerateReply
+	238, // 322: wingout.WingOutService.Restart:output_type -> wingout.RestartReply
+	240, // 323: wingout.WingOutService.EXPERIMENTAL_ReinitStreamControllers:output_type -> wingout.ReinitStreamControllersReply
+	242, // 324: wingout.WingOutService.FFSetLoggingLevel:output_type -> wingout.FFSetLoggingLevelReply
+	244, // 325: wingout.WingOutService.RemoveOutput:output_type -> wingout.RemoveOutputReply
+	247, // 326: wingout.WingOutService.GetCurrentOutput:output_type -> wingout.GetCurrentOutputReply
+	249, // 327: wingout.WingOutService.SwitchOutputByProps:output_type -> wingout.SwitchOutputByPropsReply
+	252, // 328: wingout.WingOutService.GetOutputSRTStats:output_type -> wingout.GetOutputSRTStatsReply
+	254, // 329: wingout.WingOutService.GetSRTFlagInt:output_type -> wingout.GetSRTFlagIntReply
+	256, // 330: wingout.WingOutService.SetSRTFlagInt:output_type -> wingout.SetSRTFlagIntReply
+	258, // 331: wingout.WingOutService.FFWaitChan:output_type -> wingout.FFWaitEvent
+	260, // 332: wingout.WingOutService.FFEnd:output_type -> wingout.FFEndReply
+	264, // 333: wingout.WingOutService.GetPipelines:output_type -> wingout.GetPipelinesReply
+	267, // 334: wingout.WingOutService.GetVideoAutoBitRateConfig:output_type -> wingout.GetVideoAutoBitRateConfigReply
+	269, // 335: wingout.WingOutService.SetVideoAutoBitRateConfig:output_type -> wingout.SetVideoAutoBitRateConfigReply
+	272, // 336: wingout.WingOutService.GetVideoAutoBitRateCalculator:output_type -> wingout.GetVideoAutoBitRateCalculatorReply
+	274, // 337: wingout.WingOutService.SetVideoAutoBitRateCalculator:output_type -> wingout.SetVideoAutoBitRateCalculatorReply
+	276, // 338: wingout.WingOutService.FFMonitor:output_type -> wingout.FFMonitorEvent
+	279, // 339: wingout.WingOutService.GetInputsInfo:output_type -> wingout.GetInputsInfoReply
+	282, // 340: wingout.WingOutService.SetInputCustomOption:output_type -> wingout.SetInputCustomOptionReply
+	284, // 341: wingout.WingOutService.SetStopInput:output_type -> wingout.SetStopInputReply
+	288, // 342: wingout.WingOutService.InjectDiagnostics:output_type -> wingout.InjectDiagnosticsReply
+	291, // 343: wingout.WingOutService.SetChannelQuality:output_type -> wingout.SetChannelQualityReply
+	293, // 344: wingout.WingOutService.GetChannelQuality:output_type -> wingout.GetChannelQualityReply
+	295, // 345: wingout.WingOutService.SetBackendAddresses:output_type -> wingout.SetBackendAddressesReply
+	297, // 346: wingout.WingOutService.GetBackendAddresses:output_type -> wingout.GetBackendAddressesReply
+	301, // 347: wingout.WingOutService.AVDListRoutes:output_type -> wingout.AVDListRoutesReply
+	303, // 348: wingout.WingOutService.AVDGetPrivacyBlur:output_type -> wingout.AVDGetPrivacyBlurReply
+	305, // 349: wingout.WingOutService.AVDSetPrivacyBlur:output_type -> wingout.AVDSetPrivacyBlurReply
+	307, // 350: wingout.WingOutService.AVDGetDeblemish:output_type -> wingout.AVDGetDeblemishReply
+	309, // 351: wingout.WingOutService.AVDSetDeblemish:output_type -> wingout.AVDSetDeblemishReply
+	224, // [224:352] is the sub-list for method output_type
+	96,  // [96:224] is the sub-list for method input_type
+	96,  // [96:96] is the sub-list for extension type_name
+	96,  // [96:96] is the sub-list for extension extendee
+	0,   // [0:96] is the sub-list for field type_name
 }
 
 func init() { file_wingout_proto_init() }
@@ -15837,13 +16616,15 @@ func file_wingout_proto_init() {
 	}
 	file_wingout_proto_msgTypes[30].OneofWrappers = []any{}
 	file_wingout_proto_msgTypes[272].OneofWrappers = []any{}
+	file_wingout_proto_msgTypes[290].OneofWrappers = []any{}
+	file_wingout_proto_msgTypes[294].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_wingout_proto_rawDesc), len(file_wingout_proto_rawDesc)),
 			NumEnums:      14,
-			NumMessages:   287,
+			NumMessages:   299,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

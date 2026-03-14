@@ -183,7 +183,7 @@ func TestDaemon_SetGetBackendAddresses(t *testing.T) {
 
 func TestDaemon_HandshakeFormat(t *testing.T) {
 	// Verify the handshake JSON format
-	srv := api.NewServer(nil, nil)
+	srv := api.NewServer(nil, nil, nil)
 	var output []byte
 	err := srv.WriteHandshake("127.0.0.1:5000", func(data []byte) {
 		output = data

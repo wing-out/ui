@@ -18,10 +18,12 @@ type Daemon struct {
 	server   *api.Server
 	ffstream backend.FFStreamBackend
 	streamd  backend.StreamDBackend
+	avd      backend.AVDBackend
 
 	// Current remote addresses (may differ from config if changed at runtime).
 	remoteFFStreamAddr string
 	remoteStreamDAddr  string
+	remoteAVDAddr      string
 }
 
 // New creates a new Daemon with the given configuration.
@@ -35,6 +37,7 @@ func New(cfg Config) (*Daemon, error) {
 		config:             cfg,
 		remoteFFStreamAddr: cfg.RemoteFFStreamAddr,
 		remoteStreamDAddr:  cfg.RemoteStreamDAddr,
+		remoteAVDAddr:      cfg.RemoteAVDAddr,
 	}
 
 	return d, nil
@@ -48,6 +51,11 @@ func (d *Daemon) SetFFStream(ff backend.FFStreamBackend) {
 // SetStreamD sets the StreamD backend (used for dependency injection in tests).
 func (d *Daemon) SetStreamD(sd backend.StreamDBackend) {
 	d.streamd = sd
+}
+
+// SetAVD sets the AVD backend (used for dependency injection in tests).
+func (d *Daemon) SetAVD(avd backend.AVDBackend) {
+	d.avd = avd
 }
 
 // Config returns the daemon configuration.
@@ -73,8 +81,15 @@ func (d *Daemon) Run(ctx context.Context) error {
 		}
 		d.streamd = sd
 	}
+	if d.avd == nil && d.remoteAVDAddr != "" {
+		avd, err := backend.NewRemoteAVD(d.remoteAVDAddr)
+		if err != nil {
+			return fmt.Errorf("connect to remote avd at %s: %w", d.remoteAVDAddr, err)
+		}
+		d.avd = avd
+	}
 
-	srv := api.NewServer(d.ffstream, d.streamd)
+	srv := api.NewServer(d.ffstream, d.streamd, d.avd)
 
 	// Register backend address handlers.
 	srv.SetBackendAddressHandlers(d.handleSetBackendAddresses, d.handleGetBackendAddresses)
@@ -101,7 +116,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 }
 
 // handleSetBackendAddresses creates new remote backends and hot-swaps them into the server.
-func (d *Daemon) handleSetBackendAddresses(ctx context.Context, ffAddr, sdAddr string) error {
+func (d *Daemon) handleSetBackendAddresses(ctx context.Context, ffAddr, sdAddr, avdAddr string) error {
 	d.mu.Lock()
 	srv := d.server
 	d.mu.Unlock()
@@ -147,14 +162,32 @@ func (d *Daemon) handleSetBackendAddresses(ctx context.Context, ffAddr, sdAddr s
 		d.mu.Unlock()
 	}
 
+	if avdAddr != d.remoteAVDAddr {
+		if closer, ok := srv.AVD().(io.Closer); ok {
+			closer.Close()
+		}
+		if avdAddr != "" {
+			avd, err := backend.NewRemoteAVD(avdAddr)
+			if err != nil {
+				return fmt.Errorf("connect to remote avd at %s: %w", avdAddr, err)
+			}
+			srv.SetAVD(avd)
+		} else {
+			srv.SetAVD(nil)
+		}
+		d.mu.Lock()
+		d.remoteAVDAddr = avdAddr
+		d.mu.Unlock()
+	}
+
 	return nil
 }
 
 // handleGetBackendAddresses returns the current backend addresses.
-func (d *Daemon) handleGetBackendAddresses(ctx context.Context) (string, string, error) {
+func (d *Daemon) handleGetBackendAddresses(ctx context.Context) (string, string, string, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	return d.remoteFFStreamAddr, d.remoteStreamDAddr, nil
+	return d.remoteFFStreamAddr, d.remoteStreamDAddr, d.remoteAVDAddr, nil
 }
 
 // Stop gracefully stops the daemon.

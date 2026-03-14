@@ -76,6 +76,7 @@ public:
     // =====================================================================
     Q_INVOKABLE void getBackendMode(QJSValue callback, QJSValue errorCallback);
     Q_INVOKABLE void setBackendAddresses(const QString &ffstreamAddr, const QString &streamdAddr,
+                                          const QString &avdAddr,
                                           QJSValue callback, QJSValue errorCallback);
     Q_INVOKABLE void getBackendAddresses(QJSValue callback, QJSValue errorCallback);
 
@@ -333,6 +334,21 @@ public:
     Q_INVOKABLE void setChannelQuality(const QVariantList &channels,
                                         QJSValue callback, QJSValue errorCallback);
     Q_INVOKABLE void getChannelQuality(QJSValue callback, QJSValue errorCallback);
+
+    // =====================================================================
+    // AVD Management
+    // =====================================================================
+    Q_INVOKABLE void avdListRoutes(QJSValue callback, QJSValue errorCallback);
+    Q_INVOKABLE void avdGetPrivacyBlur(const QString &routePath, qint32 forwardingIndex,
+                                        QJSValue callback, QJSValue errorCallback);
+    Q_INVOKABLE void avdSetPrivacyBlur(const QString &routePath, qint32 forwardingIndex,
+                                        const QVariantMap &params,
+                                        QJSValue callback, QJSValue errorCallback);
+    Q_INVOKABLE void avdGetDeblemish(const QString &routePath, qint32 forwardingIndex,
+                                      QJSValue callback, QJSValue errorCallback);
+    Q_INVOKABLE void avdSetDeblemish(const QString &routePath, qint32 forwardingIndex,
+                                      const QVariantMap &params,
+                                      QJSValue callback, QJSValue errorCallback);
 
     // =====================================================================
     // Diagnostics

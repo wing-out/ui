@@ -189,6 +189,13 @@ service WingOutService {
   // Backend Addresses
   rpc SetBackendAddresses(SetBackendAddressesRequest) returns (SetBackendAddressesReply) {}
   rpc GetBackendAddresses(GetBackendAddressesRequest) returns (GetBackendAddressesReply) {}
+
+  // AVD Management
+  rpc AVDListRoutes(AVDListRoutesRequest) returns (AVDListRoutesReply) {}
+  rpc AVDGetPrivacyBlur(AVDGetPrivacyBlurRequest) returns (AVDGetPrivacyBlurReply) {}
+  rpc AVDSetPrivacyBlur(AVDSetPrivacyBlurRequest) returns (AVDSetPrivacyBlurReply) {}
+  rpc AVDGetDeblemish(AVDGetDeblemishRequest) returns (AVDGetDeblemishReply) {}
+  rpc AVDSetDeblemish(AVDSetDeblemishRequest) returns (AVDSetDeblemishReply) {}
 }
 
 // ========================================================================
@@ -1520,6 +1527,7 @@ message GetChannelQualityReply {
 message SetBackendAddressesRequest {
   string ffstream_addr = 1;
   string streamd_addr = 2;
+  string avd_addr = 3;
 }
 message SetBackendAddressesReply {}
 
@@ -1527,4 +1535,67 @@ message GetBackendAddressesRequest {}
 message GetBackendAddressesReply {
   string ffstream_addr = 1;
   string streamd_addr = 2;
+  string avd_addr = 3;
 }
+
+// ========================================================================
+// AVD Management
+// ========================================================================
+
+message AVDForwardingInfo {
+  int32 index = 1;
+  bool has_privacy_blur = 2;
+  bool has_deblemish = 3;
+}
+
+message AVDRouteInfo {
+  string path = 1;
+  string description = 2;
+  bool is_serving = 3;
+  repeated AVDForwardingInfo forwardings = 4;
+}
+
+message AVDListRoutesRequest {}
+message AVDListRoutesReply {
+  repeated AVDRouteInfo routes = 1;
+}
+
+message AVDGetPrivacyBlurRequest {
+  string route_path = 1;
+  int32 forwarding_index = 2;
+}
+message AVDGetPrivacyBlurReply {
+  bool enabled = 1;
+  double blur_radius = 2;
+  int64 pixelate_block_size = 3;
+}
+
+message AVDSetPrivacyBlurRequest {
+  string route_path = 1;
+  int32 forwarding_index = 2;
+  optional bool enabled = 3;
+  optional double blur_radius = 4;
+  optional int64 pixelate_block_size = 5;
+}
+message AVDSetPrivacyBlurReply {}
+
+message AVDGetDeblemishRequest {
+  string route_path = 1;
+  int32 forwarding_index = 2;
+}
+message AVDGetDeblemishReply {
+  bool enabled = 1;
+  double sigma_s = 2;
+  double sigma_r = 3;
+  int64 diameter = 4;
+}
+
+message AVDSetDeblemishRequest {
+  string route_path = 1;
+  int32 forwarding_index = 2;
+  optional bool enabled = 3;
+  optional double sigma_s = 4;
+  optional double sigma_r = 5;
+  optional int64 diameter = 6;
+}
+message AVDSetDeblemishReply {}

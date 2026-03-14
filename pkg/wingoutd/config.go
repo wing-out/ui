@@ -22,6 +22,9 @@ type Config struct {
 	// Used when Mode is "remote" or "hybrid" (with remote StreamD).
 	RemoteStreamDAddr string `json:"remote_streamd_addr,omitempty" yaml:"remote_streamd_addr,omitempty"`
 
+	// RemoteAVDAddr is the address of a remote AVD gRPC server.
+	RemoteAVDAddr string `json:"remote_avd_addr,omitempty" yaml:"remote_avd_addr,omitempty"`
+
 	// LogLevel is the logging level (0=none, 7=trace).
 	LogLevel int `json:"log_level" yaml:"log_level"`
 }

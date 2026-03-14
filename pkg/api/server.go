@@ -23,12 +23,17 @@ type Server struct {
 }
 
 // NewServer creates a new unified API server.
-// Either backend can be nil if that functionality is not needed.
-func NewServer(ffstream backend.FFStreamBackend, streamd backend.StreamDBackend) *Server {
+// Any backend can be nil if that functionality is not needed.
+func NewServer(
+	ffstream backend.FFStreamBackend,
+	streamd backend.StreamDBackend,
+	avd backend.AVDBackend,
+) *Server {
 	return &Server{
 		service: &wingOutService{
 			ffstream: ffstream,
 			streamd:  streamd,
+			avd:      avd,
 		},
 	}
 }
@@ -51,6 +56,16 @@ func (s *Server) SetFFStream(ff backend.FFStreamBackend) {
 // SetStreamD hot-swaps the StreamD backend.
 func (s *Server) SetStreamD(sd backend.StreamDBackend) {
 	s.service.setStreamD(sd)
+}
+
+// AVD returns the AVD backend (may be nil).
+func (s *Server) AVD() backend.AVDBackend {
+	return s.service.getAVD()
+}
+
+// SetAVD hot-swaps the AVD backend.
+func (s *Server) SetAVD(avd backend.AVDBackend) {
+	s.service.setAVD(avd)
 }
 
 // SetBackendAddressHandlers registers handlers for the Set/GetBackendAddresses RPCs.

@@ -15,12 +15,17 @@ import (
 
 // testServer starts a gRPC server with mock backends and returns a connected client.
 func testServer(t *testing.T, ff backend.FFStreamBackend, sd backend.StreamDBackend) (WingOutServiceClient, func()) {
+	return testServerWithAVD(t, ff, sd, nil)
+}
+
+// testServerWithAVD starts a gRPC server with all three mock backends and returns a connected client.
+func testServerWithAVD(t *testing.T, ff backend.FFStreamBackend, sd backend.StreamDBackend, avd backend.AVDBackend) (WingOutServiceClient, func()) {
 	t.Helper()
 
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 
-	srv := NewServer(ff, sd)
+	srv := NewServer(ff, sd, avd)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
@@ -47,7 +52,7 @@ func testServer(t *testing.T, ff backend.FFStreamBackend, sd backend.StreamDBack
 func TestServer_NewServer(t *testing.T) {
 	ff := backend.NewMockFFStream()
 	sd := backend.NewMockStreamD()
-	srv := NewServer(ff, sd)
+	srv := NewServer(ff, sd, nil)
 
 	require.NotNil(t, srv)
 	require.Equal(t, ff, srv.FFStream())
@@ -55,14 +60,14 @@ func TestServer_NewServer(t *testing.T) {
 }
 
 func TestServer_NewServer_NilBackends(t *testing.T) {
-	srv := NewServer(nil, nil)
+	srv := NewServer(nil, nil, nil)
 	require.NotNil(t, srv)
 	require.Nil(t, srv.FFStream())
 	require.Nil(t, srv.StreamD())
 }
 
 func TestServer_WriteHandshake(t *testing.T) {
-	srv := NewServer(nil, nil)
+	srv := NewServer(nil, nil, nil)
 	var output []byte
 	err := srv.WriteHandshake("127.0.0.1:5000", func(data []byte) {
 		output = data
@@ -86,7 +91,7 @@ func TestServer_DoubleServe_Fails(t *testing.T) {
 	require.NoError(t, err)
 	defer lis2.Close()
 
-	srv := NewServer(nil, nil)
+	srv := NewServer(nil, nil, nil)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -3345,17 +3350,18 @@ func TestService_FFMonitor(t *testing.T) {
 // =========================================================================
 
 func TestService_SetBackendAddresses(t *testing.T) {
-	srv := NewServer(nil, nil)
+	srv := NewServer(nil, nil, nil)
 
-	var capturedFF, capturedSD string
+	var capturedFF, capturedSD, capturedAVD string
 	srv.SetBackendAddressHandlers(
-		func(ctx context.Context, ffAddr, sdAddr string) error {
+		func(ctx context.Context, ffAddr, sdAddr, avdAddr string) error {
 			capturedFF = ffAddr
 			capturedSD = sdAddr
+			capturedAVD = avdAddr
 			return nil
 		},
-		func(ctx context.Context) (string, string, error) {
-			return capturedFF, capturedSD, nil
+		func(ctx context.Context) (string, string, string, error) {
+			return capturedFF, capturedSD, capturedAVD, nil
 		},
 	)
 
@@ -3384,12 +3390,12 @@ func TestService_SetBackendAddresses(t *testing.T) {
 }
 
 func TestService_GetBackendAddresses(t *testing.T) {
-	srv := NewServer(nil, nil)
+	srv := NewServer(nil, nil, nil)
 
 	srv.SetBackendAddressHandlers(
-		func(ctx context.Context, ffAddr, sdAddr string) error { return nil },
-		func(ctx context.Context) (string, string, error) {
-			return "192.168.1.10:3593", "192.168.1.20:3594", nil
+		func(ctx context.Context, ffAddr, sdAddr, avdAddr string) error { return nil },
+		func(ctx context.Context) (string, string, string, error) {
+			return "192.168.1.10:3593", "192.168.1.20:3594", "192.168.1.30:3596", nil
 		},
 	)
 
@@ -3442,7 +3448,7 @@ func TestServer_HotSwapBackends(t *testing.T) {
 		}, nil
 	}
 
-	srv := NewServer(ff1, nil)
+	srv := NewServer(ff1, nil, nil)
 
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
@@ -3471,4 +3477,239 @@ func TestServer_HotSwapBackends(t *testing.T) {
 	resp, err = client.GetBitRates(ctx, &GetBitRatesRequest{})
 	require.NoError(t, err)
 	require.Equal(t, uint64(9_000_000), resp.GetInputBitRate().GetVideo())
+}
+
+// --- AVD service tests ---
+
+func TestService_AVDListRoutes(t *testing.T) {
+	avd := backend.NewMockAVD()
+	avd.ListRoutesFunc = func(ctx context.Context) ([]backend.AVDRouteInfo, error) {
+		return []backend.AVDRouteInfo{
+			{
+				Path:      "/live/cam1",
+				IsServing: true,
+				Forwardings: []backend.AVDForwardingInfo{
+					{Index: 0, HasPrivacyBlur: true, HasDeblemish: false},
+					{Index: 1, HasPrivacyBlur: false, HasDeblemish: true},
+				},
+			},
+			{
+				Path:      "/live/cam2",
+				IsServing: false,
+				Forwardings: []backend.AVDForwardingInfo{
+					{Index: 0, HasPrivacyBlur: true, HasDeblemish: true},
+				},
+			},
+		}, nil
+	}
+
+	client, cleanup := testServerWithAVD(t, nil, nil, avd)
+	defer cleanup()
+
+	resp, err := client.AVDListRoutes(context.Background(), &AVDListRoutesRequest{})
+	require.NoError(t, err)
+
+	routes := resp.GetRoutes()
+	require.Len(t, routes, 2)
+
+	require.Equal(t, "/live/cam1", routes[0].GetPath())
+	require.True(t, routes[0].GetIsServing())
+	require.Len(t, routes[0].GetForwardings(), 2)
+	require.Equal(t, int32(0), routes[0].GetForwardings()[0].GetIndex())
+	require.True(t, routes[0].GetForwardings()[0].GetHasPrivacyBlur())
+	require.False(t, routes[0].GetForwardings()[0].GetHasDeblemish())
+	require.Equal(t, int32(1), routes[0].GetForwardings()[1].GetIndex())
+	require.False(t, routes[0].GetForwardings()[1].GetHasPrivacyBlur())
+	require.True(t, routes[0].GetForwardings()[1].GetHasDeblemish())
+
+	require.Equal(t, "/live/cam2", routes[1].GetPath())
+	require.False(t, routes[1].GetIsServing())
+	require.Len(t, routes[1].GetForwardings(), 1)
+	require.True(t, routes[1].GetForwardings()[0].GetHasPrivacyBlur())
+	require.True(t, routes[1].GetForwardings()[0].GetHasDeblemish())
+}
+
+func TestService_AVDListRoutes_NoAVD(t *testing.T) {
+	client, cleanup := testServer(t, nil, nil)
+	defer cleanup()
+
+	_, err := client.AVDListRoutes(context.Background(), &AVDListRoutesRequest{})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "avd backend is not available")
+}
+
+func TestService_AVDGetPrivacyBlur(t *testing.T) {
+	avd := backend.NewMockAVD()
+	avd.GetPrivacyBlurFunc = func(ctx context.Context, routePath string, forwardingIndex int32) (*backend.AVDPrivacyBlurState, error) {
+		require.Equal(t, "/live/cam1", routePath)
+		require.Equal(t, int32(2), forwardingIndex)
+		return &backend.AVDPrivacyBlurState{
+			Enabled:           true,
+			BlurRadius:        25.5,
+			PixelateBlockSize: 8,
+		}, nil
+	}
+
+	client, cleanup := testServerWithAVD(t, nil, nil, avd)
+	defer cleanup()
+
+	resp, err := client.AVDGetPrivacyBlur(context.Background(), &AVDGetPrivacyBlurRequest{
+		RoutePath:       "/live/cam1",
+		ForwardingIndex: 2,
+	})
+	require.NoError(t, err)
+	require.True(t, resp.GetEnabled())
+	require.InDelta(t, 25.5, resp.GetBlurRadius(), 0.001)
+	require.Equal(t, int64(8), resp.GetPixelateBlockSize())
+}
+
+func TestService_AVDGetPrivacyBlur_NoAVD(t *testing.T) {
+	client, cleanup := testServer(t, nil, nil)
+	defer cleanup()
+
+	_, err := client.AVDGetPrivacyBlur(context.Background(), &AVDGetPrivacyBlurRequest{
+		RoutePath:       "/live/cam1",
+		ForwardingIndex: 0,
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "avd backend is not available")
+}
+
+func TestService_AVDSetPrivacyBlur(t *testing.T) {
+	avd := backend.NewMockAVD()
+	var capturedEnabled *bool
+	var capturedRadius *float64
+	var capturedBlockSize *int64
+	avd.SetPrivacyBlurFunc = func(ctx context.Context, routePath string, forwardingIndex int32, enabled *bool, blurRadius *float64, pixelateBlockSize *int64) error {
+		require.Equal(t, "/live/cam1", routePath)
+		require.Equal(t, int32(0), forwardingIndex)
+		capturedEnabled = enabled
+		capturedRadius = blurRadius
+		capturedBlockSize = pixelateBlockSize
+		return nil
+	}
+
+	client, cleanup := testServerWithAVD(t, nil, nil, avd)
+	defer cleanup()
+
+	enabled := true
+	radius := 42.0
+	_, err := client.AVDSetPrivacyBlur(context.Background(), &AVDSetPrivacyBlurRequest{
+		RoutePath:       "/live/cam1",
+		ForwardingIndex: 0,
+		Enabled:         &enabled,
+		BlurRadius:      &radius,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, capturedEnabled)
+	require.True(t, *capturedEnabled)
+	require.NotNil(t, capturedRadius)
+	require.InDelta(t, 42.0, *capturedRadius, 0.001)
+	require.Nil(t, capturedBlockSize)
+}
+
+func TestService_AVDSetPrivacyBlur_NoAVD(t *testing.T) {
+	client, cleanup := testServer(t, nil, nil)
+	defer cleanup()
+
+	enabled := true
+	_, err := client.AVDSetPrivacyBlur(context.Background(), &AVDSetPrivacyBlurRequest{
+		RoutePath:       "/live/cam1",
+		ForwardingIndex: 0,
+		Enabled:         &enabled,
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "avd backend is not available")
+}
+
+func TestService_AVDGetDeblemish(t *testing.T) {
+	avd := backend.NewMockAVD()
+	avd.GetDeblemishFunc = func(ctx context.Context, routePath string, forwardingIndex int32) (*backend.AVDDeblemishState, error) {
+		require.Equal(t, "/live/cam1", routePath)
+		require.Equal(t, int32(1), forwardingIndex)
+		return &backend.AVDDeblemishState{
+			Enabled:  true,
+			SigmaS:   60.0,
+			SigmaR:   0.45,
+			Diameter: 15,
+		}, nil
+	}
+
+	client, cleanup := testServerWithAVD(t, nil, nil, avd)
+	defer cleanup()
+
+	resp, err := client.AVDGetDeblemish(context.Background(), &AVDGetDeblemishRequest{
+		RoutePath:       "/live/cam1",
+		ForwardingIndex: 1,
+	})
+	require.NoError(t, err)
+	require.True(t, resp.GetEnabled())
+	require.InDelta(t, 60.0, resp.GetSigmaS(), 0.001)
+	require.InDelta(t, 0.45, resp.GetSigmaR(), 0.001)
+	require.Equal(t, int64(15), resp.GetDiameter())
+}
+
+func TestService_AVDGetDeblemish_NoAVD(t *testing.T) {
+	client, cleanup := testServer(t, nil, nil)
+	defer cleanup()
+
+	_, err := client.AVDGetDeblemish(context.Background(), &AVDGetDeblemishRequest{
+		RoutePath:       "/live/cam1",
+		ForwardingIndex: 0,
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "avd backend is not available")
+}
+
+func TestService_AVDSetDeblemish(t *testing.T) {
+	avd := backend.NewMockAVD()
+	var capturedEnabled *bool
+	var capturedSigmaS *float64
+	var capturedSigmaR *float64
+	var capturedDiameter *int64
+	avd.SetDeblemishFunc = func(ctx context.Context, routePath string, forwardingIndex int32, enabled *bool, sigmaS *float64, sigmaR *float64, diameter *int64) error {
+		require.Equal(t, "/live/cam1", routePath)
+		require.Equal(t, int32(3), forwardingIndex)
+		capturedEnabled = enabled
+		capturedSigmaS = sigmaS
+		capturedSigmaR = sigmaR
+		capturedDiameter = diameter
+		return nil
+	}
+
+	client, cleanup := testServerWithAVD(t, nil, nil, avd)
+	defer cleanup()
+
+	enabled := false
+	sigmaR := 0.75
+	diameter := int64(20)
+	_, err := client.AVDSetDeblemish(context.Background(), &AVDSetDeblemishRequest{
+		RoutePath:       "/live/cam1",
+		ForwardingIndex: 3,
+		Enabled:         &enabled,
+		SigmaR:          &sigmaR,
+		Diameter:        &diameter,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, capturedEnabled)
+	require.False(t, *capturedEnabled)
+	require.Nil(t, capturedSigmaS)
+	require.NotNil(t, capturedSigmaR)
+	require.InDelta(t, 0.75, *capturedSigmaR, 0.001)
+	require.NotNil(t, capturedDiameter)
+	require.Equal(t, int64(20), *capturedDiameter)
+}
+
+func TestService_AVDSetDeblemish_NoAVD(t *testing.T) {
+	client, cleanup := testServer(t, nil, nil)
+	defer cleanup()
+
+	enabled := true
+	_, err := client.AVDSetDeblemish(context.Background(), &AVDSetDeblemishRequest{
+		RoutePath:       "/live/cam1",
+		ForwardingIndex: 0,
+		Enabled:         &enabled,
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "avd backend is not available")
 }

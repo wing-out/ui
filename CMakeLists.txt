@@ -85,6 +85,7 @@ qt_add_qml_module(wingout2
         qml/pages/ProfilesPage.qml
         qml/pages/LogsPage.qml
         qml/pages/SettingsPage.qml
+        qml/pages/AVDPage.qml
         qml/dialogs/InitialSetup.qml
 )
 
