@@ -2871,6 +2871,7 @@ type SubscribeToChatMessagesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SinceUnixNano int64                  `protobuf:"varint,1,opt,name=since_unix_nano,json=sinceUnixNano,proto3" json:"since_unix_nano,omitempty"`
 	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	StreamId      *string                `protobuf:"bytes,3,opt,name=stream_id,json=streamId,proto3,oneof" json:"stream_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2919,6 +2920,13 @@ func (x *SubscribeToChatMessagesRequest) GetLimit() int32 {
 	return 0
 }
 
+func (x *SubscribeToChatMessagesRequest) GetStreamId() string {
+	if x != nil && x.StreamId != nil {
+		return *x.StreamId
+	}
+	return ""
+}
+
 type ChatMessageProto struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -2927,6 +2935,7 @@ type ChatMessageProto struct {
 	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
 	Timestamp     int64                  `protobuf:"varint,5,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	Event         *ChatEventProto        `protobuf:"bytes,6,opt,name=event,proto3" json:"event,omitempty"`
+	StreamId      string                 `protobuf:"bytes,7,opt,name=stream_id,json=streamId,proto3" json:"stream_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3001,6 +3010,13 @@ func (x *ChatMessageProto) GetEvent() *ChatEventProto {
 		return x.Event
 	}
 	return nil
+}
+
+func (x *ChatMessageProto) GetStreamId() string {
+	if x != nil {
+		return x.StreamId
+	}
+	return ""
 }
 
 type GetBackendModeRequest struct {
@@ -14975,17 +14991,21 @@ const file_wingout_proto_rawDesc = "" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\"\x15\n" +
 	"\x13ListProfilesRequest\"F\n" +
 	"\x11ListProfilesReply\x121\n" +
-	"\bprofiles\x18\x01 \x03(\v2\x15.wingout.ProfileProtoR\bprofiles\"^\n" +
+	"\bprofiles\x18\x01 \x03(\v2\x15.wingout.ProfileProtoR\bprofiles\"\x8e\x01\n" +
 	"\x1eSubscribeToChatMessagesRequest\x12&\n" +
 	"\x0fsince_unix_nano\x18\x01 \x01(\x03R\rsinceUnixNano\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\"\xc2\x01\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12 \n" +
+	"\tstream_id\x18\x03 \x01(\tH\x00R\bstreamId\x88\x01\x01B\f\n" +
+	"\n" +
+	"_stream_id\"\xdf\x01\n" +
 	"\x10ChatMessageProto\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\bplatform\x18\x02 \x01(\tR\bplatform\x12\x1b\n" +
 	"\tuser_name\x18\x03 \x01(\tR\buserName\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12\x1c\n" +
 	"\ttimestamp\x18\x05 \x01(\x03R\ttimestamp\x12-\n" +
-	"\x05event\x18\x06 \x01(\v2\x17.wingout.ChatEventProtoR\x05event\"\x17\n" +
+	"\x05event\x18\x06 \x01(\v2\x17.wingout.ChatEventProtoR\x05event\x12\x1b\n" +
+	"\tstream_id\x18\a \x01(\tR\bstreamId\"\x17\n" +
 	"\x15GetBackendModeRequest\")\n" +
 	"\x13GetBackendModeReply\x12\x12\n" +
 	"\x04mode\x18\x01 \x01(\tR\x04mode\"z\n" +
@@ -16615,6 +16635,7 @@ func file_wingout_proto_init() {
 		return
 	}
 	file_wingout_proto_msgTypes[30].OneofWrappers = []any{}
+	file_wingout_proto_msgTypes[43].OneofWrappers = []any{}
 	file_wingout_proto_msgTypes[272].OneofWrappers = []any{}
 	file_wingout_proto_msgTypes[290].OneofWrappers = []any{}
 	file_wingout_proto_msgTypes[294].OneofWrappers = []any{}

@@ -11,9 +11,9 @@
 #include <QJsonObject>
 #include <jni.h>
 
-#define JAVA_WIFI_CLASS "org/xaionaro/wingout2/WiFiHelper"
-#define JAVA_VIBRATOR_CLASS "org/xaionaro/wingout2/VibratorWrapper"
-#define JAVA_SIGNAL_CLASS "org/xaionaro/wingout2/SignalHelper"
+#define JAVA_WIFI_CLASS "center/dx/wingout2/WiFiHelper"
+#define JAVA_VIBRATOR_CLASS "center/dx/wingout2/VibratorWrapper"
+#define JAVA_SIGNAL_CLASS "center/dx/wingout2/SignalHelper"
 
 static QJniObject getAndroidContext()
 {

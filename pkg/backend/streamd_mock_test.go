@@ -179,7 +179,7 @@ func TestMockStreamD_SubscribeToChatMessages_CancelsOnContext(t *testing.T) {
 	m := NewMockStreamD()
 	ctx, cancel := context.WithCancel(context.Background())
 
-	ch, err := m.SubscribeToChatMessages(ctx, 0, 100)
+	ch, err := m.SubscribeToChatMessages(ctx, 0, 100, "")
 	require.NoError(t, err)
 
 	cancel()
@@ -196,7 +196,7 @@ func TestMockStreamD_SubscribeToChatMessages_Custom(t *testing.T) {
 	m := NewMockStreamD()
 	ctx := context.Background()
 
-	m.SubscribeToChatMessagesFunc = func(ctx context.Context, since int64, limit int32) (<-chan ChatMessage, error) {
+	m.SubscribeToChatMessagesFunc = func(ctx context.Context, since int64, limit int32, streamID string) (<-chan ChatMessage, error) {
 		ch := make(chan ChatMessage, 2)
 		ch <- ChatMessage{Platform: "twitch", UserName: "user1", Message: "hello"}
 		ch <- ChatMessage{Platform: "youtube", UserName: "user2", Message: "hi"}
@@ -204,7 +204,7 @@ func TestMockStreamD_SubscribeToChatMessages_Custom(t *testing.T) {
 		return ch, nil
 	}
 
-	ch, err := m.SubscribeToChatMessages(ctx, 0, 100)
+	ch, err := m.SubscribeToChatMessages(ctx, 0, 100, "")
 	require.NoError(t, err)
 
 	msg1 := <-ch

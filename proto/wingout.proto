@@ -513,6 +513,7 @@ message ListProfilesReply {
 message SubscribeToChatMessagesRequest {
   int64 since_unix_nano = 1;
   int32 limit = 2;
+  optional string stream_id = 3;
 }
 message ChatMessageProto {
   string id = 1;
@@ -521,6 +522,7 @@ message ChatMessageProto {
   string message = 4;
   int64 timestamp = 5;
   ChatEventProto event = 6;
+  string stream_id = 7;
 }
 
 // ========================================================================

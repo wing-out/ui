@@ -333,6 +333,7 @@ func (r *RemoteStreamD) PlayerGetLag(ctx context.Context, playerID string) (floa
 func convertStreamDChatMessage(msg *sdgrpc.ChatMessage) ChatMessage {
 	cm := ChatMessage{
 		Platform: msg.GetPlatID(),
+		StreamID: msg.GetStreamID(),
 	}
 	if content := msg.GetContent(); content != nil {
 		cm.EventType = content.GetEventType().String()
@@ -356,8 +357,15 @@ func convertStreamDChatMessage(msg *sdgrpc.ChatMessage) ChatMessage {
 	return cm
 }
 
-func (r *RemoteStreamD) SubscribeToChatMessages(ctx context.Context, since int64, limit int32) (<-chan ChatMessage, error) {
-	stream, err := r.client.SubscribeToChatMessages(ctx, &sdgrpc.SubscribeToChatMessagesRequest{})
+func (r *RemoteStreamD) SubscribeToChatMessages(ctx context.Context, since int64, limit int32, streamID string) (<-chan ChatMessage, error) {
+	req := &sdgrpc.SubscribeToChatMessagesRequest{
+		SinceUNIXNano: uint64(since),
+		Limit:         uint64(limit),
+	}
+	if streamID != "" {
+		req.StreamID = &streamID
+	}
+	stream, err := r.client.SubscribeToChatMessages(ctx, req)
 	if err != nil {
 		return nil, err
 	}

@@ -491,7 +491,7 @@ func TestService_GetBackendMode(t *testing.T) {
 func TestService_SubscribeToChatMessages(t *testing.T) {
 	sd := backend.NewMockStreamD()
 	ts := time.Now().Unix()
-	sd.SubscribeToChatMessagesFunc = func(ctx context.Context, since int64, limit int32) (<-chan backend.ChatMessage, error) {
+	sd.SubscribeToChatMessagesFunc = func(ctx context.Context, since int64, limit int32, streamID string) (<-chan backend.ChatMessage, error) {
 		ch := make(chan backend.ChatMessage, 3)
 		ch <- backend.ChatMessage{ID: "1", Platform: "twitch", UserName: "user1", Message: "hello", Timestamp: ts}
 		ch <- backend.ChatMessage{ID: "2", Platform: "youtube", UserName: "user2", Message: "hi", Timestamp: ts + 60}

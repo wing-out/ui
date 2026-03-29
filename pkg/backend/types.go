@@ -214,6 +214,7 @@ type Profile struct {
 type ChatMessage struct {
 	ID             string
 	Platform       string
+	StreamID       string
 	UserName       string
 	Message        string
 	Timestamp      int64

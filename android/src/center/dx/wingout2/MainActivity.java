@@ -1,4 +1,4 @@
-package org.xaionaro.wingout2;
+package center.dx.wingout2;
 
 import org.qtproject.qt.android.bindings.QtActivity;
 import android.os.PowerManager;

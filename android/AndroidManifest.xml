@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.xaionaro.wingout2"
+    package="center.dx.wingout2"
     android:installLocation="auto"
     android:versionCode="1"
     android:versionName="2.0">
@@ -22,7 +22,7 @@
         android:allowBackup="true"
         android:fullBackupOnly="false">
         <activity
-            android:name="org.xaionaro.wingout2.MainActivity"
+            android:name="center.dx.wingout2.MainActivity"
             android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
             android:launchMode="singleTop"
             android:screenOrientation="unspecified"

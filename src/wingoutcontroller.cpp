@@ -343,7 +343,8 @@ void WingOutController::getStreamStatus(const QString &platformId, const QString
         if (auto resp = reply->read<wingout::GetStreamStatusReply>()) {
             QVariantMap result;
             result[QStringLiteral("isActive")] = resp->isActive();
-            result[QStringLiteral("viewersCount")] = static_cast<qint64>(resp->viewersCount());
+            result[QStringLiteral("viewersCount")] = resp->hasViewersCount()
+                ? static_cast<qint64>(resp->viewersCount()) : -1;
             if (cb.isCallable())
                 cb.call(QJSValueList{qjsEngine(this)->toScriptValue(result)});
         }
@@ -2674,7 +2675,7 @@ QString WingOutController::startEmbeddedDaemon(const QString &streamdAddr, const
     QJniObject jStreamd = QJniObject::fromString(streamdAddr);
     QJniObject jFFStream = QJniObject::fromString(ffstreamAddr);
     QJniObject result = QJniObject::callStaticObjectMethod(
-        "org/xaionaro/wingout2/MainActivity",
+        "center/dx/wingout2/MainActivity",
         "startDaemon",
         "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
         jStreamd.object<jstring>(),
@@ -2698,7 +2699,7 @@ void WingOutController::stopEmbeddedDaemon()
 {
 #ifdef Q_OS_ANDROID
     QJniObject::callStaticMethod<void>(
-        "org/xaionaro/wingout2/MainActivity",
+        "center/dx/wingout2/MainActivity",
         "stopDaemon",
         "()V");
     qDebug() << "Embedded daemon stopped";
@@ -2711,7 +2712,7 @@ bool WingOutController::isEmbeddedDaemonRunning()
 {
 #ifdef Q_OS_ANDROID
     return QJniObject::callStaticMethod<jboolean>(
-        "org/xaionaro/wingout2/MainActivity",
+        "center/dx/wingout2/MainActivity",
         "isDaemonRunning",
         "()Z");
 #else
@@ -2723,7 +2724,7 @@ void WingOutController::setStopDaemonOnClose(bool stop)
 {
 #ifdef Q_OS_ANDROID
     QJniObject::callStaticMethod<void>(
-        "org/xaionaro/wingout2/MainActivity",
+        "center/dx/wingout2/MainActivity",
         "setStopDaemonOnClose",
         "(Z)V",
         static_cast<jboolean>(stop));

@@ -77,7 +77,8 @@ type StreamDBackend interface {
 	PlayerGetLag(ctx context.Context, playerID string) (float64, error)
 
 	// SubscribeToChatMessages returns a channel of chat messages.
-	SubscribeToChatMessages(ctx context.Context, since int64, limit int32) (<-chan ChatMessage, error)
+	// If streamID is non-empty, only messages for that stream are returned.
+	SubscribeToChatMessages(ctx context.Context, since int64, limit int32, streamID string) (<-chan ChatMessage, error)
 
 	// SendChatMessage sends a chat message to a platform.
 	SendChatMessage(ctx context.Context, platform, accountID, message string) error

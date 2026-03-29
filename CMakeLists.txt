@@ -115,11 +115,11 @@ if(ANDROID)
 
     # Point Qt to our custom AndroidManifest.xml and Java sources
     set(QT_ANDROID_EXTRA_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/android/src/org/xaionaro/wingout2/MainActivity.java"
-        "${CMAKE_CURRENT_SOURCE_DIR}/android/src/org/xaionaro/wingout2/WingOutDaemon.java"
-        "${CMAKE_CURRENT_SOURCE_DIR}/android/src/org/xaionaro/wingout2/VibratorWrapper.java"
-        "${CMAKE_CURRENT_SOURCE_DIR}/android/src/org/xaionaro/wingout2/WiFiHelper.java"
-        "${CMAKE_CURRENT_SOURCE_DIR}/android/src/org/xaionaro/wingout2/SignalHelper.java"
+        "${CMAKE_CURRENT_SOURCE_DIR}/android/src/center/dx/wingout2/MainActivity.java"
+        "${CMAKE_CURRENT_SOURCE_DIR}/android/src/center/dx/wingout2/WingOutDaemon.java"
+        "${CMAKE_CURRENT_SOURCE_DIR}/android/src/center/dx/wingout2/VibratorWrapper.java"
+        "${CMAKE_CURRENT_SOURCE_DIR}/android/src/center/dx/wingout2/WiFiHelper.java"
+        "${CMAKE_CURRENT_SOURCE_DIR}/android/src/center/dx/wingout2/SignalHelper.java"
     )
 
     # Link Android-specific libraries for JNI

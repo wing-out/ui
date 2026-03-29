@@ -1,4 +1,4 @@
-package org.xaionaro.wingout2;
+package center.dx.wingout2;
 
 import android.app.Activity;
 import android.content.Context;

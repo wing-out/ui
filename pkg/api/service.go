@@ -404,7 +404,7 @@ func (s *wingOutService) SubscribeToChatMessages(req *SubscribeToChatMessagesReq
 	if err := s.requireStreamD(); err != nil {
 		return err
 	}
-	ch, err := s.getStreamD().SubscribeToChatMessages(stream.Context(), req.GetSinceUnixNano(), req.GetLimit())
+	ch, err := s.getStreamD().SubscribeToChatMessages(stream.Context(), req.GetSinceUnixNano(), req.GetLimit(), req.GetStreamId())
 	if err != nil {
 		return err
 	}
@@ -412,6 +412,7 @@ func (s *wingOutService) SubscribeToChatMessages(req *SubscribeToChatMessagesReq
 		if err := stream.Send(&ChatMessageProto{
 			Id:        msg.ID,
 			Platform:  msg.Platform,
+			StreamId:  msg.StreamID,
 			UserName:  msg.UserName,
 			Message:   msg.Message,
 			Timestamp: msg.Timestamp,

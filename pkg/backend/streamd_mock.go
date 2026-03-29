@@ -33,7 +33,7 @@ type MockStreamD struct {
 	PlayerCloseFunc             func(ctx context.Context, playerID string) error
 	PlayerSetPauseFunc          func(ctx context.Context, playerID string, paused bool) error
 	PlayerGetLagFunc            func(ctx context.Context, playerID string) (float64, error)
-	SubscribeToChatMessagesFunc func(ctx context.Context, since int64, limit int32) (<-chan ChatMessage, error)
+	SubscribeToChatMessagesFunc func(ctx context.Context, since int64, limit int32, streamID string) (<-chan ChatMessage, error)
 	SendChatMessageFunc         func(ctx context.Context, platform, accountID, message string) error
 	ListProfilesFunc            func(ctx context.Context) ([]Profile, error)
 	ApplyProfileFunc            func(ctx context.Context, streamID StreamIDFullyQualified, profileName string) error
@@ -317,10 +317,10 @@ func (m *MockStreamD) PlayerGetLag(ctx context.Context, playerID string) (float6
 	return 0, nil
 }
 
-func (m *MockStreamD) SubscribeToChatMessages(ctx context.Context, since int64, limit int32) (<-chan ChatMessage, error) {
+func (m *MockStreamD) SubscribeToChatMessages(ctx context.Context, since int64, limit int32, streamID string) (<-chan ChatMessage, error) {
 	m.trackCall("SubscribeToChatMessages")
 	if m.SubscribeToChatMessagesFunc != nil {
-		return m.SubscribeToChatMessagesFunc(ctx, since, limit)
+		return m.SubscribeToChatMessagesFunc(ctx, since, limit, streamID)
 	}
 	ch := make(chan ChatMessage)
 	go func() {

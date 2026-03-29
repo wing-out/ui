@@ -18,7 +18,7 @@ const (
 	appStartTimeout  = 30 * time.Second
 	elementTimeout   = 10 * time.Second
 	screenshotDir    = "/tmp/wingout_e2e_screenshots"
-	defaultPackageID = "org.xaionaro.wingout2"
+	defaultPackageID = "center.dx.wingout2"
 )
 
 // sharedEnv is set up once in TestMain and reused across all tests.

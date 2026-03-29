@@ -54,6 +54,9 @@ frontend:
 
 # --- Android APKs ---
 
+# Build type: Release (default) or Debug
+BUILD_TYPE ?= Release
+
 # Internal: configure + build + sign for a given ABI
 # Usage: $(call build_apk,<qt_abi_dir>,<build_dir>,<output_apk>,<wingoutd_target>)
 define build_apk
@@ -63,16 +66,21 @@ define build_apk
 		-DANDROID_SDK_ROOT=$(ANDROID_SDK_ROOT) \
 		-DANDROID_NDK_ROOT=$(ANDROID_NDK_ROOT) \
 		-DANDROID_PLATFORM=$(ANDROID_PLATFORM) \
-		-DCMAKE_BUILD_TYPE=Release
-	@# Fix Gradle lint config: Qt generates deprecated lintOptions, replace with modern lint block
-	@sed -i 's/lintOptions {/lint {\n        checkReleaseBuilds = false/' $(2)/android-build/build.gradle 2>/dev/null || true
+		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
 	@# Build wingoutd for this ABI and place in native libs dir
 	$(MAKE) $(3)
+	@# Clear stale Gradle native lib caches
+	@rm -rf $(2)/android-build/build/intermediates/stripped_native_libs $(2)/android-build/build/intermediates/merged_native_libs
+	@# Build APK via androiddeployqt + Gradle
 	$(MAKE) -C $(2) apk
-	$(BUILD_TOOLS)/zipalign -f 4 $(2)/android-build/wingout2.apk $(2)/wingout2-aligned.apk
-	$(BUILD_TOOLS)/apksigner sign \
-		--ks $(DEBUG_KEYSTORE) --ks-pass pass:android \
-		--out $(4) $(2)/wingout2-aligned.apk
+	@if [ "$(BUILD_TYPE)" = "Debug" ]; then \
+		cp $(2)/android-build/build/outputs/apk/debug/android-build-debug.apk $(4); \
+	else \
+		$(BUILD_TOOLS)/zipalign -f 4 $(2)/android-build/wingout2.apk $(2)/wingout2-aligned.apk; \
+		$(BUILD_TOOLS)/apksigner sign \
+			--ks $(DEBUG_KEYSTORE) --ks-pass pass:android \
+			--out $(4) $(2)/wingout2-aligned.apk; \
+	fi
 	@echo "APK ready: $(4)"
 endef
 
