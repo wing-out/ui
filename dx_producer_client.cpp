@@ -255,11 +255,7 @@ void Client::getStreamStatus(
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   streamd::GetStreamStatusRequest arg{};
-  streamd::StreamIDFullyQualified id;
-  id.setPlatformID(platID);
-  id.setAccountID("default");
-  id.setStreamID("default");
-  arg.setId_proto(id);
+  arg.setPlatID(platID);
   arg.setNoCache(noCache);
   this->GetStreamStatus(arg, callback, errorCallback, options);
 }
@@ -498,11 +494,7 @@ void Client::startStream(
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   streamd::ApplyProfileRequest arg{};
-  streamd::StreamIDFullyQualified id;
-  id.setPlatformID(platID);
-  id.setAccountID("default");
-  id.setStreamID("default");
-  arg.setId_proto(id);
+  arg.setPlatID(platID);
   arg.setProfile(profileName);
   this->ApplyProfile(arg, callback, errorCallback, options);
 }
@@ -512,14 +504,9 @@ void Client::endStream(const QString &platID, const QJSValue &callback,
                        const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  streamd::SetStreamActiveRequest arg{};
-  streamd::StreamIDFullyQualified id;
-  id.setPlatformID(platID);
-  id.setAccountID("default");
-  id.setStreamID("default");
-  arg.setId_proto(id);
-  arg.setIsActive(false);
-  this->SetStreamActive(arg, callback, errorCallback, options);
+  streamd::EndStreamRequest arg{};
+  arg.setPlatID(platID);
+  this->EndStream(arg, callback, errorCallback, options);
 }
 
 void Client::listStreamForwards(

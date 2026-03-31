@@ -379,6 +379,10 @@ target_link_libraries(wingout_qml
 target_link_libraries(wingout
     PRIVATE
     wingout_qml
+    Qt6::CorePrivate
+    Qt6::Gui
+    Qt6::Qml
+    Qt6::Quick
 )
 
 target_precompile_headers(wingout_qml PRIVATE
