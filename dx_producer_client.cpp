@@ -230,7 +230,7 @@ void Client::subscribeToChatMessages(
   auto finishedFunc = [=](const QGrpcStatus &status) mutable {
     if (!this->chatStream)
       return;
-    delete this->chatStream;
+    this->chatStream->deleteLater();
     this->chatStream = nullptr;
     if (status.code() == QtGrpc::StatusCode::Ok) {
       finishCallback.call();
@@ -451,7 +451,7 @@ void Client::subscribeToImage(
   auto finishedFunc = [=](const QGrpcStatus &status) mutable {
     if (!this->imageStream)
       return;
-    delete this->imageStream;
+    this->imageStream->deleteLater();
     this->imageStream = nullptr;
     if (status.code() == QtGrpc::StatusCode::Ok) {
       finishCallback.call();

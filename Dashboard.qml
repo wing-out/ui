@@ -150,31 +150,6 @@ Page {
         return num;
     }
 
-    // Infers FPS from common stream patterns when ffstream returns wrong values
-    function inferFPSFromStream() {
-        var previewUrl = dashboard.root.previewRtmpUrl || "";
-        
-        // DJI Osmo Pocket 3 typically streams at 60fps for both 1080p and 4K
-        // If the URL contains "dji" or "osmo" or "pocket", assume 60fps
-        if (previewUrl.toLowerCase().indexOf("dji") >= 0 || 
-            previewUrl.toLowerCase().indexOf("osmo") >= 0 ||
-            previewUrl.toLowerCase().indexOf("pocket") >= 0) {
-            return 60;
-        }
-        
-        return null;
-    }
-
-    function pickFPS(primary, fallback) {
-        // Accept fps >= 1 since ffstream may report 1 fps for input
-        if (primary !== null && primary >= 1) {
-            return primary;
-        }
-        if (fallback !== null && fallback >= 1) {
-            return fallback;
-        }
-        return null;
-    }
 
     function ping() {
         var now = new Date();
@@ -275,74 +250,15 @@ Page {
     }
 
     function onGetInputQualitySuccess(inputQuality) {
-        // Check for manual FPS override first (highest priority)
-        var manualFPSSetting = dashboard.root.appSettings ? dashboard.root.appSettings.manualInputFPS : "";
-        var manualFPS = normalizeFPS(manualFPSSetting);
-        if (manualFPS !== null && manualFPS > 0) {
-            inputFPSText.inputFPS = manualFPS;
-            return;
-        }
-        
-        // Get FPS from various sources
         var fps = null;
         if (inputQuality && inputQuality.video) {
             fps = normalizeFPS(inputQuality.video.frameRate);
         }
-        
-        // Only use ffstream's value if it's reasonable (> 1)
-        // ffstream bug: returns 1 for DJI streams incorrectly
-        if (fps !== null && fps > 1) {
-            inputFPSText.inputFPS = fps;
-            return;
-        }
-        
-        // Try fallback from FPS fraction (also often returns wrong 1)
-        var fallback = normalizeFPS(inputFPSText.fallbackFPS);
-        if (fallback !== null && fallback > 1) {
-            inputFPSText.inputFPS = fallback;
-            return;
-        }
-        
-        // Try preview metadata
-        var previewFallback = normalizeFPS(imageScreenshot.videoFrameRate);
-        if (previewFallback !== null && previewFallback > 1) {
-            inputFPSText.inputFPS = previewFallback;
-            return;
-        }
-        
-        // Try output FPS
-        var outputFallback = normalizeFPS(outputFPSText.outputFPS);
-        if (outputFallback !== null && outputFallback > 1) {
-            inputFPSText.inputFPS = outputFallback;
-            return;
-        }
-        
-        // Infer from stream patterns (DJI Osmo typically 60fps)
-        var inferredFPS = inferFPSFromStream();
-        if (inferredFPS !== null) {
-            inputFPSText.inputFPS = inferredFPS;
-            return;
-        }
-        
-        // Last resort: use whatever we have (even if 1)
         inputFPSText.inputFPS = fps !== null ? fps : -1;
     }
 
     function onGetInputQualityError(error) {
-        // Check for manual FPS override first
-        var manualFPS = normalizeFPS(dashboard.root.appSettings.manualInputFPS);
-        if (manualFPS !== null && manualFPS > 0) {
-            inputFPSText.inputFPS = manualFPS;
-            return;
-        }
-        var fallback = normalizeFPS(inputFPSText.fallbackFPS);
-        var previewFallback = normalizeFPS(imageScreenshot.videoFrameRate);
-        var outputFallback = normalizeFPS(outputFPSText.outputFPS);
-        var picked = fallback !== null && fallback >= 1 ? fallback : null;
-        if (picked === null) {
-            picked = pickFPS(previewFallback, outputFallback);
-        }
-        inputFPSText.inputFPS = picked !== null ? picked : -1;
+        inputFPSText.inputFPS = -1;
         dashboard.root.processFFStreamGRPCError(dashboard.root.ffstreamClient, error);
     }
 
@@ -355,21 +271,20 @@ Page {
 
     function onGetFPSFractionSuccess(reply) {
         if (!reply) {
-            inputFPSText.fallbackFPS = -1;
             return;
         }
         var num = normalizeNumber(reply.num);
         var den = normalizeNumber(reply.den);
         if (num === null || den === null || den <= 0) {
-            inputFPSText.fallbackFPS = -1;
             return;
         }
         var fps = num / den;
-        inputFPSText.fallbackFPS = isFinite(fps) && fps > 0 ? fps : -1;
+        if (isFinite(fps) && fps > 0 && inputFPSText.inputFPS < 0) {
+            inputFPSText.inputFPS = fps;
+        }
     }
 
     function onGetFPSFractionError(error) {
-        inputFPSText.fallbackFPS = -1;
         dashboard.root.processFFStreamGRPCError(dashboard.root.ffstreamClient, error);
     }
 
@@ -1409,7 +1324,6 @@ Page {
                 font.bold: true
                 horizontalAlignment: Text.AlignLeft
                 property real inputFPS: -1
-                property real fallbackFPS: -1
                 text: "in-FPS: " + (inputFPS < 0 ? "N/A" : Math.round(inputFPS * 10) / 10)
                 color: dashboard.fpsColor(inputFPS, 15, 21, 24)
             }
@@ -1421,7 +1335,7 @@ Page {
                 font.pixelSize: 20
                 font.bold: true
                 horizontalAlignment: Text.AlignRight
-                property int outputFPS: 0
+                property int outputFPS: -1
                 text: "out-FPS: " + (outputFPS < 0 ? "N/A" : outputFPS)
                 color: dashboard.fpsColor(outputFPS, 5, 10, 29)
             }
@@ -1432,7 +1346,7 @@ Page {
                 width: 90
                 font.pixelSize: 20
                 font.bold: true
-                property int videoBitrate: 0
+                property int videoBitrate: -1
                 text: "enc: " + (videoBitrate < 0 ? "N/A" : dashboard.formatBandwidth(videoBitrate))
                 color: dashboard.bwColor(videoBitrate, 50000, 1000000, 5000000)
                 onVideoBitrateChanged: {

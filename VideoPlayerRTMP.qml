@@ -165,7 +165,7 @@ Rectangle {
         id: steadyStatusLogTimer
         interval: 1500
         repeat: true
-        running: true
+        running: mediaPlayer.playing || mediaPlayer.mediaStatus !== MediaPlayer.NoMedia
         onTriggered: {
             console.log(
                 "MediaPlayer steady tick:",

@@ -1,4 +1,5 @@
 /* This file implements Timers used for retries and periodic tasks. */
+pragma ComponentBehavior: Bound
 import QtQuick
 
 Item {

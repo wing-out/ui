@@ -21,7 +21,6 @@ TestCase {
         property string previewRTMPPort: ""
         property string previewRTMPStreamID: ""
         property string ffstreamHost: ""
-        property string manualInputFPS: ""
     }
 
     function cleanup() {
@@ -30,7 +29,6 @@ TestCase {
         testSettings.previewRTMPPort = ""
         testSettings.previewRTMPStreamID = ""
         testSettings.ffstreamHost = ""
-        testSettings.manualInputFPS = ""
     }
 
     function test_01_defaults_applied_programmatically() {

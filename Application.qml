@@ -36,11 +36,9 @@ ApplicationWindow {
         property string previewRTMPPort: ""
         property string previewRTMPStreamID: ""
         property string ffstreamHost: ""
-        property string manualInputFPS: ""  // Manual override for input FPS
     }
 
-    readonly property bool hasPreviewConfig: appSettings.previewRTMPUrl !== "" || appSettings.previewRTMPPort !== "" || appSettings.previewRTMPStreamID !== ""
-    readonly property bool setupRequired: !appSettings.dxProducerHost || !hasPreviewConfig
+    readonly property bool setupRequired: !appSettings.dxProducerHost
 
     Loader {
         id: setupLoader
@@ -63,7 +61,6 @@ ApplicationWindow {
         active: !application.setupRequired
         sourceComponent: Component {
             Main {
-                dxProducerHost: appSettings.dxProducerHost
                 platformInstance: platformInstance
                 appSettings: appSettings
             }

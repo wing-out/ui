@@ -20,7 +20,6 @@ TestCase {
         property string previewRTMPPort: "1945"
         property string previewRTMPStreamID: "test/stream/"
         property string ffstreamHost: ""
-        property string manualInputFPS: ""
     }
 
     Component.onCompleted: {

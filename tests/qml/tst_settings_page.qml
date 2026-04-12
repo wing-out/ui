@@ -19,7 +19,6 @@ TestCase {
         property string previewRTMPPort: "1945"
         property string previewRTMPStreamID: "test/stream/"
         property string ffstreamHost: "https://localhost:3593"
-        property string manualInputFPS: ""
     }
 
     Component.onCompleted: {
