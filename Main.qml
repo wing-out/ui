@@ -159,7 +159,7 @@ Pane {
         id: ffstreamClient
         channel: ffstreamChannel.channel
         Component.onCompleted: {
-            console.log("ffstreamClient connected to http://localhost:3593");
+            console.log("ffstreamClient connected to", main.normalizedFFStreamHost);
         }
     }
 

@@ -541,8 +541,8 @@ void Client::listProfiles(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  streamd::ListStreamProfilesRequest arg{};
-  this->ListStreamProfiles(arg, callback, errorCallback, options);
+  streamd::ListProfilesRequest arg{};
+  this->ListProfiles(arg, callback, errorCallback, options);
 }
 
 void Client::listStreamSources(
@@ -550,9 +550,8 @@ void Client::listStreamSources(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  // The proto provides ListStreamServers instead of ListStreamSources.
-  streamd::ListStreamServersRequest arg{};
-  this->ListStreamServers(arg, callback, errorCallback, options);
+  streamd::ListStreamSourcesRequest arg{};
+  this->ListStreamSources(arg, callback, errorCallback, options);
 }
 
 } // namespace DXProducer
