@@ -5,6 +5,8 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 import QtCore
 
+import QtGrpc
+
 import streamd 1.0 as StreamD
 import ffstream_grpc 1.0 as FFStream
 
@@ -53,22 +55,30 @@ Pane {
         id: globalChatMessagesModel
     }
 
-    property var grpcCallOptions: ({ deadlineTimeout: 10000 })
-    property var streamingGrpcCallOptions: ({ deadlineTimeout: 365 * 24 * 3600 * 1000 })
-
-    QtObject {
-        id: ffstreamTarget
-        property string hostUri: "http://localhost:3593"
-        property var channel: undefined
-        property var options: ({
-                deadlineTimeout: 365 * 24 * 3600 * 1000
-            })
+    // Use proper QML GrpcCallOptions objects instead of plain JS
+    // objects: Qt 6.9 gRPC methods expect QQmlGrpcCallOptions* and
+    // cannot convert from a V4ReferenceObject (JS {}).
+    GrpcCallOptions {
+        id: grpcCallOptions
+        deadlineTimeout: 10000
     }
+    GrpcCallOptions {
+        id: streamingGrpcCallOptions
+        deadlineTimeout: 365 * 24 * 3600 * 1000
+    }
+
+    // Create a real gRPC HTTP/2 channel for the ffstream connection.
+    // Same pattern as the streamd channel (dxProducerChannel).
+    GrpcHttp2Channel {
+        id: ffstreamChannel
+        hostUri: "http://localhost:3593"
+    }
+
     FFStream.Client {
         id: ffstreamClient
+        channel: ffstreamChannel.channel
         Component.onCompleted: {
-            if (ffstreamTarget && typeof ffstreamTarget.channel !== 'undefined')
-                ffstreamClient.channel = ffstreamTarget.channel;
+            console.log("ffstreamClient connected to http://localhost:3593");
         }
     }
 
@@ -83,6 +93,44 @@ Pane {
         console.log("FFStream gRPC error:", JSON.stringify(error));
         if (ffstream.processGRPCError !== undefined) {
             ffstream.processGRPCError(error);
+        }
+    }
+
+    // fireMultiPlatformRPC fires an RPC across all platforms with shared
+    // success/error counting and status reporting.
+    //   label: display name (e.g. "Shoutout", "Raid", "Title")
+    //   rpcCall: function(platID, onSuccess, onError) that initiates the RPC
+    //   setStatus: function(text) to update status text
+    //   setStatusColor: function(colorStr) to update status color
+    function fireMultiPlatformRPC(label, rpcCall, setStatus, setStatusColor) {
+        var platforms = ["twitch", "youtube", "kick"];
+        setStatus("Sending " + label.toLowerCase() + "...");
+        setStatusColor("#FFFF00");
+        var successCount = 0;
+        var errorCount = 0;
+        var total = platforms.length;
+        for (var i = 0; i < platforms.length; i++) {
+            (function(platID) {
+                rpcCall(platID,
+                    function() {
+                        successCount++;
+                        if (successCount + errorCount === total) {
+                            setStatus(label + " sent (" + successCount + "/" + total + " ok)");
+                            setStatusColor(errorCount === 0 ? "#00FF00" : "#FFFF00");
+                        }
+                    },
+                    function(error) {
+                        errorCount++;
+                        console.warn(label + " failed for", platID, error);
+                        if (successCount + errorCount === total) {
+                            setStatus(successCount > 0
+                                ? label + " partial (" + successCount + "/" + total + ")"
+                                : label + " failed");
+                            setStatusColor(successCount > 0 ? "#FFFF00" : "#FF0000");
+                        }
+                        processStreamDGRPCError(dxProducerClient, error);
+                    });
+            })(platforms[i]);
         }
     }
 
@@ -160,22 +208,19 @@ Pane {
             platform.refreshWiFiState();
     }
 
-    // Stubbed dxProducer channel.
-    QtObject {
-        id: dxProducerTarget
-        property string hostUri: main.dxProducerHost
-        property var channel: undefined
-        property var options: ({
-                deadlineTimeout: 365 * 24 * 3600 * 1000
-            })
+    // Create a real gRPC HTTP/2 channel for the streamd connection.
+    // DXProducer::Client._onChannelChanged() extracts the hostUri,
+    // disables SSL peer verification, and re-creates the channel.
+    GrpcHttp2Channel {
+        id: dxProducerChannel
+        hostUri: main.dxProducerHost
     }
 
     StreamD.Client {
         id: dxProducerClient
+        channel: dxProducerChannel.channel
         Component.onCompleted: {
-            if (dxProducerTarget && typeof dxProducerTarget["channel"] !== 'undefined')
-                dxProducerClient["channel"] = dxProducerTarget["channel"];
-            console.log("dxProducerClient connected to", dxProducerTarget.hostUri);
+            console.log("dxProducerClient connected to", main.dxProducerHost);
         }
     }
 

@@ -11,6 +11,14 @@ Page {
     title: qsTr("Profiles")
     padding: 0
 
+    QtObject {
+        id: llmState
+        property bool generating: false
+        property string generatedTitle: ""
+        property string statusText: ""
+        property color statusColor: "#808080"
+    }
+
     Component.onCompleted: {
         refreshProfiles();
     }
@@ -95,7 +103,101 @@ Page {
                         Layout.fillWidth: true
                         spacing: 4
                         Label { text: "Title"; opacity: 0.6; font.pixelSize: 12 }
-                        TextField { id: profileTitleField; placeholderText: "Stream title"; Layout.fillWidth: true }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            TextField { id: profileTitleField; placeholderText: "Stream title"; Layout.fillWidth: true }
+                            Button {
+                                id: generateTitleBtn
+                                text: "AI"
+                                font.pixelSize: 12
+                                enabled: !llmState.generating
+                                ToolTip.visible: hovered
+                                ToolTip.text: "Generate title with LLM"
+                                onClicked: {
+                                    llmState.generating = true;
+                                    llmState.statusText = "Generating...";
+                                    llmState.statusColor = "#FFFF00";
+                                    dxProducerClient.llmGenerate(
+                                        "Generate a catchy stream title for an IRL stream. Reply with just the title, nothing else.",
+                                        function(reply) {
+                                            llmState.generating = false;
+                                            var generated = reply.response || "";
+                                            if (generated.length > 0) {
+                                                llmState.generatedTitle = generated;
+                                                llmState.statusText = "Generated! Tap Apply to use.";
+                                                llmState.statusColor = "#00FF00";
+                                            } else {
+                                                llmState.statusText = "Empty response";
+                                                llmState.statusColor = "#FF0000";
+                                            }
+                                        },
+                                        function(error) {
+                                            llmState.generating = false;
+                                            llmState.statusText = "Generation failed";
+                                            llmState.statusColor = "#FF0000";
+                                            console.warn("LLM generate failed:", error);
+                                            processStreamDGRPCError(dxProducerClient, error);
+                                        },
+                                        grpcCallOptions);
+                                }
+                            }
+                        }
+
+                        // LLM generation result area
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+                            visible: llmState.generatedTitle.length > 0 || llmState.statusText.length > 0
+
+                            Label {
+                                text: llmState.statusText
+                                color: llmState.statusColor
+                                font.pixelSize: 11
+                                visible: llmState.statusText.length > 0
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                visible: llmState.generatedTitle.length > 0
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: llmState.generatedTitle
+                                    wrapMode: Text.Wrap
+                                    font.pixelSize: 13
+                                    font.italic: true
+                                    color: "#AAAAFF"
+                                }
+
+                                Button {
+                                    text: "Apply"
+                                    font.pixelSize: 11
+                                    onClicked: {
+                                        profileTitleField.text = llmState.generatedTitle;
+                                        llmState.generatedTitle = "";
+                                        llmState.statusText = "";
+                                    }
+                                }
+
+                                Button {
+                                    text: "Set All"
+                                    font.pixelSize: 11
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: "Apply title to all platforms"
+                                    onClicked: {
+                                        var title = llmState.generatedTitle;
+                                        profileTitleField.text = title;
+                                        llmState.generatedTitle = "";
+                                        fireMultiPlatformRPC("Title",
+                                            function(platID, onOk, onErr) { dxProducerClient.setTitle(platID, title, onOk, onErr, grpcCallOptions); },
+                                            function(t) { llmState.statusText = t; },
+                                            function(c) { llmState.statusColor = c; });
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     ColumnLayout {

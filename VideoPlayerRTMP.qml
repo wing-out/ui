@@ -36,26 +36,39 @@ Rectangle {
         playbackRate: audioOutput.muted ? 10.0 : 1.0
         playbackOptions.playbackIntent: PlaybackOptions.LowLatencyStreaming
         playbackOptions.probeSize: -1
+        // networkTimeoutMs must be 0: Qt passes it as "timeout" to FFmpeg,
+        // which collides with RTMP's "timeout" option (= listen_timeout).
+        // Any positive value triggers RTMP server/listen mode, causing
+        // bind(remote_addr) → EADDRNOTAVAIL on Android.
         playbackOptions.networkTimeoutMs: 0
 
         property var lastProgressAt: Date.now()
         property var lastRestartAt: 0
         property var started: false
+        // Guard flag: true while onSourceChanged is executing, prevents
+        // the retry timer from interfering with the source transition.
+        property bool sourceTransitioning: false
+        // Exponential backoff: current retry delay in ms (3000 → 5000 max).
+        // Must be ≥ 3000 to allow RTMP handshake + stream probe to complete.
+        property int retryBackoffMs: 3000
 
         videoOutput: videoOutput
         audioOutput: audioOutput
 
         onSourceChanged: function (newSource) {
-            //console.log("onSourceChanged: ", newSource);
+            console.log("onSourceChanged: ", newSource);
+            mediaPlayer.sourceTransitioning = true;
             mediaPlayer.stop();
             mediaPlayer.setSource(newSource);
             mediaPlayer.play();
+            mediaPlayer.retryBackoffMs = 3000;
+            mediaPlayer.sourceTransitioning = false;
         }
         onErrorOccurred: function (code, msg) {
-        //console.log("onErrorOccurred:", code, " ", msg);
+            console.log("onErrorOccurred:", code, " ", msg);
         }
         onMediaStatusChanged: {
-            //console.log("onMediaStatusChanged: ", mediaPlayer.mediaStatus);
+            console.log("onMediaStatusChanged: ", mediaPlayer.mediaStatus);
         }
         onPlaybackStateChanged: {
             console.log("onPlaybackStateChanged: ", mediaPlayer.playbackState);
@@ -70,6 +83,8 @@ Rectangle {
             //console.log("onPositionChanged: ", mediaPlayer.position);
             mediaPlayer.lastProgressAt = Date.now();
             mediaPlayer.started = true;
+            // Reset backoff on successful playback progress.
+            mediaPlayer.retryBackoffMs = 3000;
         }
         onDurationChanged: function () {
             console.log("onDurationChanged: ", mediaPlayer.duration);
@@ -121,21 +136,33 @@ Rectangle {
         triggeredOnStart: true
         onTriggered: {
             var now = Date.now();
-            //console.log("RetryTimer check: playbackState=", mediaPlayer.playbackState, " mediaStatus=", mediaPlayer.mediaStatus, " lastProgressAt=", mediaPlayer.lastProgressAt, " now=", now);
+            // Skip if a source transition is in progress.
+            if (mediaPlayer.sourceTransitioning) {
+                return;
+            }
+            // Skip if currently making progress (playing and receiving data).
             if ((mediaPlayer.playbackState === MediaPlayer.PlayingState || mediaPlayer.mediaStatus === MediaPlayer.LoadingMedia) && (now - mediaPlayer.lastProgressAt < 1000)) {
                 return;
             }
-            if ((!mediaPlayer.started) && (now - mediaPlayer.lastRestartAt < 10000)) {
+            // Exponential backoff: wait retryBackoffMs before retrying
+            // after a failed attempt (replaces fixed 10-second dead zone).
+            if (now - mediaPlayer.lastRestartAt < mediaPlayer.retryBackoffMs) {
                 return;
             }
-            //console.log("RetryTimer triggered: playbackState=", mediaPlayer.playbackState, " mediaStatus=", mediaPlayer.mediaStatus, " lastProgressAt=", mediaPlayer.lastProgressAt, " now=", now);
+            var source = mediaPlayer.source;
+            // Skip if source is empty — retrying with no URL creates a
+            // permanent empty-source loop.
+            if (!source || source === "") {
+                return;
+            }
+            console.log("RetryTimer triggered (backoff=", mediaPlayer.retryBackoffMs, "ms): playbackState=", mediaPlayer.playbackState, " source=", source);
             mediaPlayer.lastProgressAt = now;
             mediaPlayer.lastRestartAt = now;
+            // Increase backoff for next attempt: 500 → 1000 → 2000 → 5000 max.
+            mediaPlayer.retryBackoffMs = Math.min(mediaPlayer.retryBackoffMs * 2, 5000);
             mediaPlayer.stop();
-            var source = mediaPlayer.source;
             mediaPlayer.setSource("");
             mediaPlayer.setSource(source);
-            //console.log("Retrying stream: ", source);
             mediaPlayer.play();
         }
     }

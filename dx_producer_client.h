@@ -92,6 +92,35 @@ public:
       const QString &key, const QJSValue &messageCallback,
       const QJSValue &finishCallback, const QJSValue &errorCallback,
       const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void
+  banUser(const QString &platID, const QString &userID, const QString &reason,
+          const qint64 deadlineUnixMs, const QJSValue &callback,
+          const QJSValue &errorCallback,
+          const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void removeChatMessage(
+      const QString &platID, const QString &messageID,
+      const QJSValue &callback, const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void getBackendInfo(
+      const QString &platID, const QJSValue &callback,
+      const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void
+  shoutout(const QString &platID, const QString &userID,
+           const QJSValue &callback, const QJSValue &errorCallback,
+           const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void
+  raidTo(const QString &platID, const QString &userID,
+         const QJSValue &callback, const QJSValue &errorCallback,
+         const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void
+  llmGenerate(const QString &prompt, const QJSValue &callback,
+              const QJSValue &errorCallback,
+              const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void
+  setTitle(const QString &platID, const QString &title,
+           const QJSValue &callback, const QJSValue &errorCallback,
+           const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
   Q_INVOKABLE void setIgnoreImages(const bool value);
   Q_INVOKABLE void processGRPCError(const QVariant &error);
 signals:

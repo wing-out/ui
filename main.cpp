@@ -28,6 +28,9 @@ static void filteredQtHandler(QtMsgType type, const QMessageLogContext &ctx,
 int app(int argc, char *argv[]) {
   qDebug() << "Main: Starting app";
   QGuiApplication app(argc, argv);
+  app.setOrganizationName("WingOut");
+  app.setOrganizationDomain("wingout.app");
+  app.setApplicationName("WingOut");
   // g_prevHandler = qInstallMessageHandler(filteredQtHandler);
 
 #ifdef Q_OS_ANDROID

@@ -350,6 +350,7 @@ target_link_libraries(wingout
     AVPipeline.LibAV
     AVPipeline
     FFStream
+    WingOutDiagnostics
     Platform
     StreamingSettingsController
     RemoteCameraController

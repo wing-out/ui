@@ -9,8 +9,11 @@ Window {
     title: qsTr("Setup StreamD host")
     modality: Qt.ApplicationModal
     flags: Qt.Dialog
-    width: 540
-    height: 180
+    // Constrain to screen size: at 420 DPI the screen is only
+    // ~411dp wide, so a fixed 540dp Window overflows and pushes
+    // buttons off the right edge.
+    width: Screen.width > 0 ? Math.min(540, Screen.width) : 540
+    height: Screen.height > 0 ? Math.min(180, Screen.height) : 180
     visible: true
 
     signal finished()
@@ -38,7 +41,6 @@ Window {
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignRight
             spacing: 8
 
             Item { Layout.fillWidth: true }
@@ -54,6 +56,11 @@ Window {
                 text: qsTr("Save")
                 highlighted: true
                 onClicked: {
+                    // Force the IME to commit any composing text
+                    // (e.g., from adb shell input text) before reading
+                    // the property, otherwise TextField.text may be
+                    // empty while the field visually shows the URL.
+                    Qt.inputMethod.commit();
                     var val = setupHostField.text.trim();
                     if (val.length === 0) {
                         return;

@@ -120,7 +120,7 @@ Page {
                     Layout.fillWidth: true
                     onClicked: {
                         // Keep {} for SubmitOAuthCode because it's NOT overridden in dx_producer_client.cpp
-                        dxProducerClient.submitOAuthCode({
+                        dxProducerClient.SubmitOAuthCode({
                             code: oauthCodeField.text
                         }, function () {
                             oauthCodeField.text = "";
@@ -151,19 +151,8 @@ Page {
                     text: "Reset Cache"
                     Layout.fillWidth: true
                     // Keep {} for ResetCache because it's NOT overridden
-                    onClicked: dxProducerClient.resetCache({}, function () {
+                    onClicked: dxProducerClient.ResetCache({}, function () {
                         console.log("Cache reset");
-                    }, function (e) {
-                        processStreamDGRPCError(dxProducerClient, e);
-                    }, grpcCallOptions)
-                }
-
-                Button {
-                    text: "Trigger Rules"
-                    Layout.fillWidth: true
-                    // Keep {} for TriggerRules assuming it's NOT overridden
-                    onClicked: dxProducerClient.triggerRules({}, function () {
-                        console.log("Rules triggered");
                     }, function (e) {
                         processStreamDGRPCError(dxProducerClient, e);
                     }, grpcCallOptions)

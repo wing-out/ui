@@ -11,6 +11,30 @@ Item {
     property ListModel model: chatMessagesModel
     property alias list: messagesList
     property alias atYEnd: messagesList.atYEnd
+    property bool soundEnabled: true
+    property var platformCapabilities: ({})
+    property int selectedIndex: -1
+
+    signal requestBanUser(string platID, string userID, string reason, var deadlineUnixMs)
+    signal requestRemoveChatMessage(string platID, string messageID)
+
+    function canBanUser(platformName) {
+        var caps = platformCapabilities[platformName];
+        if (!caps) return false;
+        for (var i = 0; i < caps.length; i++) {
+            if (caps[i] === 3) return true; // Capability.BanUser = 3
+        }
+        return false;
+    }
+
+    function canDeleteMessage(platformName) {
+        var caps = platformCapabilities[platformName];
+        if (!caps) return false;
+        for (var i = 0; i < caps.length; i++) {
+            if (caps[i] === 2) return true; // Capability.DeleteChatMessage = 2
+        }
+        return false;
+    }
 
     ListModel {
         id: chatMessagesModel
@@ -23,6 +47,10 @@ Item {
             message: "message 1"
             messageFormatType: 0
             isTest: true
+            eventID: ""
+            userID: ""
+            moneyAmount: 0
+            moneyCurrency: 0
         }
     }
 
@@ -126,9 +154,9 @@ Item {
         }
 
         Connections {
-            target: chatMessagesModel
+            target: chatView.model
             function onRowsInserted(parent, first, last) {
-                var msg = chatMessagesModel.get(last);
+                var msg = chatView.model.get(last);
                 if (!msg.isLive) {
                     return;
                 }
@@ -155,7 +183,7 @@ Item {
                         text = "from " + username + ": " + text;
                     }
                     tts.enqueue(text);
-                } else {
+                } else if (soundEnabled) {
                     soundAddChatMessage.play();
                 }
             }
@@ -212,8 +240,9 @@ Item {
         }
 
         model: chatView.model
-        delegate: Row {
-            id: row
+        delegate: Item {
+            id: messageItem
+            required property int index
             required property string timestamp
             required property string platformName
             required property int eventType
@@ -222,19 +251,87 @@ Item {
             required property string message
             required property int messageFormatType
             required property bool isTest
-            spacing: ListView.view.spacing
+            required property string eventID
+            required property string userID
+            required property double moneyAmount
+            required property int moneyCurrency
+            width: messagesList.width
+            height: messageColumn.height
             visible: !isTest || chatView.parent == null
-            Text {
-                color: "#ffffff"
-                textFormat: Text.RichText
-                text: "\u200E" + "<font color='" + row.platformNameToColor(row.platformName) + "'>" + row.timestamp + "</font> " + row.formatEventType(row.eventType) + " <font color='" + row.usernameToColor(row.username) + "'>" + row.formatUsername() + "</font> " + row.formatMessage(row.message, row.messageFormatType)
-                wrapMode: Text.WordWrap
-                font.family: fontFreeSans.name
-                font.letterSpacing: 1
-                font.pointSize: 20
-                font.bold: true
-                lineHeight: 1.2
-                width: messagesList.width
+
+            Column {
+                id: messageColumn
+                width: parent.width
+
+                Text {
+                    color: "#ffffff"
+                    textFormat: Text.RichText
+                    text: "\u200E" + "<font color='" + messageItem.platformNameToColor(messageItem.platformName) + "'>" + messageItem.timestamp + "</font> " + messageItem.formatEventType(messageItem.eventType) + messageItem.formatMoney() + " <font color='" + messageItem.usernameToColor(messageItem.username) + "'>" + messageItem.formatUsername() + "</font> " + messageItem.formatMessage(messageItem.message, messageItem.messageFormatType)
+                    wrapMode: Text.WordWrap
+                    font.family: fontFreeSans.name
+                    font.letterSpacing: 1
+                    font.pointSize: 20
+                    font.bold: true
+                    lineHeight: 1.2
+                    width: messagesList.width
+                }
+
+                Row {
+                    id: moderationRow
+                    visible: chatView.selectedIndex === messageItem.index
+                    spacing: 8
+                    topPadding: 4
+                    bottomPadding: 4
+
+                    Button {
+                        text: "Delete"
+                        enabled: chatView.canDeleteMessage(messageItem.platformName)
+                        height: 40
+                        font.pixelSize: 14
+                        onClicked: {
+                            chatView.requestRemoveChatMessage(messageItem.platformName, messageItem.eventID);
+                            chatView.selectedIndex = -1;
+                        }
+                    }
+                    Button {
+                        text: "Ban"
+                        enabled: chatView.canBanUser(messageItem.platformName)
+                        height: 40
+                        font.pixelSize: 14
+                        Material.background: Material.Red
+                        onClicked: {
+                            chatView.requestBanUser(messageItem.platformName, messageItem.userID, "", 0);
+                            chatView.selectedIndex = -1;
+                        }
+                    }
+                    Button {
+                        text: "Timeout 10m"
+                        enabled: chatView.canBanUser(messageItem.platformName)
+                        height: 40
+                        font.pixelSize: 14
+                        onClicked: {
+                            var deadline = Date.now() + 600000; // 10 minutes in ms
+                            chatView.requestBanUser(messageItem.platformName, messageItem.userID, "", deadline);
+                            chatView.selectedIndex = -1;
+                        }
+                    }
+                    Button {
+                        text: "X"
+                        height: 40
+                        font.pixelSize: 14
+                        onClicked: chatView.selectedIndex = -1
+                    }
+                }
+            }
+
+            MouseArea {
+                anchors.fill: messageColumn
+                z: moderationRow.visible ? -1 : 0
+                onPressAndHold: chatView.selectedIndex = messageItem.index
+                onClicked: {
+                    if (chatView.selectedIndex >= 0)
+                        chatView.selectedIndex = -1;
+                }
             }
 
             function platformNameToColor(platformName): string {
@@ -305,10 +402,10 @@ Item {
                 if (!simpleNicknamesEnabled.checked) {
                     return username;
                 }
-                if (!row.usernameReadable) {
+                if (!messageItem.usernameReadable) {
                     return username;
                 }
-                return row.usernameReadable;
+                return messageItem.usernameReadable;
             }
 
             function formatEventType(eventType) {
@@ -343,6 +440,10 @@ Item {
                     return "<font color='#ffff00'>ban</font>";
                 case 1025:
                     return "<font color='#ffff00'>hold</font>";
+                case 1280:
+                    return "<font color='#00ffff'>redeem</font>";
+                case 1536:
+                    return "<font color='#00ff88'>said hi</font>";
                 case 65535:
                     return "<font color='#ffffff'>other</font>";
                 }
@@ -362,6 +463,32 @@ Item {
                     console.warn("Unknown messageFormatType: " + messageFormatType);
                     return escapeHtml(message);
                 }
+            }
+
+            function currencySymbol(currency) {
+                switch (currency) {
+                case 1: return "$";        // USD
+                case 2: return "\u20AC";   // EUR
+                case 3: return "\u00A3";   // GBP
+                case 4: return "\u00A5";   // JPY
+                case 1024: return " bits"; // Twitch Bits (suffix)
+                default: return "";
+                }
+            }
+
+            function formatMoney() {
+                if (moneyAmount <= 0) {
+                    return "";
+                }
+                var sym = currencySymbol(moneyCurrency);
+                var isSuffix = (moneyCurrency === 1024); // Twitch Bits
+                var amountStr = (moneyCurrency === 4)
+                    ? Math.round(moneyAmount).toString()
+                    : moneyAmount.toFixed(2);
+                var moneyText = isSuffix
+                    ? amountStr + sym
+                    : sym + amountStr;
+                return " <font color='#FFD700'>[" + moneyText + "]</font>";
             }
         }
     }

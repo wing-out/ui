@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Shapes
+import QtCore as Core
 import wingout_diagnostics as Diagnostics
 
 Page {
@@ -12,16 +13,30 @@ Page {
     title: qsTr("Dashboard")
 
     property var latestChatMessageTimestampUNIXNano: null
-    property var latestTimestampChatMessageIDs: []
     property var pingCurrentID: 0
     property var pingTimestamps: ({})
     property var pingInProgress: false
     readonly property bool isLandscape: width > height
     property var lastDiagnostics: ({})
     property int diagnosticsUpdateCount: 0
+    property var platformCapabilities: ({})
+
+    // Uses "dashboard" category so this Settings writes to
+    // [dashboard] section, not [General]. Application.qml has
+    // its own Settings for dxProducerHost under [General] — two
+    // Settings in the same section cause the last sync to
+    // overwrite the other's keys.
+    // Use qualified import to avoid shadowing by local Settings.qml
+    // (which is a Page component for the config editor, not QSettings).
+    Core.Settings {
+        id: appSettings
+        category: "dashboard"
+        property bool soundEnabled: true
+    }
 
     Component.onCompleted: {
         subscribeToChatMessages();
+        fetchPlatformCapabilities();
         pingTimestamps = {};
         ping();
         timers.pingTicker.callback = ping;
@@ -244,34 +259,34 @@ Page {
 
     function onChatNewMessage(chatMessage): void {
         console.log("Dashboard.qml: Received new chat message");
-        if (latestChatMessageTimestampUNIXNano != null && latestChatMessageTimestampUNIXNano == chatMessage.content.createdAtUNIXNano) {
-            var alreadyDisplayed = false;
-            latestTimestampChatMessageIDs.foreach(function (item) {
-                if (chatMessage) {
-                    alreadyDisplayed = true;
-                }
-            });
-            if (alreadyDisplayed) {
-                console.log("message ", chatMessage.content.ID, " is already displayed");
+        var eventID = chatMessage.content.id_proto;
+
+        // Dedup: check if eventID already exists in model
+        for (var i = 0; i < chatView.model.count; i++) {
+            if (chatView.model.get(i).eventID === eventID) {
+                console.log("message ", eventID, " is already displayed");
                 return;
             }
-        } else {
-            latestTimestampChatMessageIDs.length = 0;
         }
-        latestChatMessageTimestampUNIXNano = chatMessage.content.createdAtUNIXNano;
-        latestTimestampChatMessageIDs.push(chatMessage.content.ID);
 
+        // Message is optional in the proto — events like subscriptions,
+        // bans, raids, and "said hi" notifications have no message body.
+        var hasMessage = chatMessage.content.message !== null
+            && typeof chatMessage.content.message !== "undefined";
         var messageFormatType = 0;
-        if (typeof chatMessage.content.message.formatType === "undefined" || chatMessage.content.message.formatType === null) {
-            console.warn("message.formatType is undefined");
-        } else {
-            messageFormatType = chatMessage.content.message.formatType;
+        var messageContent = "";
+        if (hasMessage) {
+            if (typeof chatMessage.content.message.formatType !== "undefined"
+                    && chatMessage.content.message.formatType !== null) {
+                messageFormatType = chatMessage.content.message.formatType;
+            }
+            messageContent = chatMessage.content.message.content || "";
         }
-        var usernameReadable = chatMessage.content.user.name;
-        if (typeof chatMessage.content.user.nameReadable === "undefined" || chatMessage.content.user.nameReadable === null) {
-            console.warn("user.nameReadable is undefined");
-        } else {
-            usernameReadable = chatMessage.content.user.nameReadable;
+        var moneyAmount = 0;
+        var moneyCurrency = 0;
+        if (chatMessage.content.hasMoney) {
+            moneyAmount = chatMessage.content.money.amount;
+            moneyCurrency = chatMessage.content.money.currency;
         }
         var item = {
             timestamp: String((new Date(Math.floor(chatMessage.content.createdAtUNIXNano / 1000000))).getMinutes()).padStart(2, "0"),
@@ -280,9 +295,15 @@ Page {
             platformName: chatMessage.platID,
             username: chatMessage.content.user.name,
             usernameReadable: chatMessage.content.user.nameReadable,
-            message: chatMessage.content.message.content,
-            messageFormatType: messageFormatType
+            message: messageContent,
+            messageFormatType: messageFormatType,
+            isTest: false,
+            eventID: eventID,
+            userID: chatMessage.content.user.id_proto,
+            moneyAmount: moneyAmount,
+            moneyCurrency: moneyCurrency
         };
+        latestChatMessageTimestampUNIXNano = chatMessage.content.createdAtUNIXNano;
         if (chatView.model.count > 200) {
             chatView.model.remove(0);
         }
@@ -297,6 +318,22 @@ Page {
         console.log("Errored", error);
         processStreamDGRPCError(dxProducerClient, error);
         timers.retryTimerSubscribeToChatMessages.start();
+    }
+
+    function fetchPlatformCapabilities() {
+        var platforms = ["twitch", "youtube", "kick"];
+        for (var i = 0; i < platforms.length; i++) {
+            (function(platID) {
+                dxProducerClient.getBackendInfo(platID, function(reply) {
+                    var caps = platformCapabilities;
+                    caps[platID] = reply.capabilities;
+                    platformCapabilities = caps;
+                    chatView.platformCapabilities = platformCapabilities;
+                }, function(error) {
+                    console.warn("getBackendInfo failed for", platID, error);
+                }, grpcCallOptions);
+            })(platforms[i]);
+        }
     }
 
     property var updateStreamStatusYouTubeInProgress: false
@@ -757,13 +794,25 @@ Page {
         return '#00FF00';
     }
 
+    // Extract hostname from the streamd gRPC address (e.g.
+    // "http://192.168.0.173:3594" → "192.168.0.173") so the preview
+    // URL points at the same host instead of a hardcoded IP.
+    function streamdHost() {
+        var addr = main.dxProducerHost || "";
+        // Strip protocol prefix if present.
+        var host = addr.replace(/^https?:\/\//, "");
+        // Strip port suffix if present.
+        host = host.replace(/:[0-9]+\/?$/, "");
+        return host || "127.0.0.1";
+    }
+
     VideoPlayerRTMP {
         id: imageScreenshot
         anchors.top: statusBarTop.bottom
         width: parent.width
         height: parent.width * 9 / 16
         source: sourcePreview
-        property string sourcePreview: "rtmp://192.168.0.134:1935/preview/horizontal"
+        property string sourcePreview: "rtmp://" + dashboard.streamdHost() + ":1935/preview/horizontal"
         property string sourceRawCamera: "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3"
 
         Shape {
@@ -1109,10 +1158,8 @@ Page {
                 font.bold: true
                 horizontalAlignment: Text.AlignRight
                 property int outputFPS: 0
-                //text: "out-FPS: " + (outputFPS < 0 ? "N/A" : outputFPS)
-                //color: application.fpsColor(outputFPS, 5, 10, 29)
-                text: "out-FPS: ?"
-                color: '#808080'
+                text: "out-FPS: " + (outputFPS < 0 ? "N/A" : outputFPS)
+                color: dashboard.fpsColor(outputFPS, 5, 10, 29)
             }
 
             Text {
@@ -1133,7 +1180,7 @@ Page {
                     if (videoBitrate < 2000000) {
                         imageScreenshot.sourcePreview = lowBitRateSource;
                     } else {
-                        imageScreenshot.sourcePreview = "rtmp://192.168.0.134:1935/preview/horizontal";
+                        imageScreenshot.sourcePreview = "rtmp://" + dashboard.streamdHost() + ":1935/preview/horizontal";
                     }
                     if (isPreviewEnabled) {
                         imageScreenshot.source = imageScreenshot.sourcePreview;
@@ -1161,14 +1208,154 @@ Page {
         }
     }
 
+    Button {
+        id: musicToggleBtn
+        property bool musicEnabled: false
+        y: statusBarBottom.y + statusBarBottom.height
+        x: subtitlesToggleBtn.x - width - 4
+        z: 1
+        width: 100
+        height: 32
+        text: musicEnabled ? "Music ON" : "Music OFF"
+        font.pixelSize: 12
+        Material.background: musicEnabled ? Material.Green : Material.Grey
+        onClicked: {
+            var newVal = !musicEnabled;
+            var val = newVal ? "true" : "false";
+            dxProducerClient.setVariable("obs_music_enabled", val,
+                function() { musicEnabled = newVal; },
+                function(err) { processStreamDGRPCError(dxProducerClient, err); },
+                grpcCallOptions);
+        }
+        Component.onCompleted: {
+            dxProducerClient.getVariable("obs_music_enabled",
+                function(reply) { musicEnabled = (reply.value.toString() === "true"); },
+                function(err) { /* Variable may not exist yet — default to false. */ },
+                grpcCallOptions);
+        }
+    }
+
+    Button {
+        id: subtitlesToggleBtn
+        property bool subtitlesEnabled: false
+        y: statusBarBottom.y + statusBarBottom.height
+        x: soundToggleBtn.x - width - 4
+        z: 1
+        width: 100
+        height: 32
+        text: subtitlesEnabled ? "Subs ON" : "Subs OFF"
+        font.pixelSize: 12
+        Material.background: subtitlesEnabled ? Material.Green : Material.Grey
+        onClicked: {
+            var newVal = !subtitlesEnabled;
+            var val = newVal ? "true" : "false";
+            dxProducerClient.setVariable("subtitles_enabled", val,
+                function() { subtitlesEnabled = newVal; },
+                function(err) { processStreamDGRPCError(dxProducerClient, err); },
+                grpcCallOptions);
+        }
+        Component.onCompleted: {
+            dxProducerClient.getVariable("subtitles_enabled",
+                function(reply) { subtitlesEnabled = (reply.value.toString() === "true"); },
+                function(err) { /* Variable may not exist yet — default to false. */ },
+                grpcCallOptions);
+        }
+    }
+
+    Button {
+        id: soundToggleBtn
+        y: statusBarBottom.y + statusBarBottom.height
+        x: parent.width - width - 8
+        z: 1
+        width: 100
+        height: 32
+        text: appSettings.soundEnabled ? "Sound ON" : "Sound OFF"
+        font.pixelSize: 12
+        Material.background: appSettings.soundEnabled ? Material.Green : Material.Grey
+        onClicked: appSettings.soundEnabled = !appSettings.soundEnabled
+    }
+
     ChatView {
         id: chatView
         model: globalChatMessagesModel
-        y: statusBarBottom.y + statusBarBottom.height
+        soundEnabled: appSettings.soundEnabled
+        platformCapabilities: dashboard.platformCapabilities
+        y: soundToggleBtn.y + soundToggleBtn.height + 2
         width: parent.width
-        height: parent.height - y
+        height: parent.height - y - chatReplyBar.height
+
+        onRequestBanUser: function(platID, userID, reason, deadlineUnixMs) {
+            console.log("Ban user:", platID, userID, reason, deadlineUnixMs);
+            dxProducerClient.banUser(platID, userID, reason, deadlineUnixMs,
+                function() { console.log("ban ok:", platID, userID); },
+                function(err) { console.warn("ban failed:", err); },
+                grpcCallOptions);
+        }
+        onRequestRemoveChatMessage: function(platID, messageID) {
+            console.log("Remove chat message:", platID, messageID);
+            dxProducerClient.removeChatMessage(platID, messageID,
+                function() { console.log("delete ok:", platID, messageID); },
+                function(err) { console.warn("delete failed:", err); },
+                grpcCallOptions);
+        }
+
         Component.onCompleted: function () {
             console.log("ChatView: x,y,w,h: ", x, y, width, height);
+        }
+    }
+
+    Row {
+        id: chatReplyBar
+        x: 0
+        y: parent.height - height
+        width: parent.width
+        height: 44
+        spacing: 4
+
+        ComboBox {
+            id: chatPlatformSelector
+            width: 80
+            height: parent.height
+            model: ["twitch", "youtube", "kick"]
+            font.pixelSize: 12
+        }
+
+        TextField {
+            id: chatMessageInput
+            width: parent.width - chatPlatformSelector.width - chatSendBtn.width - parent.spacing * 2
+            height: parent.height
+            placeholderText: "Send a message..."
+            font.pixelSize: 14
+            onAccepted: chatSendBtn.sendMessage()
+        }
+
+        Button {
+            id: chatSendBtn
+            width: 60
+            height: parent.height
+            text: "Send"
+            font.pixelSize: 12
+            enabled: chatMessageInput.text.length > 0
+
+            function sendMessage() {
+                var platID = chatPlatformSelector.currentText;
+                var msg = chatMessageInput.text.trim();
+                if (msg.length === 0) {
+                    return;
+                }
+                dxProducerClient.SendChatMessage({
+                    platID: platID,
+                    message: msg
+                }, function () {
+                    console.log("Chat message sent to", platID);
+                    chatMessageInput.text = "";
+                }, function (error) {
+                    console.warn("SendChatMessage failed:", error);
+                    processStreamDGRPCError(dxProducerClient, error);
+                }, grpcCallOptions);
+            }
+
+            onClicked: sendMessage()
         }
     }
 }

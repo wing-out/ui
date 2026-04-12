@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Controls.Material
-import QtCore
+import QtCore as Core
 import WingOut 1.0
 
 ApplicationWindow {
@@ -21,22 +21,25 @@ ApplicationWindow {
         Qt.application.applicationName = "WingOut"
     }
 
-    Settings {
+    // Use qualified import to avoid shadowing by local Settings.qml
+    // (which is a Page component for the config editor, not QSettings).
+    Core.Settings {
         id: appSettings
         property string dxProducerHost: ""
     }
 
-    InitialSetup {
-        id: setupWindow
-        // Re-inject Settings directly in InitialSetup.qml or use property
-        appSettings: appSettings
-        visible: !appSettings.dxProducerHost
-    }
-
-    Component {
-        id: mainComponent
-        Main {
-            dxProducerHost: appSettings.dxProducerHost
+    Loader {
+        id: setupLoader
+        active: !appSettings.dxProducerHost
+        // Assign appSettings imperatively: inside a Component{} block the
+        // unqualified "appSettings" resolves to InitialSetup's own property
+        // (self-reference), not to the outer id.
+        onLoaded: item.appSettings = appSettings
+        sourceComponent: Component {
+            InitialSetup {
+                visible: true
+                onFinished: setupLoader.active = false
+            }
         }
     }
 
@@ -44,6 +47,10 @@ ApplicationWindow {
         id: mainLoader
         anchors.fill: parent
         active: !!appSettings.dxProducerHost
-        sourceComponent: mainComponent
+        sourceComponent: Component {
+            Main {
+                dxProducerHost: appSettings.dxProducerHost
+            }
+        }
     }
 }

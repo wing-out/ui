@@ -102,9 +102,8 @@ void Client::getPlayerLag(
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   streamd::StreamPlayerGetLagRequest arg{};
-  // The generated proto uses `streamID` string field now. Set a sensible
-  // default stream id when callers don't provide one.
-  arg.setStreamID("pixel/dji-osmo-pocket-3");
+  // Set a sensible default stream source id when callers don't provide one.
+  arg.setStreamSourceID("preview/horizontal");
   arg.setRequestUnixNano(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() * 1000 * 1000);
   this->StreamPlayerGetLag(arg, finishCallback, errorCallback, options);
 }
@@ -183,6 +182,94 @@ void Client::subscribeToVariable(
   arg.setKey(key);
   this->SubscribeToVariable(arg, messageCallback, finishCallback, errorCallback,
                             options);
+}
+
+void Client::banUser(
+    const QString &platID, const QString &userID, const QString &reason,
+    const qint64 deadlineUnixMs, const QJSValue &callback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::BanUserRequest arg{};
+  arg.setPlatID(platID);
+  arg.setUserID(userID);
+  arg.setReason(reason);
+  if (deadlineUnixMs > 0) {
+    arg.setDeadlineUnixNano(deadlineUnixMs * 1000000LL);
+  }
+  this->BanUser(arg, callback, errorCallback, options);
+}
+
+void Client::removeChatMessage(
+    const QString &platID, const QString &messageID,
+    const QJSValue &callback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::RemoveChatMessageRequest arg{};
+  arg.setPlatID(platID);
+  arg.setMessageID(messageID);
+  this->RemoveChatMessage(arg, callback, errorCallback, options);
+}
+
+void Client::getBackendInfo(
+    const QString &platID, const QJSValue &callback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::GetBackendInfoRequest arg{};
+  arg.setPlatID(platID);
+  arg.setIncludeData(false);
+  this->GetBackendInfo(arg, callback, errorCallback, options);
+}
+
+void Client::shoutout(
+    const QString &platID, const QString &userID, const QJSValue &callback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::ShoutoutRequest arg{};
+  arg.setPlatID(platID);
+  arg.setUserID(userID);
+  this->Shoutout(arg, callback, errorCallback, options);
+}
+
+void Client::raidTo(
+    const QString &platID, const QString &userID, const QJSValue &callback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::RaidToRequest arg{};
+  arg.setPlatID(platID);
+  arg.setUserID(userID);
+  this->RaidTo(arg, callback, errorCallback, options);
+}
+
+void Client::llmGenerate(
+    const QString &prompt, const QJSValue &callback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::LLMGenerateRequest arg{};
+  arg.setPrompt(prompt);
+  this->LLMGenerate(arg, callback, errorCallback, options);
+}
+
+void Client::setTitle(
+    const QString &platID, const QString &title, const QJSValue &callback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::SetTitleRequest arg{};
+  arg.setPlatID(platID);
+  arg.setTitle(title);
+  this->SetTitle(arg, callback, errorCallback, options);
 }
 
 void Client::setIgnoreImages(const bool value) {
@@ -271,11 +358,10 @@ void Client::startStream(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  // Use ApplyProfile RPC (exists in current proto) to start a stream by profile
-  streamd::ApplyProfileRequest arg{};
+  streamd::StartStreamByProfileNameRequest arg{};
   arg.setPlatID(platID);
-  arg.setProfile(profileName);
-  this->ApplyProfile(arg, callback, errorCallback, options);
+  arg.setProfileName(profileName);
+  this->StartStreamByProfileName(arg, callback, errorCallback, options);
 }
 
 void Client::endStream(
@@ -322,11 +408,8 @@ void Client::listProfiles(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
-  // The streamd proto in this build does not define ListProfiles; fall back
-  // to listing profiles via ListStreamServers (closest available) or do
-  // nothing. Here we just call ListStreamServers to keep compilation green.
-  streamd::ListStreamServersRequest arg{};
-  this->ListStreamServers(arg, callback, errorCallback, options);
+  streamd::ListStreamProfilesRequest arg{};
+  this->ListStreamProfiles(arg, callback, errorCallback, options);
 }
 
 void Client::listStreamSources(
