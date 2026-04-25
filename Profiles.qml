@@ -259,9 +259,60 @@ Page {
         y: (parent.height - height) / 2
         modal: true
         width: 300
+        // disable Ok until user typed a non-empty name; prevents server round-trip
+        // for input we already know is invalid.
+        property bool nameValid: newProfileNameField.text.trim().length > 0
+        function syncOkEnabled() {
+            var okBtn = standardButton(Dialog.Ok);
+            if (okBtn) okBtn.enabled = nameValid;
+        }
+        onNameValidChanged: syncOkEnabled()
+        Component.onCompleted: syncOkEnabled()
+        onOpened: {
+            newProfileNameField.text = "";
+            newProfileTitleField.text = "";
+            newProfileDescField.text = "";
+            syncOkEnabled();
+            newProfileNameField.forceActiveFocus();
+        }
+        onAccepted: {
+            var name = newProfileNameField.text.trim();
+            if (name.length === 0) {
+                console.log("Profiles.qml: empty profile name, ignoring");
+                return;
+            }
+            console.log("Profiles.qml: addStreamProfile name=" + name);
+            dxProducerClient.addStreamProfile(
+                name,
+                newProfileTitleField.text,
+                newProfileDescField.text,
+                function() {
+                    console.log("Profiles.qml: addStreamProfile ok");
+                    refreshProfiles();
+                },
+                function(error) {
+                    console.log("Profiles.qml: addStreamProfile failed");
+                    processStreamDGRPCError(dxProducerClient, error);
+                },
+                grpcCallOptions);
+        }
         contentItem: ColumnLayout {
             spacing: 8
-            TextField { placeholderText: "Profile name"; Layout.fillWidth: true }
+            TextField {
+                id: newProfileNameField
+                placeholderText: "Profile name (required)"
+                Layout.fillWidth: true
+            }
+            TextField {
+                id: newProfileTitleField
+                placeholderText: "Default title (optional)"
+                Layout.fillWidth: true
+            }
+            TextField {
+                id: newProfileDescField
+                placeholderText: "Default description (optional)"
+                Layout.fillWidth: true
+            }
         }
     }
 

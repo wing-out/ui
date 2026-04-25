@@ -69,6 +69,11 @@ public:
   Q_INVOKABLE void listProfiles(
       const QJSValue &callback, const QJSValue &errorCallback,
       const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void addStreamProfile(
+      const QString &name, const QString &defaultTitle,
+      const QString &defaultDescription, const QJSValue &callback,
+      const QJSValue &errorCallback,
+      const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
   Q_INVOKABLE void listStreamSources(
       const QJSValue &callback, const QJSValue &errorCallback,
       const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);

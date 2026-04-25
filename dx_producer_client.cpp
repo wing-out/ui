@@ -545,6 +545,20 @@ void Client::listProfiles(
   this->ListProfiles(arg, callback, errorCallback, options);
 }
 
+void Client::addStreamProfile(
+    const QString &name, const QString &defaultTitle,
+    const QString &defaultDescription, const QJSValue &callback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  QMutexLocker locker(&this->locker);
+  this->_reconnectIfNeeded();
+  streamd::AddStreamProfileRequest arg{};
+  arg.setName(name);
+  arg.setDefaultTitle(defaultTitle);
+  arg.setDefaultDescription(defaultDescription);
+  this->AddStreamProfile(arg, callback, errorCallback, options);
+}
+
 void Client::listStreamSources(
     const QJSValue &callback, const QJSValue &errorCallback,
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
