@@ -968,6 +968,19 @@ Page {
         return hours + ":" + minutes + ":" + seconds;
     }
 
+    // formatLatencyPair returns "<a>+<b>" (seconds) or "<a>+<b> ms".
+    // Threshold: if max(a, b) >= 1000 ms, both render in seconds (no unit suffix); else both in ms.
+    function formatLatencyPair(aMS, bMS) {
+        if (aMS < 0 || bMS < 0) {
+            return "N/A";
+        }
+        var maxVal = Math.max(aMS, bMS);
+        if (maxVal >= 1000) {
+            return (aMS / 1000).toFixed(1) + "+" + (bMS / 1000).toFixed(1);
+        }
+        return Math.round(aMS) + "+" + Math.round(bMS) + " ms";
+    }
+
     function rssiColor(rssi) {
         if (rssi >= -50) {
             return '#00FF00';
@@ -1317,14 +1330,14 @@ Page {
             Text {
                 id: sendingLatencyText
                 height: parent.height
-                width: 180
+                width: 140
                 leftPadding: 8
                 font.pixelSize: 20
                 font.bold: true
                 horizontalAlignment: Text.AlignRight
                 property real preSendingLatency: 0
                 property real sendingLatency: 0
-                text: (preSendingLatency < 0 || sendingLatency < 0 ? "N/A" : dashboard.formatDuration(preSendingLatency) + "+" + dashboard.formatDuration(sendingLatency)) + "📱"
+                text: dashboard.formatLatencyPair(preSendingLatency, sendingLatency) + " 📱"
                 color: dashboard.pingColorFromMS(preSendingLatency + sendingLatency, 100, 400, 1500)
             }
 
