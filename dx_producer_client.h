@@ -120,6 +120,10 @@ public:
          const QJSValue &callback, const QJSValue &errorCallback,
          const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
   Q_INVOKABLE void
+  sendChatMessage(const QString &platID, const QString &message,
+                  const QJSValue &callback, const QJSValue &errorCallback,
+                  const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
+  Q_INVOKABLE void
   llmGenerate(const QString &prompt, const QJSValue &callback,
               const QJSValue &errorCallback,
               const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);

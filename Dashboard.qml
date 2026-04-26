@@ -1639,10 +1639,7 @@ Page {
                 if (msg.length === 0) {
                     return;
                 }
-                dxProducerClient.SendChatMessage({
-                    platID: platID,
-                    message: msg
-                }, function () {
+                dxProducerClient.sendChatMessage(platID, msg, function () {
                     console.log("Chat message sent to", platID);
                     chatMessageInput.text = "";
                 }, function (error) {
