@@ -50,7 +50,7 @@ Window {
                 }
 
                 Label {
-                    text: qsTr("Preview RTMP URL (leave blank to disable preview):")
+                    text: qsTr("Preview RTMP URL (leave blank to use the default derived from the StreamD host):")
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
                 }

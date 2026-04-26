@@ -238,10 +238,27 @@ Pane {
         }
     }
 
+    // Derive a default preview RTMP URL from the dx-producer host so
+    // first-run users see a working preview without manual entry. Empty
+    // dxProducerHost falls back to 127.0.0.1; a non-empty stored
+    // previewRTMPUrl is never overwritten.
+    function defaultPreviewRtmpUrl() {
+        var addr = appSettings ? appSettings.dxProducerHost : "";
+        var host = String(addr || "").replace(/^https?:\/\//, "").replace(/:[0-9]+\/?$/, "");
+        if (host.length === 0) {
+            host = "127.0.0.1";
+        }
+        return "rtmp://" + host + ":1945/pixel/dji-osmo-pocket-3-merged/";
+    }
+
     Component.onCompleted: {
         console.log("Platform object type:", platform);
         if (platform && typeof platform.refreshWiFiState === 'function')
             platform.refreshWiFiState();
+        if (appSettings && (!appSettings.previewRTMPUrl || appSettings.previewRTMPUrl.length === 0)) {
+            appSettings.previewRTMPUrl = defaultPreviewRtmpUrl();
+            console.log("Main.qml: seeded default previewRTMPUrl:", appSettings.previewRTMPUrl);
+        }
     }
 
     StreamD.Client {
