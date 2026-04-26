@@ -58,6 +58,13 @@ Page {
         id: timers
     }
 
+    Connections {
+        target: dashboard.root
+        function onNormalizedDxProducerHostChanged() {
+            subscribeToChatMessages();
+        }
+    }
+
     Component.onCompleted: {
         subscribeToChatMessages();
         fetchPlatformCapabilities();
@@ -445,8 +452,13 @@ Page {
         if (!dashboard.root.checkStreamDClient()) {
             return;
         }
-        var since = null;
+        if (!dashboard.root.dxProducerClient.isChannelReady()) {
+            timers.retryTimerSubscribeToChatMessages.start();
+            return;
+        }
+        timers.retryTimerSubscribeToChatMessages.stop();
 
+        var since = null;
         if (latestChatMessageTimestampUNIXNano == null) {
             since = new Date();
             since.setDate(since.getDate() - 60);
