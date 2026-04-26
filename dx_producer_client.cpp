@@ -567,13 +567,28 @@ void Client::addStreamProfile(
     const QString &defaultDescription, const QJSValue &callback,
     const QJSValue &errorCallback,
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
-  QMutexLocker locker(&this->locker);
-  this->_reconnectIfNeeded();
-  streamd::AddStreamProfileRequest arg{};
-  arg.setName(name);
-  arg.setDefaultTitle(defaultTitle);
-  arg.setDefaultDescription(defaultDescription);
-  this->AddStreamProfile(arg, callback, errorCallback, options);
+  Q_UNUSED(name);
+  Q_UNUSED(defaultTitle);
+  Q_UNUSED(defaultDescription);
+  Q_UNUSED(callback);
+  Q_UNUSED(options);
+  qWarning() << "DXProducerClient::addStreamProfile: AddStreamProfileRequest "
+                "is not present in streamd proto; new-profile dialog will "
+                "fail until RPC is added.";
+  QJSEngine *engine = qjsEngine(this);
+  if (engine != nullptr && errorCallback.isCallable()) {
+    QGrpcStatus status(QtGrpc::StatusCode::Unimplemented,
+                       QStringLiteral("AddStreamProfileRequest is not present "
+                                      "in streamd proto"));
+    QJSValueList argsOut;
+    argsOut << engine->toScriptValue(status);
+    QJSValue errCb = errorCallback;
+    errCb.call(argsOut);
+  } else {
+    qWarning() << "DXProducerClient::addStreamProfile: errorCallback could not "
+                  "be delivered (engine null or callback not callable); caller "
+                  "will not receive a response.";
+  }
 }
 
 void Client::listStreamSources(
