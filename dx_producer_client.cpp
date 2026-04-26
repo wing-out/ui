@@ -171,13 +171,15 @@ void Client::ping(const QString &payloadToReturn,
 }
 
 void Client::getPlayerLag(
-    const QJSValue &finishCallback, const QJSValue &errorCallback,
+    const QString &streamSourceID, const QJSValue &finishCallback,
+    const QJSValue &errorCallback,
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   QMutexLocker locker(&this->locker);
   this->_reconnectIfNeeded();
   streamd::StreamPlayerGetLagRequest arg{};
-  // Set a sensible default stream source id when callers don't provide one.
-  arg.setStreamSourceID("preview/horizontal");
+  // streamSourceID is the proto field name, but its semantic value
+  // is the registered stream player's streamID.
+  arg.setStreamSourceID(streamSourceID);
   arg.setRequestUnixNano(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() * 1000 * 1000);
   this->StreamPlayerGetLag(arg, finishCallback, errorCallback, options);
 }
@@ -539,10 +541,25 @@ void Client::listStreamPlayers(
 void Client::listProfiles(
     const QJSValue &callback, const QJSValue &errorCallback,
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
-  QMutexLocker locker(&this->locker);
-  this->_reconnectIfNeeded();
-  streamd::ListProfilesRequest arg{};
-  this->ListProfiles(arg, callback, errorCallback, options);
+  Q_UNUSED(callback);
+  Q_UNUSED(options);
+  qWarning() << "DXProducerClient::listProfiles: ListProfilesRequest removed "
+                "from streamd proto (commit 5e6b9dc); Profiles.qml will show "
+                "empty list until RPC is restored.";
+  QJSEngine *engine = qjsEngine(this);
+  if (engine != nullptr && errorCallback.isCallable()) {
+    QGrpcStatus status(QtGrpc::StatusCode::Unimplemented,
+                       QStringLiteral("ListProfilesRequest removed from streamd "
+                                      "proto in commit 5e6b9dc"));
+    QJSValueList argsOut;
+    argsOut << engine->toScriptValue(status);
+    QJSValue errCb = errorCallback;
+    errCb.call(argsOut);
+  } else {
+    qWarning() << "DXProducerClient::listProfiles: errorCallback could not be "
+                  "delivered (engine null or callback not callable); caller "
+                  "will not receive a response.";
+  }
 }
 
 void Client::addStreamProfile(
@@ -562,10 +579,25 @@ void Client::addStreamProfile(
 void Client::listStreamSources(
     const QJSValue &callback, const QJSValue &errorCallback,
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
-  QMutexLocker locker(&this->locker);
-  this->_reconnectIfNeeded();
-  streamd::ListStreamSourcesRequest arg{};
-  this->ListStreamSources(arg, callback, errorCallback, options);
+  Q_UNUSED(callback);
+  Q_UNUSED(options);
+  qWarning() << "DXProducerClient::listStreamSources: ListStreamSourcesRequest "
+                "removed from streamd proto (commit 5e6b9dc); stream-source UI "
+                "will show empty list until RPC is restored.";
+  QJSEngine *engine = qjsEngine(this);
+  if (engine != nullptr && errorCallback.isCallable()) {
+    QGrpcStatus status(QtGrpc::StatusCode::Unimplemented,
+                       QStringLiteral("ListStreamSourcesRequest removed from streamd "
+                                      "proto in commit 5e6b9dc"));
+    QJSValueList argsOut;
+    argsOut << engine->toScriptValue(status);
+    QJSValue errCb = errorCallback;
+    errCb.call(argsOut);
+  } else {
+    qWarning() << "DXProducerClient::listStreamSources: errorCallback could not be "
+                  "delivered (engine null or callback not callable); caller "
+                  "will not receive a response.";
+  }
 }
 
 } // namespace DXProducer

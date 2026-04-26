@@ -16,15 +16,11 @@ TestCase {
         id: chatSettings
         property string dxProducerHost: "https://localhost:1234"
         property string previewRTMPUrl: ""
-        property string previewRTMPPort: "1945"
-        property string previewRTMPStreamID: "test/stream/"
         property string ffstreamHost: ""
     }
 
     Component.onCompleted: {
         chatSettings.dxProducerHost = "https://localhost:1234"
-        chatSettings.previewRTMPPort = "1945"
-        chatSettings.previewRTMPStreamID = "test/stream/"
     }
 
     ListModel {

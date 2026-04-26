@@ -379,11 +379,47 @@ target_link_libraries(wingout_qml
 target_link_libraries(wingout
     PRIVATE
     wingout_qml
+    wingout_qmlplugin
+    wingout_qmlplugin_init
     Qt6::CorePrivate
     Qt6::Gui
     Qt6::Qml
     Qt6::Quick
+    Qt6::Multimedia
 )
+
+set_target_properties(wingout PROPERTIES
+    QT_QML_IMPORT_PATH "${CMAKE_BINARY_DIR}"
+)
+
+if(ANDROID)
+    get_target_property(_qt_install_prefix Qt6::Core _qt_package_prefix_dir)
+    if(_qt_install_prefix)
+        set_target_properties(wingout PROPERTIES
+            QT_ANDROID_EXTRA_PLUGINS "${_qt_install_prefix}/plugins"
+        )
+    endif()
+    if(NOT _qt_install_prefix)
+        if(Qt6Multimedia_DIR)
+            set_target_properties(wingout PROPERTIES
+                QT_ANDROID_EXTRA_PLUGINS "${Qt6Multimedia_DIR}/../../../plugins"
+            )
+        elseif(DEFINED ENV{QT_DIR})
+            set_target_properties(wingout PROPERTIES
+                QT_ANDROID_EXTRA_PLUGINS "$ENV{QT_DIR}/plugins"
+            )
+        else()
+            message(FATAL_ERROR "ANDROID build: cannot derive Qt plugins path; set QT_DIR or check Qt6Multimedia_DIR")
+        endif()
+    endif()
+    get_target_property(_wingout_extra_plugins wingout QT_ANDROID_EXTRA_PLUGINS)
+    message(STATUS "wingout QT_ANDROID_EXTRA_PLUGINS = ${_wingout_extra_plugins}")
+endif()
+
+qt_import_qml_plugins(wingout)
+if(TARGET qt_internal_plugins)
+    add_dependencies(wingout qt_internal_plugins)
+endif()
 
 target_precompile_headers(wingout_qml PRIVATE
     <QtCore/QtCore>

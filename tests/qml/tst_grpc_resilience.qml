@@ -17,15 +17,11 @@ TestCase {
         id: resSettings
         property string dxProducerHost: "https://unreachable-host:9999"
         property string previewRTMPUrl: ""
-        property string previewRTMPPort: "1945"
-        property string previewRTMPStreamID: "test/stream/"
         property string ffstreamHost: "https://unreachable-host:3593"
     }
 
     Component.onCompleted: {
         resSettings.dxProducerHost = "https://unreachable-host:9999"
-        resSettings.previewRTMPPort = "1945"
-        resSettings.previewRTMPStreamID = "test/stream/"
         resSettings.ffstreamHost = "https://unreachable-host:3593"
     }
 

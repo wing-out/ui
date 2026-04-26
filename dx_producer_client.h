@@ -31,7 +31,8 @@ public:
        const QJSValue &errorCallback,
        const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
   Q_INVOKABLE void getPlayerLag(
-      const QJSValue &finishCallback, const QJSValue &errorCallback,
+      const QString &streamSourceID, const QJSValue &finishCallback,
+      const QJSValue &errorCallback,
       const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options = nullptr);
   Q_INVOKABLE void subscribeToChatMessages(
       const QDateTime &since, const uint64_t limit,

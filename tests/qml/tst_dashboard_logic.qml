@@ -17,15 +17,11 @@ TestCase {
         id: dashSettings
         property string dxProducerHost: "https://localhost:1234"
         property string previewRTMPUrl: ""
-        property string previewRTMPPort: "1945"
-        property string previewRTMPStreamID: "test/stream/"
         property string ffstreamHost: ""
     }
 
     Component.onCompleted: {
         dashSettings.dxProducerHost = "https://localhost:1234"
-        dashSettings.previewRTMPPort = "1945"
-        dashSettings.previewRTMPStreamID = "test/stream/"
     }
 
     Component {

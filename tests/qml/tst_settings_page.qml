@@ -16,15 +16,11 @@ TestCase {
         id: setSettings
         property string dxProducerHost: "https://localhost:1234"
         property string previewRTMPUrl: ""
-        property string previewRTMPPort: "1945"
-        property string previewRTMPStreamID: "test/stream/"
         property string ffstreamHost: "https://localhost:3593"
     }
 
     Component.onCompleted: {
         setSettings.dxProducerHost = "https://localhost:1234"
-        setSettings.previewRTMPPort = "1945"
-        setSettings.previewRTMPStreamID = "test/stream/"
         setSettings.ffstreamHost = "https://localhost:3593"
     }
 

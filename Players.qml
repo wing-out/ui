@@ -79,7 +79,7 @@ Page {
             for (var i = 0; i < players.length; i++) {
                 var p = players[i];
                 playersModel.append({
-                    playerID: p.streamSourceID,
+                    playerID: p.streamID,
                     uri: (p.streamPlaybackConfig && p.streamPlaybackConfig.overriddenURL) ? p.streamPlaybackConfig.overriddenURL : "default"
                 });
             }

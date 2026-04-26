@@ -105,61 +105,32 @@ Pane {
         return value;
     }
 
-    function extractHostFromGrpcUri(rawValue) {
-        var normalized = normalizeGrpcUri(rawValue, "http");
-        if (normalized.length === 0) {
-            return "";
-        }
-        var match = normalized.match(/^https?:\/\/([^\/:]+)/);
-        return match ? match[1] : "";
-    }
-
-    function deriveFFStreamUri() {
-        var explicitFFStream = normalizeGrpcUri(appSettings ? appSettings.ffstreamHost : "", "https");
-        if (explicitFFStream.length > 0) {
-            return explicitFFStream;
-        }
-        var host = extractHostFromGrpcUri(main.dxProducerHost);
-        if (host.length === 0) {
-            return "https://localhost:3593";
-        }
-        return "https://" + host + ":3593";
-    }
-
-    function derivePreviewRtmpUrl() {
-        var host = extractHostFromGrpcUri(main.dxProducerHost);
-        if (host.length === 0) {
-            return "";
-        }
-        var port = "" + (appSettings ? appSettings.previewRTMPPort : "");
-        if (port.trim().length === 0) {
-            port = "1945";
-        }
-        var streamId = "" + (appSettings ? appSettings.previewRTMPStreamID : "");
-        if (streamId.trim().length === 0) {
-            streamId = "pixel/dji-osmo-pocket-3-merged/";
-        }
-        if (streamId.startsWith("/")) {
-            streamId = streamId.slice(1);
-        }
-        return "rtmp://" + host + ":" + port + "/" + streamId;
-    }
-
     readonly property string normalizedDxProducerHost: normalizeGrpcUri(appSettings ? appSettings.dxProducerHost : "", "https")
-    readonly property string normalizedFFStreamHost: deriveFFStreamUri()
-    readonly property string previewRtmpUrl: derivePreviewRtmpUrl()
-
-    // Create a real gRPC HTTP/2 channel for the ffstream connection.
-    GrpcHttp2Channel {
-        id: ffstreamChannel
-        hostUri: main.normalizedFFStreamHost
-    }
+    // ffstreamHost must be configured explicitly. No host-derivation fallback —
+    // we previously derived a URL from dxProducerHost when ffstreamHost was
+    // empty, but that silently overrode the user's value during the brief
+    // window when Core.Settings had not yet loaded persisted state, leaving
+    // the ffstream client bound to the wrong host indefinitely.
+    readonly property string normalizedFFStreamHost: normalizeGrpcUri(
+        appSettings ? appSettings.ffstreamHost : "", "https")
 
     FFStream.Client {
         id: ffstreamClient
-        channel: ffstreamChannel.channel
         Component.onCompleted: {
-            console.log("ffstreamClient connected to", main.normalizedFFStreamHost);
+            if (main.normalizedFFStreamHost && main.normalizedFFStreamHost.length > 0) {
+                ffstreamClient.setServerUri(main.normalizedFFStreamHost);
+                console.log("ffstreamClient setServerUri:", main.normalizedFFStreamHost);
+            }
+        }
+    }
+
+    Connections {
+        target: main
+        function onNormalizedFFStreamHostChanged() {
+            if (main.normalizedFFStreamHost && main.normalizedFFStreamHost.length > 0) {
+                ffstreamClient.setServerUri(main.normalizedFFStreamHost);
+                console.log("ffstreamClient setServerUri:", main.normalizedFFStreamHost);
+            }
         }
     }
 
@@ -273,19 +244,23 @@ Pane {
             platform.refreshWiFiState();
     }
 
-    // Create a real gRPC HTTP/2 channel for the streamd connection.
-    // DXProducer::Client._onChannelChanged() extracts the hostUri,
-    // disables SSL peer verification, and re-creates the channel.
-    GrpcHttp2Channel {
-        id: dxProducerChannel
-        hostUri: main.normalizedDxProducerHost
-    }
-
     StreamD.Client {
         id: dxProducerClient
-        channel: dxProducerChannel.channel
         Component.onCompleted: {
-            console.log("dxProducerClient connected to", main.dxProducerHost);
+            if (main.normalizedDxProducerHost && main.normalizedDxProducerHost.length > 0) {
+                dxProducerClient.setServerUri(main.normalizedDxProducerHost);
+                console.log("dxProducerClient setServerUri:", main.normalizedDxProducerHost);
+            }
+        }
+    }
+
+    Connections {
+        target: main
+        function onNormalizedDxProducerHostChanged() {
+            if (main.normalizedDxProducerHost && main.normalizedDxProducerHost.length > 0) {
+                dxProducerClient.setServerUri(main.normalizedDxProducerHost);
+                console.log("dxProducerClient setServerUri:", main.normalizedDxProducerHost);
+            }
         }
     }
 

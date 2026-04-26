@@ -17,6 +17,19 @@ Page {
     property var pingCurrentID: 0
     property var pingTimestamps: ({})
     property var pingInProgress: false
+    // Auto-picked streamID (first enabled player from listStreamPlayers).
+    // Populated lazily — refreshChosenPlayerStreamID is called from
+    // fetchPlayerLag when the channel is finally ready.
+    property string autoChosenPlayerStreamID: ""
+    // Effective streamID: user override from settings if set, else auto-picked.
+    readonly property string chosenPlayerStreamID:
+        (dashboard.root && dashboard.root.appSettings
+            && dashboard.root.appSettings.chosenPlayerStreamID
+            && dashboard.root.appSettings.chosenPlayerStreamID.length > 0)
+            ? dashboard.root.appSettings.chosenPlayerStreamID
+            : autoChosenPlayerStreamID
+    // Guard so refreshChosenPlayerStreamID does not spam-retry.
+    property bool _refreshChosenPlayerStreamIDInProgress: false
     readonly property bool isLandscape: width > height
     property var lastDiagnostics: ({})
     property int diagnosticsUpdateCount: 0
@@ -48,6 +61,7 @@ Page {
     Component.onCompleted: {
         subscribeToChatMessages();
         fetchPlatformCapabilities();
+        refreshChosenPlayerStreamID();
         pingTimestamps = {};
         ping();
         timers.pingTicker.callback = ping;
@@ -349,11 +363,61 @@ Page {
         playerLagText.lastUpdateAt = now;
     }
 
+    function refreshChosenPlayerStreamID() {
+        if (dashboard._refreshChosenPlayerStreamIDInProgress) {
+            return;
+        }
+        if (!dashboard.root.checkStreamDClient()) {
+            return;
+        }
+        // checkStreamDClient is a null-check only. Skip the call before
+        // the gRPC channel is ready — it would be silently dropped and
+        // neither callback would ever fire, leaving _refresh...InProgress
+        // stuck true forever.
+        if (!dashboard.root.dxProducerClient.isChannelReady()) {
+            return;
+        }
+        dashboard._refreshChosenPlayerStreamIDInProgress = true;
+        dashboard.root.dxProducerClient.listStreamPlayers(function (reply) {
+            dashboard._refreshChosenPlayerStreamIDInProgress = false;
+            var players = reply.playersData || reply.players || [];
+            console.log("Dashboard.qml: listStreamPlayers returned", players.length, "players");
+            for (var i = 0; i < players.length; i++) {
+                var p = players[i];
+                if (p.disabled === true) {
+                    continue;
+                }
+                if (!p.streamID) {
+                    continue;
+                }
+                console.log("Dashboard.qml: autoChosenPlayerStreamID =", p.streamID);
+                dashboard.autoChosenPlayerStreamID = p.streamID;
+                return;
+            }
+            console.log("Dashboard.qml: no enabled player found in listStreamPlayers");
+        }, function (error) {
+            dashboard._refreshChosenPlayerStreamIDInProgress = false;
+            console.log("Dashboard.qml: listStreamPlayers failed");
+            dashboard.root.processStreamDGRPCError(dashboard.root.dxProducerClient, error);
+        }, dashboard.root.grpcCallOptions);
+    }
+
     function fetchPlayerLag() {
         if (!dashboard.root.checkStreamDClient()) {
             return;
         }
-        dashboard.root.dxProducerClient.getPlayerLag(onGetPlayerLagSuccess, onGetPlayerLagError, dashboard.root.grpcCallOptions);
+        if (!dashboard.chosenPlayerStreamID) {
+            // No streamID resolved yet. If there is also no auto-picked
+            // value, retry listStreamPlayers — earlier calls may have
+            // fired before the gRPC channel became ready and were
+            // silently dropped. Skip getPlayerLag to avoid hammering
+            // the server with blank streamIDs.
+            if (!dashboard.autoChosenPlayerStreamID) {
+                refreshChosenPlayerStreamID();
+            }
+            return;
+        }
+        dashboard.root.dxProducerClient.getPlayerLag(dashboard.chosenPlayerStreamID, onGetPlayerLagSuccess, onGetPlayerLagError, dashboard.root.grpcCallOptions);
     }
 
     function onGetPlayerLagSuccess(lagReply) {
@@ -844,12 +908,12 @@ Page {
     }
 
     function memUtilizationColor(util) {
-        if (util < 0.2)
+        if (util < 0.5)
             return '#00FF00';
-        if (util < 0.6)
-            return colorMix('#00FF00', '#FFFF00', (util - 0.2) / 0.4);
-        if (util < 0.8)
-            return colorMix('#FFFF00', '#FF0000', (util - 0.6) / 0.2);
+        if (util < 0.75)
+            return colorMix('#00FF00', '#FFFF00', (util - 0.5) / 0.25);
+        if (util < 0.9)
+            return colorMix('#FFFF00', '#FF0000', (util - 0.75) / 0.15);
         return '#FF0000';
     }
 
@@ -982,9 +1046,7 @@ Page {
         property bool useRawSource: false
         readonly property string effectivePreview: useLowBitratePreview
             ? lowBitRatePreview
-            : ((configuredPreview && configuredPreview.length > 0)
-                ? configuredPreview
-                : dashboard.root.previewRtmpUrl)
+            : configuredPreview
         source: useRawSource ? sourceRawCamera : effectivePreview
 
         onEffectivePreviewChanged: {
@@ -1255,7 +1317,8 @@ Page {
             Text {
                 id: sendingLatencyText
                 height: parent.height
-                width: 130
+                width: 180
+                leftPadding: 8
                 font.pixelSize: 20
                 font.bold: true
                 horizontalAlignment: Text.AlignRight
@@ -1377,71 +1440,105 @@ Page {
         }
     }
 
-    Button {
-        id: musicToggleBtn
-        property bool musicEnabled: false
+    Flow {
+        id: toggleBar
         y: statusBarBottom.y + statusBarBottom.height
-        x: subtitlesToggleBtn.x - width - 4
+        x: 0
+        width: parent.width
+        spacing: 4
+        padding: 4
         z: 1
-        width: 100
-        height: 32
-        text: musicEnabled ? "Music ON" : "Music OFF"
-        font.pixelSize: 12
-        Material.background: musicEnabled ? Material.Green : Material.Grey
-        onClicked: {
-            var newVal = !musicEnabled;
-            var val = newVal ? "true" : "false";
-            dxProducerClient.setVariable("obs_music_enabled", val,
-                function() { musicEnabled = newVal; },
-                function(err) { processStreamDGRPCError(dxProducerClient, err); },
-                grpcCallOptions);
-        }
-        Component.onCompleted: {
-            dxProducerClient.getVariable("obs_music_enabled",
-                function(reply) { musicEnabled = (reply.value.toString() === "true"); },
-                function(err) { /* Variable may not exist yet — default to false. */ },
-                grpcCallOptions);
-        }
-    }
 
-    Button {
-        id: subtitlesToggleBtn
-        property bool subtitlesEnabled: false
-        y: statusBarBottom.y + statusBarBottom.height
-        x: soundToggleBtn.x - width - 4
-        z: 1
-        width: 100
-        height: 32
-        text: subtitlesEnabled ? "Subs ON" : "Subs OFF"
-        font.pixelSize: 12
-        Material.background: subtitlesEnabled ? Material.Green : Material.Grey
-        onClicked: {
-            var newVal = !subtitlesEnabled;
-            var val = newVal ? "true" : "false";
-            dxProducerClient.setVariable("subtitles_enabled", val,
-                function() { subtitlesEnabled = newVal; },
-                function(err) { processStreamDGRPCError(dxProducerClient, err); },
-                grpcCallOptions);
+        CheckBox {
+            id: musicToggleBtn
+            property bool musicEnabled: false
+            text: "Music"
+            topPadding: 2; bottomPadding: 2
+            font.pixelSize: 12
+            checked: musicEnabled
+            nextCheckState: function() {
+                var newVal = !musicEnabled;
+                var val = newVal ? "true" : "false";
+                dxProducerClient.setVariable("obs_music_enabled", val,
+                    function() { musicEnabled = newVal; },
+                    function(err) { processStreamDGRPCError(dxProducerClient, err); },
+                    grpcCallOptions);
+                return musicEnabled ? Qt.Checked : Qt.Unchecked;
+            }
+            Component.onCompleted: {
+                dxProducerClient.getVariable("obs_music_enabled",
+                    function(reply) { musicEnabled = (reply.value.toString() === "true"); },
+                    function(err) { /* default false */ },
+                    grpcCallOptions);
+            }
         }
-        Component.onCompleted: {
-            dxProducerClient.getVariable("subtitles_enabled",
-                function(reply) { subtitlesEnabled = (reply.value.toString() === "true"); },
-                function(err) { /* Variable may not exist yet — default to false. */ },
-                grpcCallOptions);
-        }
-    }
 
-    Button {
-        id: soundToggleBtn
-        y: statusBarBottom.y + statusBarBottom.height
-        x: parent.width - width - 8
-        z: 1
-        width: 100
-        height: 32
-        text: appSettings.soundEnabled ? "Sound ON" : "Sound OFF"
-        font.pixelSize: 12
-        Material.background: appSettings.soundEnabled ? Material.Green : Material.Grey
-        onClicked: appSettings.soundEnabled = !appSettings.soundEnabled
+        CheckBox {
+            id: subtitlesToggleBtn
+            property bool subtitlesEnabled: false
+            text: "Subs"
+            topPadding: 2; bottomPadding: 2
+            font.pixelSize: 12
+            checked: subtitlesEnabled
+            nextCheckState: function() {
+                var newVal = !subtitlesEnabled;
+                var val = newVal ? "true" : "false";
+                dxProducerClient.setVariable("subtitles_enabled", val,
+                    function() { subtitlesEnabled = newVal; },
+                    function(err) { processStreamDGRPCError(dxProducerClient, err); },
+                    grpcCallOptions);
+                return subtitlesEnabled ? Qt.Checked : Qt.Unchecked;
+            }
+            Component.onCompleted: {
+                dxProducerClient.getVariable("subtitles_enabled",
+                    function(reply) { subtitlesEnabled = (reply.value.toString() === "true"); },
+                    function(err) { /* default false */ },
+                    grpcCallOptions);
+            }
+        }
+
+        CheckBox {
+            id: soundToggleBtn
+            text: "Sound"
+            topPadding: 2; bottomPadding: 2
+            font.pixelSize: 12
+            checked: appSettings.soundEnabled
+            nextCheckState: function() {
+                appSettings.soundEnabled = !appSettings.soundEnabled;
+                return appSettings.soundEnabled ? Qt.Checked : Qt.Unchecked;
+            }
+        }
+
+        CheckBox {
+            id: vibrateToggleBtn
+            checked: true
+            text: "Vibrate"
+            topPadding: 2; bottomPadding: 2
+            font.pixelSize: 12
+        }
+
+        CheckBox {
+            id: simpleNicksToggleBtn
+            text: "Nick:simple"
+            topPadding: 2; bottomPadding: 2
+            font.pixelSize: 12
+        }
+
+        CheckBox {
+            id: ttsToggleBtn
+            enabled: chatView.ttsAvailable
+            text: "TTS"
+            topPadding: 2; bottomPadding: 2
+            font.pixelSize: 12
+        }
+
+        CheckBox {
+            id: ttsTellNamesToggleBtn
+            enabled: ttsToggleBtn.checked
+            text: "TTS:name"
+            topPadding: 2; bottomPadding: 2
+            font.pixelSize: 12
+        }
     }
 
     ChatView {
@@ -1450,7 +1547,11 @@ Page {
         model: dashboard.root.globalChatMessagesModel
         soundEnabled: appSettings.soundEnabled
         platformCapabilities: dashboard.platformCapabilities
-        y: soundToggleBtn.y + soundToggleBtn.height + 2
+        vibrateEnabled: vibrateToggleBtn.checked
+        simpleNicks: simpleNicksToggleBtn.checked
+        ttsOn: ttsToggleBtn.checked
+        ttsTellNames: ttsTellNamesToggleBtn.checked
+        y: toggleBar.y + toggleBar.height + 2
         width: parent.width
         height: parent.height - y - chatReplyBar.height
 

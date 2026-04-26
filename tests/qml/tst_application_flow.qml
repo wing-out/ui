@@ -68,12 +68,8 @@ TestCase {
             'Settings {\n' +
             '    property string dxProducerHost: ""\n' +
             '    property string previewRTMPUrl: ""\n' +
-            '    property string previewRTMPPort: ""\n' +
-            '    property string previewRTMPStreamID: ""\n' +
             '}', tc)
         settings.dxProducerHost = "https://test-host:1234"
-        settings.previewRTMPPort = "1945"
-        settings.previewRTMPStreamID = "test/stream/"
         settings.destroy()
 
         // Wait for QSettings to flush.

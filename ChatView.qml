@@ -16,6 +16,17 @@ Item {
     property bool soundEnabled: true
     property var platformCapabilities: ({})
     property int selectedIndex: -1
+    property bool vibrateEnabled: true
+    property bool simpleNicks: false
+    property bool ttsOn: false
+    property bool ttsTellNames: false
+    readonly property bool ttsAvailable: tts.state !== TextToSpeech.Error
+
+    onTtsOnChanged: {
+        if (!ttsOn) {
+            tts.stop();
+        }
+    }
 
     signal requestBanUser(string platID, string userID, string reason, var deadlineUnixMs)
     signal requestRemoveChatMessage(string platID, string messageID)
@@ -70,43 +81,12 @@ Item {
         source: "qrc:/qt/qml/WingOut/fonts/FreeSans.ttf"
     }
 
-    Row {
-        id: chatSettings
-        height: ttsEnabled.height
-        spacing: 16
-
-        CheckBox {
-            id: vibrationEnabled
-            checked: true
-            text: "vibrate"
-        }
-        CheckBox {
-            id: simpleNicknamesEnabled
-            text: "nick:simple"
-        }
-        CheckBox {
-            id: ttsEnabled
-            enabled: tts.state !== TextToSpeech.Error
-            text: "TTS"
-            onCheckedChanged: function () {
-                if (!ttsEnabled.checked) {
-                    tts.stop();
-                }
-            }
-        }
-        CheckBox {
-            id: ttsTellUsernames
-            enabled: ttsEnabled.checked
-            text: "TTS:name"
-        }
-    }
-
     ListView {
         id: messagesList
         x: 0
-        y: chatSettings.height
+        y: 0
         width: parent.width
-        height: parent.height - y
+        height: parent.height
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
@@ -173,14 +153,14 @@ Item {
                 case "botrixoficial":
                     return;
                 }
-                if (vibrationEnabled.checked) {
+                if (chatView.vibrateEnabled) {
                     chatView.root.platform.vibrate(500, true);
                 }
                 var text = msg.message;
                 text = text.replace(/<[^>]*>/g, "");
                 text = text.replace(/https?:\/\/[^\s]+/g, "<HTTP-link>");
-                if (ttsEnabled.checked && tts.state !== TextToSpeech.Error) {
-                    if (ttsTellUsernames.checked) {
+                if (chatView.ttsOn && tts.state !== TextToSpeech.Error) {
+                    if (chatView.ttsTellNames) {
                         var username = msg.usernameReadable ? msg.usernameReadable : msg.username;
                         text = "from " + username + ": " + text;
                     }
@@ -401,7 +381,7 @@ Item {
             }
 
             function formatUsername() {
-                if (!simpleNicknamesEnabled.checked) {
+                if (!chatView.simpleNicks) {
                     return username;
                 }
                 if (!messageItem.usernameReadable) {

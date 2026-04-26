@@ -33,9 +33,9 @@ ApplicationWindow {
         id: appSettings
         property string dxProducerHost: ""
         property string previewRTMPUrl: ""
-        property string previewRTMPPort: ""
-        property string previewRTMPStreamID: ""
         property string ffstreamHost: ""
+        // Empty string means "auto-pick first enabled player".
+        property string chosenPlayerStreamID: ""
     }
 
     readonly property bool setupRequired: !appSettings.dxProducerHost
@@ -61,7 +61,7 @@ ApplicationWindow {
         active: !application.setupRequired
         sourceComponent: Component {
             Main {
-                platformInstance: platformInstance
+                platformInstance: application.externalPlatformInstance
                 appSettings: appSettings
             }
         }

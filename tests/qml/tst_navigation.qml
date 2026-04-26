@@ -19,16 +19,12 @@ TestCase {
         id: navSettings
         property string dxProducerHost: "https://localhost:1234"
         property string previewRTMPUrl: ""
-        property string previewRTMPPort: "1945"
-        property string previewRTMPStreamID: "test/stream/"
         property string ffstreamHost: ""
     }
 
     Component.onCompleted: {
         // Ensure the settings are flushed before Application reads them.
         navSettings.dxProducerHost = "https://localhost:1234"
-        navSettings.previewRTMPPort = "1945"
-        navSettings.previewRTMPStreamID = "test/stream/"
     }
 
     Component {

@@ -7,6 +7,24 @@ FONT_PATH=$1
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
+# Optional fast path: reuse a pre-built FreeSans.ttf from any sibling build
+# dir to skip the slow / fragile FontForge generation. Off by default so
+# CI / clean builds always regenerate; opt-in via env var when iterating
+# locally on a host where FontForge is not installed.
+if [ -n "${WINGOUT_REUSE_PREBUILT_FONT}" ]; then
+    for cand in \
+        "$PROJECT_ROOT/build-test/FreeSans.ttf" \
+        "$PROJECT_ROOT/build-test/fonts/FreeSans.ttf" \
+        "$PROJECT_ROOT/build-android-debug/android-build/FreeSans.ttf" \
+        "$PROJECT_ROOT/build-android-debug/android-build/fonts/FreeSans.ttf"; do
+        if [ -f "$cand" ]; then
+            echo "Reusing prebuilt font: $cand -> $FONT_PATH"
+            cp "$cand" "$FONT_PATH"
+            exit 0
+        fi
+    done
+fi
+
 TWEAKS_DIR="$PROJECT_ROOT/import/gnu-freefont/tools/generate/tweeks"
 SFD_DIR="$PROJECT_ROOT/import/gnu-freefont/sfd"
 

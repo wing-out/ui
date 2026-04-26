@@ -225,35 +225,6 @@ Page {
                 }
 
                 Label {
-                    text: "Preview RTMP Port:"
-                }
-
-                TextField {
-                    id: previewPortField
-                    Layout.fillWidth: true
-                    text: settingsPage.appSettings.previewRTMPPort
-                    placeholderText: "1945"
-                    inputMethodHints: Qt.ImhDigitsOnly
-                    onTextChanged: {
-                        settingsPage.appSettings.previewRTMPPort = text.trim();
-                    }
-                }
-
-                Label {
-                    text: "Preview RTMP Stream ID:"
-                }
-
-                TextField {
-                    id: previewStreamField
-                    Layout.fillWidth: true
-                    text: settingsPage.appSettings.previewRTMPStreamID
-                    placeholderText: "pixel/dji-osmo-pocket-3-merged/"
-                    onTextChanged: {
-                        settingsPage.appSettings.previewRTMPStreamID = text.trim();
-                    }
-                }
-
-                Label {
                     text: "FFStream gRPC Host (optional):"
                 }
 
@@ -276,6 +247,59 @@ Page {
                         settingsPage.appSettings.ffstreamHost = url;
                         console.log("FFStream host saved:", url);
                     }
+                }
+
+                Label {
+                    text: "Stream Player (for lag metric):"
+                }
+
+                ComboBox {
+                    id: playerPicker
+                    Layout.fillWidth: true
+                    textRole: "label"
+                    valueRole: "streamID"
+                    model: ListModel {
+                        id: playerPickerModel
+                        ListElement { label: "Auto (first enabled)"; streamID: "" }
+                    }
+                    Component.onCompleted: refreshPlayers()
+                    function refreshPlayers() {
+                        if (!settingsPage.root || !settingsPage.root.dxProducerClient) {
+                            return;
+                        }
+                        settingsPage.root.dxProducerClient.listStreamPlayers(function (reply) {
+                            playerPickerModel.clear();
+                            playerPickerModel.append({ label: "Auto (first enabled)", streamID: "" });
+                            var players = reply.playersData || reply.players || [];
+                            for (var i = 0; i < players.length; i++) {
+                                var p = players[i];
+                                var labelTxt = (p.disabled === true ? "[disabled] " : "") + p.streamID;
+                                playerPickerModel.append({ label: labelTxt, streamID: p.streamID });
+                            }
+                            // Restore selection from settings.
+                            var idx = 0;
+                            for (var j = 0; j < playerPickerModel.count; j++) {
+                                if (playerPickerModel.get(j).streamID === settingsPage.appSettings.chosenPlayerStreamID) {
+                                    idx = j;
+                                    break;
+                                }
+                            }
+                            playerPicker.currentIndex = idx;
+                        }, function (err) {
+                            console.log("Settings.qml: listStreamPlayers failed");
+                            // Keep auto-only model and let the user retry via Refresh.
+                        }, settingsPage.root.grpcCallOptions);
+                    }
+                    onActivated: function (idx) {
+                        settingsPage.appSettings.chosenPlayerStreamID = playerPickerModel.get(idx).streamID;
+                        console.log("Settings.qml: chosenPlayerStreamID set to '" + settingsPage.appSettings.chosenPlayerStreamID + "'");
+                    }
+                }
+
+                Button {
+                    text: "Refresh Players"
+                    Layout.fillWidth: true
+                    onClicked: playerPicker.refreshPlayers()
                 }
 
                 Item {

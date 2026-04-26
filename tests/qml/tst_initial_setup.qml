@@ -18,36 +18,26 @@ TestCase {
         id: testSettings
         property string dxProducerHost: ""
         property string previewRTMPUrl: ""
-        property string previewRTMPPort: ""
-        property string previewRTMPStreamID: ""
         property string ffstreamHost: ""
     }
 
     function cleanup() {
         testSettings.dxProducerHost = ""
         testSettings.previewRTMPUrl = ""
-        testSettings.previewRTMPPort = ""
-        testSettings.previewRTMPStreamID = ""
         testSettings.ffstreamHost = ""
     }
 
-    function test_01_defaults_applied_programmatically() {
-        // Instead of trying to click inside a separate Window, test the
-        // settings logic directly: fill the host and simulate save by
-        // writing settings the way the Save handler does.
-        var val = "myhost:1234"
-        if (!val.startsWith("http://") && !val.startsWith("https://"))
-            val = "https://" + val
-        testSettings.dxProducerHost = val
-        testSettings.previewRTMPPort = "1945"
-        testSettings.previewRTMPStreamID = "pixel/dji-osmo-pocket-3-merged/"
+    function test_01_save_writes_host_and_url() {
+        var host = "myhost:1234"
+        if (!host.startsWith("http://") && !host.startsWith("https://"))
+            host = "https://" + host
+        testSettings.dxProducerHost = host
+        testSettings.previewRTMPUrl = "rtmp://192.168.0.134:1945/pixel/dji-osmo-pocket-3-merged/"
 
         compare(testSettings.dxProducerHost, "https://myhost:1234")
-        compare(testSettings.previewRTMPPort, "1945",
-                "Default RTMP port should be 1945")
-        compare(testSettings.previewRTMPStreamID,
-                "pixel/dji-osmo-pocket-3-merged/",
-                "Default stream ID should be applied")
+        compare(testSettings.previewRTMPUrl,
+                "rtmp://192.168.0.134:1945/pixel/dji-osmo-pocket-3-merged/",
+                "Preview URL should be stored verbatim")
     }
 
     function test_02_https_scheme_added() {
