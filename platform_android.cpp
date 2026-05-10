@@ -50,6 +50,13 @@ void Platform::setEnableRunningInBackground(bool value) {
       serviceIntent.handle().object());*/
 }
 
+bool Platform::startFFStreamCameraDaemon() {
+  // Intentionally unused in the current mission topology. The phone's
+  // rc.local-owned supervisor starts the ffstream-camera loop script; Wingout
+  // must not start Ubuntu, call su/chroot, or launch that script directly.
+  return false;
+}
+
 void Platform::startMonitoringSignalStrength() {
   QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
     QJniObject activity =
@@ -107,19 +114,6 @@ QVariantMap Platform::getSafeAreaInsets() {
     insets["bottom"] = systemBarsInsets.getField<jint>("bottom");
     insets["left"] = systemBarsInsets.getField<jint>("left");
     insets["right"] = systemBarsInsets.getField<jint>("right");
-  }
-
-  QJniObject displayCutout = rootWindowInsets.callObjectMethod(
-      "getDisplayCutout", "()Landroid/view/DisplayCutout;");
-  if (displayCutout.isValid()) {
-    insets["top"] =
-        qMax(insets["top"].toInt(), displayCutout.callMethod<jint>("getSafeInsetTop"));
-    insets["bottom"] = qMax(insets["bottom"].toInt(),
-                            displayCutout.callMethod<jint>("getSafeInsetBottom"));
-    insets["left"] = qMax(insets["left"].toInt(),
-                          displayCutout.callMethod<jint>("getSafeInsetLeft"));
-    insets["right"] = qMax(insets["right"].toInt(),
-                           displayCutout.callMethod<jint>("getSafeInsetRight"));
   }
 
   return insets;

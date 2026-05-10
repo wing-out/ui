@@ -53,9 +53,11 @@ void Client::_onChannelChanged() {
   }
   this->serverURI = channelUri;
   this->serverChannelOptions = http2Channel->channelOptions();
-  QSslConfiguration sslConfig;
-  sslConfig.setPeerVerifyMode(QSslSocket::PeerVerifyMode::VerifyNone);
-  this->serverChannelOptions.setSslConfiguration(sslConfig);
+  if (this->serverURI.scheme() == "https") {
+    QSslConfiguration sslConfig;
+    sslConfig.setPeerVerifyMode(QSslSocket::PeerVerifyMode::VerifyNone);
+    this->serverChannelOptions.setSslConfiguration(sslConfig);
+  }
   this->attachChannel(std::make_shared<QGrpcHttp2Channel>(
       this->serverURI, this->serverChannelOptions));
   qDebug() << "ffstreamClient channel changed: " << this->serverURI;
@@ -100,14 +102,6 @@ void Client::_reconnectIfNeeded() {
     return;
   }
 
-  auto http2Channel = dynamic_cast<QGrpcHttp2Channel *>(this->channel().get());
-  if (http2Channel && http2Channel->hostUri().scheme() == "https" &&
-      this->serverURI.scheme() == "http") {
-    qWarning() << "re-creating the channel skipped: insecure URI with secure channel"
-               << this->serverURI;
-    return;
-  }
-
   bool needsReconnect = (this->channel() == nullptr);
   if (!needsReconnect) {
     auto http2Channel =
@@ -132,11 +126,13 @@ void Client::_reconnectIfNeeded() {
 
   qWarning() << "re-creating the channel" << this->serverURI;
   defer[=] { qDebug() << "/re-creating the channel"; };
-  QSslConfiguration sslConfig =
-      this->serverChannelOptions.sslConfiguration().value_or(
-          QSslConfiguration());
-  sslConfig.setPeerVerifyMode(QSslSocket::PeerVerifyMode::VerifyNone);
-  this->serverChannelOptions.setSslConfiguration(sslConfig);
+  if (this->serverURI.scheme() == "https") {
+    QSslConfiguration sslConfig =
+        this->serverChannelOptions.sslConfiguration().value_or(
+            QSslConfiguration());
+    sslConfig.setPeerVerifyMode(QSslSocket::PeerVerifyMode::VerifyNone);
+    this->serverChannelOptions.setSslConfiguration(sslConfig);
+  }
   this->attachChannel(std::make_shared<QGrpcHttp2Channel>(
       this->serverURI, this->serverChannelOptions));
 }
@@ -144,8 +140,17 @@ void Client::_reconnectIfNeeded() {
 void Client::getLatencies(
     const QJSValue &finishCallback, const QJSValue &errorCallback,
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
-  QMutexLocker locker(&this->locker);
-  this->_reconnectIfNeeded();
+  // Limit the lock to channel reconciliation only. The async
+  // GetLatencies() RPC dispatch must not run under the mutex —
+  // every other wrapper in this file (getInputQuality, getStats,
+  // injectSubtitles, ...) does the same: lock-free dispatch after
+  // _reconnectIfNeeded(). Holding the mutex across the async call
+  // serialises every QML caller and can deadlock with
+  // _onChannelChanged / processGRPCError, which both also take it.
+  {
+    QMutexLocker locker(&this->locker);
+    this->_reconnectIfNeeded();
+  }
   ffstream_grpc::GetLatenciesRequest arg{};
   this->GetLatencies(arg, finishCallback, errorCallback, options);
 }
@@ -196,12 +201,113 @@ void Client::injectSubtitles(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   this->_reconnectIfNeeded();
   ffstream_grpc::InjectSubtitlesRequest arg{};
-  // The generated proto now exposes a `text` string field. If caller passes
-  // raw bytes for subtitles, treat them as UTF-8 text. This preserves the
-  // original intent while matching the generated API.
-  arg.setText(QString::fromUtf8(data));
+  // The generated proto exposes `bytes data` (QByteArray). Pass through.
+  arg.setData(data);
   arg.setDurationNs(durationNS);
   this->InjectSubtitles(arg, finishCallback, errorCallback, options);
+}
+
+void Client::addInput(
+    quint64 priority, const QString &url, const QVariantList &customOptions,
+    const QJSValue &finishCallback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  this->_reconnectIfNeeded();
+
+  avpipeline::InputConfig cfg;
+  QList<avpipeline::CustomOption> protoOpts;
+  protoOpts.reserve(customOptions.size());
+  for (const QVariant &v : customOptions) {
+    const QVariantMap m = v.toMap();
+    avpipeline::CustomOption co;
+    co.setKey(m.value(QStringLiteral("key")).toString());
+    co.setValue(m.value(QStringLiteral("value")).toString());
+    if (co.key().isEmpty()) {
+      qWarning() << "addInput: skipping custom option with empty key";
+      continue;
+    }
+    protoOpts.append(co);
+  }
+  cfg.setCustomOptions(protoOpts);
+
+  ffstream_grpc::AddInputRequest req{};
+  req.setPriority(priority);
+  req.setUrl(url);
+  req.setInputConfig(cfg);
+
+  this->AddInput(req, finishCallback, errorCallback, options);
+}
+
+void Client::removeInput(
+    quint64 priority, quint64 num, const QJSValue &finishCallback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  this->_reconnectIfNeeded();
+
+  ffstream_grpc::RemoveInputRequest req{};
+  req.setPriority(priority);
+  req.setNum(num);
+
+  this->RemoveInput(req, finishCallback, errorCallback, options);
+}
+
+void Client::getInputsInfo(
+    const QJSValue &finishCallback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  this->_reconnectIfNeeded();
+
+  ffstream_grpc::GetInputsInfoRequest req{};
+
+  this->GetInputsInfo(req, finishCallback, errorCallback, options);
+}
+
+void Client::end(
+    const QJSValue &finishCallback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  this->_reconnectIfNeeded();
+
+  ffstream_grpc::EndRequest req{};
+
+  this->End(req, finishCallback, errorCallback, options);
+}
+
+void Client::switchOutput(
+    const QString &videoCodec, quint32 width, quint32 height,
+    quint64 videoBitrate, const QString &audioCodec, quint32 audioSampleRate,
+    quint64 audioBitrate, quint64 maxBitrate,
+    const QJSValue &finishCallback, const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  this->_reconnectIfNeeded();
+
+  ffstream_grpc::VideoCodecConfig video;
+  video.setCodecName(videoCodec);
+  video.setWidth(width);
+  video.setHeight(height);
+  video.setAverageBitRate(videoBitrate);
+
+  ffstream_grpc::AudioCodecConfig audio;
+  audio.setCodecName(audioCodec);
+  audio.setSampleRate(audioSampleRate);
+  audio.setAverageBitRate(audioBitrate);
+
+  ffstream_grpc::TranscoderConfig config;
+  config.setVideo(video);
+  config.setAudio(audio);
+
+  ffstream_grpc::SwitchOutputByPropsRequest req;
+  req.setConfig(config);
+  req.setMaxBitRate(maxBitrate);
+
+  this->SwitchOutputByProps(req, finishCallback, errorCallback, options);
+}
+
+void Client::setOutputUrl(
+    const QString &url, const QJSValue &finishCallback,
+    const QJSValue &errorCallback,
+    const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
+  this->_reconnectIfNeeded();
+  ffstream_grpc::SetOutputURLRequest req{};
+  req.setUrl(url);
+  this->SetOutputURL(req, finishCallback, errorCallback, options);
 }
 
 void Client::injectDiagnostics(
@@ -210,13 +316,18 @@ void Client::injectDiagnostics(
     const QtGrpcQuickPrivate::QQmlGrpcCallOptions *options) {
   this->_reconnectIfNeeded();
   ffstream_grpc::InjectSubtitlesRequest arg{};
-  // Diagnostics are binary; encode as base64 and mark so the receiver can
-  // detect and decode if needed. We prefix with an identifier string so the
-  // text field remains valid UTF-8.
+  // Diagnostics are binary; encode as base64 and mark with a fixed
+  // magic header so the receiver can distinguish a serialised
+  // Diagnostics payload from a literal user-typed subtitle. The
+  // header is intentionally non-printable (SOH bytes) to make
+  // collisions with real subtitle text effectively impossible while
+  // still keeping the field valid UTF-8 — see DiagnosticsMagic in
+  // ffstream_client.h for the protocol contract.
   QProtobufSerializer serializer;
   QByteArray ser = diagnostics.serialize(&serializer);
-  QString text = QString::fromLatin1(ser.toBase64());
-  arg.setText(text);
+  QByteArray payload =
+      DiagnosticsMagic().toUtf8() + ser.toBase64();
+  arg.setData(payload);
   arg.setDurationNs(durationNS);
   this->InjectSubtitles(arg, finishCallback, errorCallback, options);
 }

@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Shapes
 import QtCore as Core
+import chatwebhook
 
 Page {
     id: dashboard
@@ -62,6 +63,10 @@ Page {
         target: dashboard.root
         function onNormalizedDxProducerHostChanged() {
             subscribeToChatMessages();
+            // Reset capability cache so retries hit the new host.
+            dashboard.platformCapabilities = ({});
+            chatView.platformCapabilities = dashboard.platformCapabilities;
+            fetchPlatformCapabilities();
         }
     }
 
@@ -111,6 +116,10 @@ Page {
         timers.retryTimerSubscribeToChatMessages.callback = function () {
             console.log("re-subscribing to chat messages");
             subscribeToChatMessages();
+        };
+        timers.retryTimerFetchPlatformCapabilities.callback = function () {
+            console.log("re-fetching platform capabilities");
+            fetchPlatformCapabilities();
         };
     }
 
@@ -448,6 +457,14 @@ Page {
         dashboard.root.processStreamDGRPCError(dashboard.root.dxProducerClient, error);
     }
 
+    function cameraIndexForPreferredCamera(camera) {
+        return camera === "Back" ? 0 : 1
+    }
+
+    function cameraControlClient() {
+        return dashboard.root ? dashboard.root.ffstreamCameraClient : null
+    }
+
     function subscribeToChatMessages() {
         if (!dashboard.root.checkStreamDClient()) {
             return;
@@ -495,10 +512,50 @@ Page {
         console.log("Dashboard.qml: Received new chat message");
         var eventID = chatMessage.content.id_proto;
 
-        // Dedup: check if eventID already exists in model
+        // Server-pushed deletion: strikethrough the matching row and don't append.
+        if (chatMessage.content.eventType === PlatformEventType.PlatformEventType.platformEventTypeChatMessageDeleted) {
+            var deletedID = chatMessage.content.referredMessageID;
+            if (deletedID) {
+                for (var i = 0; i < chatView.model.count; i++) {
+                    if (chatView.model.get(i).eventID === deletedID) {
+                        if (!chatView.model.get(i).isDeleted) {
+                            chatView.model.setProperty(i, "isDeleted", true);
+                        }
+                        break;
+                    }
+                }
+            }
+            return;
+        }
+
+        // Upsert: if (eventID, platformName) already exists, mutate in place.
+        // Streamd may publish a follow-up event with the same (EventID,
+        // Platform) when async translation completes; we replace the row's
+        // mutable fields rather than appending or dropping.
+        var platformName = chatMessage.platID;
         for (var i = 0; i < chatView.model.count; i++) {
-            if (chatView.model.get(i).eventID === eventID) {
-                console.log("message ", eventID, " is already displayed");
+            var row = chatView.model.get(i);
+            if (row.eventID === eventID && row.platformName === platformName) {
+                var upHasMessage = chatMessage.content.message !== null
+                    && typeof chatMessage.content.message !== "undefined";
+                var upFmt = 0;
+                var upContent = "";
+                if (upHasMessage) {
+                    if (typeof chatMessage.content.message.formatType !== "undefined"
+                            && chatMessage.content.message.formatType !== null) {
+                        upFmt = chatMessage.content.message.formatType;
+                    }
+                    upContent = chatMessage.content.message.content || "";
+                }
+                // Empty/whitespace translation guard: keep raw text rather
+                // than blanking the row.
+                if (upContent && upContent.trim().length > 0) {
+                    chatView.model.setProperty(i, "message", upContent);
+                    chatView.model.setProperty(i, "messageFormatType", upFmt);
+                }
+                // Advance the resubscribe watermark so a reconnect doesn't
+                // replay messages that arrived between raw and update.
+                latestChatMessageTimestampUNIXNano = chatMessage.content.createdAtUNIXNano;
                 return;
             }
         }
@@ -535,7 +592,8 @@ Page {
             eventID: eventID,
             userID: chatMessage.content.user.id_proto,
             moneyAmount: moneyAmount,
-            moneyCurrency: moneyCurrency
+            moneyCurrency: moneyCurrency,
+            isDeleted: false
         };
         latestChatMessageTimestampUNIXNano = chatMessage.content.createdAtUNIXNano;
         if (chatView.model.count > 200) {
@@ -555,16 +613,27 @@ Page {
     }
 
     function fetchPlatformCapabilities() {
+        if (!dashboard.root.checkStreamDClient()) {
+            return;
+        }
+        if (!dashboard.root.dxProducerClient.isChannelReady()) {
+            timers.retryTimerFetchPlatformCapabilities.start();
+            return;
+        }
+        timers.retryTimerFetchPlatformCapabilities.stop();
         var platforms = ["twitch", "youtube", "kick"];
         for (var i = 0; i < platforms.length; i++) {
             (function(platID) {
+                if (platformCapabilities[platID] !== undefined) return;
                 dxProducerClient.getBackendInfo(platID, function(reply) {
                     var caps = platformCapabilities;
                     caps[platID] = reply.capabilities;
                     platformCapabilities = caps;
                     chatView.platformCapabilities = platformCapabilities;
+                    console.log("getBackendInfo ok for", platID, "caps=", JSON.stringify(reply.capabilities));
                 }, function(error) {
                     console.warn("getBackendInfo failed for", platID, error);
+                    timers.retryTimerFetchPlatformCapabilities.start();
                 }, grpcCallOptions);
             })(platforms[i]);
         }
@@ -1048,7 +1117,7 @@ Page {
     }
 
     // Extract hostname from the streamd gRPC address (e.g.
-    // "http://192.168.0.173:3594" → "192.168.0.173") so the preview
+    // "http://192.0.2.10:3594" → "192.0.2.10") so the preview
     // URL points at the same host instead of a hardcoded IP.
     function streamdHost() {
         var addr = main.dxProducerHost || "";
@@ -1065,14 +1134,27 @@ Page {
         width: parent.width
         height: parent.width * 9 / 16
         property string configuredPreview: dashboard.root.appSettings.previewRTMPUrl
-        property string sourceRawCamera: "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3"
-        property string lowBitRatePreview: "rtmp://127.0.0.1:1935/proxy/dji-osmo-pocket3?reason=low-bitrate"
+        // Optional raw-camera and low-bitrate preview URLs come from
+        // appSettings; the underlying stream paths are deployment
+        // choices (e.g. local mediamtx routes for the upstream camera
+        // proxy), so we don't hardcode any default here. When the
+        // raw-camera URL is unset, videoSourceToggle is disabled via
+        // its `enabled:` binding (so the user cannot put the toggle
+        // into a state inconsistent with the source binding's
+        // short-circuit at L1143). The low-bitrate path stays
+        // auto-managed based on encoded video bitrate at L1581 (no
+        // user-facing toggle to gate).
+        property string sourceRawCamera: dashboard.root.appSettings.rawCameraPreviewUrl
+        property string lowBitRatePreview: dashboard.root.appSettings.lowBitratePreviewUrl
         property bool useLowBitratePreview: false
         property bool useRawSource: false
-        readonly property string effectivePreview: useLowBitratePreview
-            ? lowBitRatePreview
-            : configuredPreview
-        source: useRawSource ? sourceRawCamera : effectivePreview
+        readonly property string effectivePreview:
+            (useLowBitratePreview && lowBitRatePreview && lowBitRatePreview.length > 0)
+                ? lowBitRatePreview
+                : configuredPreview
+        source: (useRawSource && sourceRawCamera && sourceRawCamera.length > 0)
+            ? sourceRawCamera
+            : effectivePreview
 
         onEffectivePreviewChanged: {
             console.log("Dashboard preview URL:", effectivePreview);
@@ -1112,21 +1194,108 @@ Page {
 
         ToolButton {
             id: videoSourceToggle
+            objectName: "videoSourceToggle"
             anchors.margins: 12
             anchors.bottom: parent.bottom
             anchors.right: parent.right
             font.pixelSize: 40
             checkable: true
             checked: false
+            // Disable the toggle when no raw-camera URL is configured;
+            // the binding at L1143 already short-circuits to the
+            // configured preview when sourceRawCamera is empty, but
+            // without this `enabled:` companion guard the toggle would
+            // visually flip its checked/icon/tooltip state on click
+            // while the source binding silently falls through — a UX
+            // lie the user reads as "switched to raw" without any
+            // actual source change. Gating user input here keeps the
+            // toggle's name-contract honest: it either really switches
+            // sources or advertises itself as not-currently-actionable.
+            enabled: imageScreenshot.sourceRawCamera && imageScreenshot.sourceRawCamera.length > 0
             property real defaultOpacity: 0.6
             opacity: hovered ? 1.0 : defaultOpacity
             onToggled: function () {
-                console.log("toggling video source to ", checked ? "raw" : "prod");
+                console.log("toggling video source to ", checked ? "raw" : "processed");
                 imageScreenshot.useRawSource = videoSourceToggle.checked;
             }
             text: checked ? "📷" : "🌐"
             ToolTip.visible: hovered
-            ToolTip.text: checked ? "Switch to prod" : "Switch to raw"
+            ToolTip.text: enabled
+                ? (checked ? "Switch to processed feed" : "Switch to raw camera feed")
+                : "Raw camera preview not configured"
+        }
+
+        ToolButton {
+            id: cameraFlipButton
+            anchors.margins: 12
+            anchors.bottom: parent.bottom
+            anchors.right: videoSourceToggle.left
+            anchors.rightMargin: 8
+            font.pixelSize: 40
+            property real defaultOpacity: 0.6
+            opacity: hovered ? 1.0 : defaultOpacity
+            visible: dashboard.root && dashboard.root.streamingSettings && dashboard.root.streamingSettings.active
+            enabled: !flipping
+            property bool flipping: false
+            text: "🔄"
+            ToolTip.visible: hovered
+            ToolTip.text: "Flip camera"
+            onClicked: cameraFlipButton.flipCamera()
+
+            function flipCamera() {
+                if (cameraFlipButton.flipping) return;
+                var cameraClient = dashboard.cameraControlClient();
+                if (!dashboard.root || !cameraClient || !dashboard.root.streamingSettings) return;
+                cameraFlipButton.flipping = true;
+                var settings = dashboard.root.streamingSettings;
+                var oldCamera = settings.preferredCamera;
+                var oldNum = settings.activeCameraNum;
+                var newCamera = oldCamera === "Front" ? "Back" : "Front";
+                var newIdx = dashboard.cameraIndexForPreferredCamera(newCamera);
+                var newIdxStr = String(newIdx);
+
+                if (dashboard.root.ffstreamCameraHost
+                        && typeof cameraClient.setServerUri === "function") {
+                    cameraClient.setServerUri(dashboard.root.ffstreamCameraHost);
+                }
+
+                // Persist the intent BEFORE issuing RPCs so the JSON
+                // reflects the user's last choice even if removeInput /
+                // addInput fail or the process is killed mid-flip.
+                // setPreferredCamera writes streaming_settings.json when
+                // active. On RPC failure we revert below.
+                settings.preferredCamera = newCamera;
+
+                var camOpts = [
+                    { key: "f",            value: "android_camera" },
+                    { key: "camera_index", value: newIdxStr },
+                    { key: "video_size",   value: settings.width + "x" + settings.height },
+                    { key: "framerate",    value: String(settings.fps) },
+                    { key: "pixel_format", value: "yuv420p" }
+                ];
+                function _revert() {
+                    settings.preferredCamera = oldCamera;
+                    cameraFlipButton.flipping = false;
+                }
+                cameraClient.removeInput(0, oldNum,
+                    function() {
+                        cameraClient.addInput(0, newIdxStr, camOpts,
+                            function(reply) {
+                                settings.activeCameraNum = reply.num;
+                                cameraFlipButton.flipping = false;
+                            },
+                            function(err) {
+                                _revert();
+                                cameraClient.processGRPCError(err);
+                            },
+                            null);
+                    },
+                    function(err) {
+                        _revert();
+                        cameraClient.processGRPCError(err);
+                    },
+                    null);
+            }
         }
     }
 
@@ -1476,6 +1645,7 @@ Page {
 
         CheckBox {
             id: musicToggleBtn
+            enabled: false
             property bool musicEnabled: false
             text: "Music"
             topPadding: 2; bottomPadding: 2
@@ -1500,6 +1670,7 @@ Page {
 
         CheckBox {
             id: subtitlesToggleBtn
+            enabled: false
             property bool subtitlesEnabled: false
             text: "Subs"
             topPadding: 2; bottomPadding: 2
@@ -1568,6 +1739,7 @@ Page {
 
     ChatView {
         id: chatView
+        objectName: "chatView"
         root: dashboard.root
         model: dashboard.root.globalChatMessagesModel
         soundEnabled: appSettings.soundEnabled
@@ -1590,7 +1762,18 @@ Page {
         onRequestRemoveChatMessage: function(platID, messageID) {
             console.log("Remove chat message:", platID, messageID);
             dxProducerClient.removeChatMessage(platID, messageID,
-                function() { console.log("delete ok:", platID, messageID); },
+                function() {
+                    console.log("delete ok:", platID, messageID);
+                    // If a server-pushed "deleted" event is ever wired into
+                    // onChatNewMessage, guard there for an existing isDeleted=true
+                    // row to avoid double-application across both code paths.
+                    for (var i = 0; i < chatView.model.count; i++) {
+                        if (chatView.model.get(i).eventID === messageID) {
+                            chatView.model.setProperty(i, "isDeleted", true);
+                            break;
+                        }
+                    }
+                },
                 function(err) { console.warn("delete failed:", err); },
                 grpcCallOptions);
         }

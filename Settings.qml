@@ -13,8 +13,23 @@ Page {
     Material.accent: Material.Purple
     title: qsTr("Settings")
     padding: 0
+    // NO Page bottomPadding: AndroidManifest sets
+    // windowSoftInputMode=adjustResize, so Android already resizes the
+    // app window when the keyboard appears. A Page-level bottomPadding
+    // bound to Qt.inputMethod.keyboardRectangle.height would
+    // double-shrink the content area (Android window resize +
+    // bottomPadding stack), collapsing the inner ScrollView to ~0
+    // height — see Cameras.qml for the same correction. The Editor
+    // tab's TextArea handles focus-visible via Qt's built-in cursor
+    // tracking; the Codec tab no longer exists post the
+    // camera-settings consolidation.
 
     property string configText: ""
+
+    // Re-export the shared StreamingSettingsController owned by Main.qml so the
+    // codec UI binds to the same instance the auto-AV1-on-connect handler
+    // consumes. Avoids two in-memory copies of the same persisted settings.
+    readonly property var streamingSettings: settingsPage.root.streamingSettings
 
     function refresh() {
         console.log("Settings.qml: Requesting config...");

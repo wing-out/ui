@@ -24,6 +24,16 @@ Item {
     }
 
     Timer {
+        id: retryTimerFetchPlatformCapabilities
+        interval: 1000
+        repeat: false
+        property var callback: null
+        onTriggered: {
+            if (callback) callback()
+        }
+    }
+
+    Timer {
         id: pingTicker
         interval: 200
         repeat: true
@@ -152,6 +162,7 @@ Item {
     }
     property alias retryTimerSubscribeToChatMessages: retryTimerSubscribeToChatMessages
     property alias retryTimerSubscribeToScreenshot: retryTimerSubscribeToScreenshot
+    property alias retryTimerFetchPlatformCapabilities: retryTimerFetchPlatformCapabilities
     property alias pingTicker: pingTicker
     property alias streamStatusTicker: streamStatusTicker
     property alias updateFFStreamLatenciesTicker: updateFFStreamLatenciesTicker

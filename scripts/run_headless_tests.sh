@@ -9,8 +9,8 @@ set -euo pipefail
 #
 # The script:
 #   1. Configures a CMake build (reusing the desktop build infrastructure).
-#   2. Builds the test target (tst_wingout) and QML module plugins.
-#   3. Runs it via ctest with QT_QPA_PLATFORM=offscreen.
+#   2. Builds every tst_* test target and QML module plugins.
+#   3. Runs them via ctest (filter ^tst_) with QT_QPA_PLATFORM=offscreen.
 # ---------------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -94,9 +94,46 @@ cmake_args=(
 echo "==> Configuring CMake …"
 cmake "${cmake_args[@]}" 2>&1 | tail -20
 
-# ---- Build test target and QML module plugins ----
-echo "==> Building tst_wingout and QML plugins …"
-cmake --build "$BUILD_DIR" --target tst_wingout -- -j"$JOBS" 2>&1 | tail -30
+# ---- Build test targets and QML module plugins ----
+#
+# Discover tst_* targets dynamically rather than hardcoding names. Without
+# this, adding a new tst_* via tests/CMakeLists.txt would silently NOT be
+# built — ctest would then fail with "Could not find executable" even
+# though the registration succeeded. The previous incarnation of this
+# script hardcoded `tst_wingout` (and later added a second hand-maintained
+# line for tst_streaming_settings_controller_reconcile); enumerating from
+# the configured CMake API keeps every future tst_* in the runner without
+# manual edits.
+#
+# Strategy: parse the CTest registration file (built by `add_test(NAME …)`).
+# Test names are also the executable target names by convention here.
+echo "==> Discovering tst_* targets …"
+TEST_TARGETS=()
+if [ -f "$BUILD_DIR/tests/CTestTestfile.cmake" ]; then
+  while IFS= read -r name; do
+    [ -n "$name" ] && TEST_TARGETS+=("$name")
+  done < <(
+    grep -hE '^add_test\(tst_[A-Za-z0-9_]+ ' "$BUILD_DIR/tests/CTestTestfile.cmake" \
+      | sed -E 's/^add_test\((tst_[A-Za-z0-9_]+) .*/\1/' \
+      | sort -u
+  )
+fi
+if [ "${#TEST_TARGETS[@]}" -eq 0 ]; then
+  # Fallback: if CTest registration is not yet generated, use the current
+  # roster. This keeps the script working on first-config runs.
+  TEST_TARGETS=(tst_wingout tst_streaming_settings_controller_reconcile)
+fi
+echo "    Targets: ${TEST_TARGETS[*]}"
+
+echo "==> Building tst_* targets and QML plugins …"
+for t in "${TEST_TARGETS[@]}"; do
+  # tst_qml_wrapper_pattern is a script-driven add_test (no executable
+  # target to build). Skip the build step but still let ctest run it.
+  if [ "$t" = "tst_qml_wrapper_pattern" ]; then
+    continue
+  fi
+  cmake --build "$BUILD_DIR" --target "$t" -- -j"$JOBS" 2>&1 | tail -30
+done
 cmake --build "$BUILD_DIR" --target qt_internal_plugins -- -j"$JOBS" 2>&1 | tail -10
 
 # ---- Run tests headlessly ----
@@ -106,5 +143,8 @@ export QT_QUICK_BACKEND=software
 export LD_LIBRARY_PATH="${QT_DIR}/lib:${LD_LIBRARY_PATH:-}"
 
 cd "$BUILD_DIR"
-ctest --output-on-failure -R tst_wingout --timeout 120
+# Filter "^tst_" matches every tst_* test executable registered via
+# add_test(NAME tst_*). The previous filter was "tst_wingout" which silently
+# skipped tst_streaming_settings_controller_reconcile.
+ctest --output-on-failure -R '^tst_' --timeout 120
 echo "==> All tests passed."

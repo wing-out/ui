@@ -225,10 +225,16 @@ Rectangle {
             if (now - mediaPlayer.lastRestartAt < mediaPlayer.retryBackoffMs) {
                 return;
             }
-            var source = mediaPlayer.source;
-            // Skip if source is empty — retrying with no URL creates a
-            // permanent empty-source loop.
-            if (!source || source === "") {
+            var source = String(mediaPlayer.source || "").trim();
+            // Skip if source is empty (or whitespace-only) — retrying
+            // with no URL creates a permanent empty-source loop.
+            // `mediaPlayer.source` is a `url` property (QUrl wrapper);
+            // strict `=== ""` against the wrapper always returns false
+            // and `!source` is falsy on the object even when wrapping
+            // an empty URL. Coerce to string for an honest emptiness
+            // check, matching the same pattern used at L47 in this
+            // component's `Component.onCompleted` initializer.
+            if (source.length === 0) {
                 return;
             }
             console.log("RetryTimer triggered (backoff=", mediaPlayer.retryBackoffMs, "ms): playbackState=", mediaPlayer.playbackState, " source=", source);

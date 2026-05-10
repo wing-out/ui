@@ -120,6 +120,8 @@ Page {
             if (DJIController.djiBleLoggingEnabled) {
                 console.log("[DJI-BLE] QML: Actually starting streaming to", rtmpUrlField.text)
             }
+            DJIController.wifiSSID = wifiSsidField.text
+            DJIController.wifiPSK = wifiPskField.text
             DJIController.startStreaming(rtmpUrlField.text, res, fps, bitrateSelector.value)
         }
     }
@@ -259,11 +261,24 @@ Page {
                 anchors.fill: parent
                 TextField {
                     id: rtmpUrlField
+                    objectName: "rtmpUrlField"
                     placeholderText: "RTMP URL"
                     text: {
+                        // Default RTMP publish URL is composed from the
+                        // current hotspot IP plus the deployment-specific
+                        // route stem the user configures in app settings
+                        // (`appSettings.djiPreviewRouteStem`, e.g. the
+                        // mediamtx route this app's DJI source publishes
+                        // to). Both must be set; otherwise the field
+                        // stays blank and the user types one in.
                         var ip = djiControlPage.root.platform.hotspotIPAddress
                         if (!ip) ip = DJIController.localWlan1Ip
-                        return ip ? "rtmp://" + ip + ":1935/proxy/dji-osmo-pocket3" : ""
+                        var stem = djiControlPage.root.appSettings
+                                ? djiControlPage.root.appSettings.djiPreviewRouteStem
+                                : ""
+                        return (ip && stem && stem.length > 0)
+                            ? "rtmp://" + ip + ":1935/" + stem
+                            : ""
                     }
                     Layout.fillWidth: true
                 }

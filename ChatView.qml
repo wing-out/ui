@@ -30,6 +30,10 @@ Item {
 
     signal requestBanUser(string platID, string userID, string reason, var deadlineUnixMs)
     signal requestRemoveChatMessage(string platID, string messageID)
+    // Passive observability hook: emitted whenever the chat-message sound effect
+    // is played. Used by tests to verify that the soundEnabled gating actually
+    // suppresses the sound. Does not alter playback behavior.
+    signal chatSoundPlayed()
 
     function canBanUser(platformName) {
         var caps = platformCapabilities[platformName];
@@ -64,6 +68,7 @@ Item {
             userID: ""
             moneyAmount: 0
             moneyCurrency: 0
+            isDeleted: false
         }
     }
 
@@ -167,6 +172,7 @@ Item {
                     tts.enqueue(text);
                 } else if (soundEnabled) {
                     soundAddChatMessage.play();
+                    chatView.chatSoundPlayed();
                 }
             }
         }
@@ -237,6 +243,7 @@ Item {
             required property string userID
             required property double moneyAmount
             required property int moneyCurrency
+            required property bool isDeleted
             width: messagesList.width
             height: messageColumn.height
             visible: !isTest || chatView.parent == null
@@ -248,7 +255,9 @@ Item {
                 Text {
                     color: "#ffffff"
                     textFormat: Text.RichText
-                    text: "\u200E" + "<font color='" + messageItem.platformNameToColor(messageItem.platformName) + "'>" + messageItem.timestamp + "</font> " + messageItem.formatEventType(messageItem.eventType) + messageItem.formatMoney() + " <font color='" + messageItem.usernameToColor(messageItem.username) + "'>" + messageItem.formatUsername() + "</font> " + messageItem.formatMessage(messageItem.message, messageItem.messageFormatType)
+                    text: (messageItem.isDeleted ? "<s>" : "") +
+                          "\u200E" + "<font color='" + messageItem.platformNameToColor(messageItem.platformName) + "'>" + messageItem.timestamp + "</font> " + messageItem.formatEventType(messageItem.eventType) + messageItem.formatMoney() + " <font color='" + messageItem.usernameToColor(messageItem.username) + "'>" + messageItem.formatUsername() + "</font> " + messageItem.formatMessage(messageItem.message, messageItem.messageFormatType) +
+                          (messageItem.isDeleted ? "</s>" : "")
                     wrapMode: Text.WordWrap
                     font.family: fontFreeSans.name
                     font.letterSpacing: 1
@@ -422,6 +431,8 @@ Item {
                     return "<font color='#ffff00'>ban</font>";
                 case 1025:
                     return "<font color='#ffff00'>hold</font>";
+                case 1026: // platformEventTypeChatMessageDeleted
+                    return "";
                 case 1280:
                     return "<font color='#00ffff'>redeem</font>";
                 case 1536:

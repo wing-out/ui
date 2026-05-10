@@ -30,6 +30,9 @@ public:
 
 // Power management:
   Q_INVOKABLE void setEnableRunningInBackground(bool value);
+  // Placeholder for a future app-owned launcher. Current production startup is
+  // owned by phone boot services, so implementations return false.
+  Q_INVOKABLE bool startFFStreamCameraDaemon();
 
 // Resources:
   Q_INVOKABLE float getCpuUtilization() { return m_cpuUtilization; }

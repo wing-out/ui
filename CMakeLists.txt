@@ -156,6 +156,8 @@ endif()
 qt_add_qml_module(wingout_qml
     URI WingOut
     VERSION 1.0
+    SOURCES
+    android_permissions.h android_permissions.cpp
     QML_FILES
     ${WINGOUT_QML_FILES}
     RESOURCES
@@ -295,6 +297,21 @@ qt_add_qml_module(RemoteCameraController
     ${CMAKE_CURRENT_BINARY_DIR}/RemoteCameraController/
 )
 
+qt_add_qml_module(MicrophoneController
+    URI MicrophoneController
+    VERSION 1.0
+    SOURCES
+    microphone_controller.h microphone_controller.cpp
+    OUTPUT_DIRECTORY
+    ${CMAKE_CURRENT_BINARY_DIR}/MicrophoneController/
+)
+
+target_link_libraries(MicrophoneController
+    PRIVATE
+    Qt6::Core
+    Qt6::Qml
+)
+
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
@@ -367,6 +384,7 @@ target_link_libraries(wingout_qml
     Platform
     StreamingSettingsController
     RemoteCameraController
+    MicrophoneController
     Qt6::Core
     Qt6::CorePrivate
     Qt6::Concurrent
@@ -386,6 +404,7 @@ target_link_libraries(wingout
     Qt6::Qml
     Qt6::Quick
     Qt6::Multimedia
+    Qt6::TextToSpeech
 )
 
 set_target_properties(wingout PROPERTIES
@@ -419,6 +438,14 @@ endif()
 qt_import_qml_plugins(wingout)
 if(TARGET qt_internal_plugins)
     add_dependencies(wingout qt_internal_plugins)
+endif()
+
+if(ANDROID)
+    if(TARGET Qt6::QTextToSpeechEngineAndroidPlugin)
+        qt_import_plugins(wingout INCLUDE Qt6::QTextToSpeechEngineAndroidPlugin)
+    else()
+        message(WARNING "Qt6::QTextToSpeechEngineAndroidPlugin not found; TTS plug-in may not be bundled automatically")
+    endif()
 endif()
 
 target_precompile_headers(wingout_qml PRIVATE

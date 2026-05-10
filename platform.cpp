@@ -27,6 +27,7 @@
 #include "platform.h"
 void Platform::vibrate(uint64_t duration_ms, bool is_notification) {}
 void Platform::setEnableRunningInBackground(bool value) {}
+bool Platform::startFFStreamCameraDaemon() { return false; }
 void Platform::startMonitoringSignalStrength() {}
 WiFiInfo getCurrentWiFiConnection() {}
 void startWiFiScan() {}

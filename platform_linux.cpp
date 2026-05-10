@@ -16,6 +16,8 @@ void Platform::vibrate(uint64_t duration_ms, bool is_notification) { return; }
 
 void Platform::setEnableRunningInBackground(bool value) { return; }
 
+bool Platform::startFFStreamCameraDaemon() { return false; }
+
 void Platform::startMonitoringSignalStrength() { return; }
 
 extern QList<ChannelQualityInfo>

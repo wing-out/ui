@@ -98,3 +98,8 @@ CMakeLists.txt.user*
 /artifacts
 /myscripts
 /qt_dir
+/.build-autonomous
+/.build-strict
+/.fixer-strict
+/.fixer_result.md
+/.repro_via_tests_result.md

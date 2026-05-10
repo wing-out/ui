@@ -4,8 +4,8 @@
 #include <QLoggingCategory>
 #include <cstdio>
 #include "platform.h"
+#include "android_permissions.h"
 #ifdef Q_OS_ANDROID
-#include "android_permissions.cpp"
 #include <QtCore/private/qandroidextras_p.h>
 #endif
 

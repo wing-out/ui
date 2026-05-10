@@ -136,4 +136,108 @@ TestCase {
             compare(stack.currentIndex, 3, "Chat page should be active")
         }
     }
+
+    // ----- upsert helpers (mirror Dashboard.qml onChatNewMessage upsert loop) -----
+
+    /// Locate the row whose (eventID, platformName) tuple matches the
+    /// arguments. Returns the index, or -1 when no row matches.
+    function findExistingRowIdx(model, eventID, platformName) {
+        for (var i = 0; i < model.count; i++) {
+            var row = model.get(i)
+            if (row.eventID === eventID && row.platformName === platformName) {
+                return i
+            }
+        }
+        return -1
+    }
+
+    /// Apply the dashboard's upsert mutation to `model` at `idx` using the
+    /// translated payload `(content, formatType)`. Mirrors Dashboard.qml's
+    /// in-place replacement (empty/whitespace-only content is dropped to
+    /// avoid blanking the row).
+    function applyUpsert(model, idx, content, formatType) {
+        if (content && content.trim().length > 0) {
+            model.setProperty(idx, "message", content)
+            model.setProperty(idx, "messageFormatType", formatType)
+        }
+    }
+
+    function test_07_upsert_replaces_message_by_event_id_and_platform() {
+        mockChatModel.clear()
+        mockChatModel.append({
+            eventID: "abc",
+            platformName: "twitch",
+            message: "raw",
+            messageFormatType: 0,
+            isDeleted: false
+        })
+        compare(mockChatModel.count, 1)
+
+        var idx = findExistingRowIdx(mockChatModel, "abc", "twitch")
+        verify(idx >= 0, "row (abc,twitch) should be found")
+        applyUpsert(mockChatModel, idx, "translated", 0)
+
+        compare(mockChatModel.count, 1, "upsert must not append")
+        compare(mockChatModel.get(0).message, "translated",
+                "message should be replaced by translation")
+    }
+
+    function test_08_upsert_does_not_match_across_platforms() {
+        mockChatModel.clear()
+        mockChatModel.append({
+            eventID: "abc",
+            platformName: "twitch",
+            message: "raw-twitch",
+            messageFormatType: 0,
+            isDeleted: false
+        })
+        mockChatModel.append({
+            eventID: "abc",
+            platformName: "youtube",
+            message: "raw-youtube",
+            messageFormatType: 0,
+            isDeleted: false
+        })
+
+        // No row has (abc, kick). The upsert loop falls through; the
+        // append branch (not exercised here) would add a third row, so we
+        // simulate it.
+        var idx = findExistingRowIdx(mockChatModel, "abc", "kick")
+        compare(idx, -1, "no row should match (abc, kick)")
+        mockChatModel.append({
+            eventID: "abc",
+            platformName: "kick",
+            message: "raw-kick",
+            messageFormatType: 0,
+            isDeleted: false
+        })
+
+        compare(mockChatModel.count, 3,
+                "platform mismatch must not collapse rows")
+        compare(mockChatModel.get(0).message, "raw-twitch")
+        compare(mockChatModel.get(1).message, "raw-youtube")
+        compare(mockChatModel.get(2).message, "raw-kick")
+    }
+
+    function test_09_upsert_preserves_isDeleted() {
+        mockChatModel.clear()
+        mockChatModel.append({
+            eventID: "abc",
+            platformName: "twitch",
+            message: "raw",
+            messageFormatType: 0,
+            isDeleted: false
+        })
+        mockChatModel.setProperty(0, "isDeleted", true)
+        compare(mockChatModel.get(0).isDeleted, true)
+
+        var idx = findExistingRowIdx(mockChatModel, "abc", "twitch")
+        verify(idx >= 0)
+        applyUpsert(mockChatModel, idx, "translated", 0)
+
+        compare(mockChatModel.get(0).message, "translated",
+                "translation should still apply")
+        compare(mockChatModel.get(0).isDeleted, true,
+                "isDeleted must be preserved across upsert")
+    }
 }

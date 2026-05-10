@@ -35,7 +35,7 @@ Window {
                 spacing: 8
 
                 Label {
-                    text: qsTr("Enter StreamD server address (e.g. http://192.168.0.134:3594):")
+                    text: qsTr("Enter StreamD server address (e.g. http://192.0.2.10:3594):")
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
                 }

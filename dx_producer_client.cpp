@@ -59,9 +59,11 @@ void Client::_onChannelChanged() {
   }
   this->serverURI = channelUri;
   this->serverChannelOptions = http2Channel->channelOptions();
-  QSslConfiguration sslConfig;
-  sslConfig.setPeerVerifyMode(QSslSocket::PeerVerifyMode::VerifyNone);
-  this->serverChannelOptions.setSslConfiguration(sslConfig);
+  if (this->serverURI.scheme() == "https") {
+    QSslConfiguration sslConfig;
+    sslConfig.setPeerVerifyMode(QSslSocket::PeerVerifyMode::VerifyNone);
+    this->serverChannelOptions.setSslConfiguration(sslConfig);
+  }
   this->attachChannel(std::make_shared<QGrpcHttp2Channel>(
       this->serverURI, this->serverChannelOptions));
   qDebug() << "dxProducerClient: channel changed: " << this->serverURI;
@@ -136,11 +138,13 @@ void Client::_reconnectIfNeeded() {
 
   qWarning() << "re-creating the channel" << this->serverURI;
   defer[=] { qDebug() << "/re-creating the channel"; };
-  QSslConfiguration sslConfig =
-      this->serverChannelOptions.sslConfiguration().value_or(
-          QSslConfiguration());
-  sslConfig.setPeerVerifyMode(QSslSocket::PeerVerifyMode::VerifyNone);
-  this->serverChannelOptions.setSslConfiguration(sslConfig);
+  if (this->serverURI.scheme() == "https") {
+    QSslConfiguration sslConfig =
+        this->serverChannelOptions.sslConfiguration().value_or(
+            QSslConfiguration());
+    sslConfig.setPeerVerifyMode(QSslSocket::PeerVerifyMode::VerifyNone);
+    this->serverChannelOptions.setSslConfiguration(sslConfig);
+  }
   this->attachChannel(std::make_shared<QGrpcHttp2Channel>(
       this->serverURI, this->serverChannelOptions));
 }

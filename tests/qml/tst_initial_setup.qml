@@ -32,11 +32,11 @@ TestCase {
         if (!host.startsWith("http://") && !host.startsWith("https://"))
             host = "https://" + host
         testSettings.dxProducerHost = host
-        testSettings.previewRTMPUrl = "rtmp://192.168.0.134:1945/pixel/dji-osmo-pocket-3-merged/"
+        testSettings.previewRTMPUrl = "rtmp://192.0.2.10:1945/live/example-source-merged/"
 
         compare(testSettings.dxProducerHost, "https://myhost:1234")
         compare(testSettings.previewRTMPUrl,
-                "rtmp://192.168.0.134:1945/pixel/dji-osmo-pocket-3-merged/",
+                "rtmp://192.0.2.10:1945/live/example-source-merged/",
                 "Preview URL should be stored verbatim")
     }
 

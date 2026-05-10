@@ -36,6 +36,30 @@ ApplicationWindow {
         property string ffstreamHost: ""
         // Empty string means "auto-pick first enabled player".
         property string chosenPlayerStreamID: ""
+        // Optional raw-camera preview RTMP URL: when the dashboard's
+        // raw-source toggle is engaged, the video player binds to this URL
+        // instead of the configured preview. Empty means "no raw preview
+        // configured"; the toggle becomes a no-op in that case. This is a
+        // deployment-specific stream URL (e.g. the route a local mediamtx
+        // exposes for the upstream camera proxy); leave blank for general
+        // deployments.
+        property string rawCameraPreviewUrl: ""
+        // Optional low-bitrate preview RTMP URL: when the player switches
+        // to a low-bitrate variant (e.g. on poor link quality), it binds
+        // to this URL. Empty means "no low-bitrate variant configured";
+        // the player keeps using the regular preview URL. This is a
+        // deployment-specific stream URL; leave blank for general
+        // deployments.
+        property string lowBitratePreviewUrl: ""
+        // Optional DJI camera preview RTMP route stem: when the user
+        // configures DJI hotspot streaming, the DJI control page
+        // composes a default RTMP publish URL as
+        // `rtmp://<hotspot-ip>:1935/<djiPreviewRouteStem>`. The route
+        // stem is a deployment choice (the route name your local
+        // mediamtx exposes for DJI camera ingest). Empty means "no
+        // default published; user types one in"; the TextField stays
+        // empty in that case. Leave blank for general deployments.
+        property string djiPreviewRouteStem: ""
     }
 
     readonly property bool setupRequired: !appSettings.dxProducerHost
